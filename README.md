@@ -98,6 +98,33 @@ FastAPI automatically generates interactive API docs:
 - The `app/` directory contains the FastAPI application code.
 - The `tests/` directory contains test modules, organized by `features/` and `models/` subdirectories.
 
+
+### App Factory Pattern
+
+This project uses the **app factory design pattern** for creating the FastAPI application instance. Instead of creating the app at the top level, a function (commonly called `create_app`) is used to construct and configure the FastAPI app. This approach makes it easier to:
+
+- Configure the app differently for development, testing, and production environments
+- Register routes, dependencies, and extensions in a modular way
+- Support testing by creating isolated app instances with custom settings
+
+### Example Usage
+
+```python
+from app.main import create_app
+
+app = create_app()
+```
+
+- In production, the app factory is called by the ASGI server (e.g., Uvicorn or Gunicorn).
+- In tests, you can call `create_app(test_config)` to inject test-specific settings.
+
+### Benefits
+- Clean separation of configuration and initialization
+- Easier to test and extend
+- Flexible for different environments
+
+---
+
 ## Schema
 
 Here is the schema for the database with the tables and their relationships (Designed with [wwwsqldesigner](https://github.com/ondras/wwwsqldesigner)):
