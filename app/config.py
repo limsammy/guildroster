@@ -5,8 +5,11 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8"
+    )
 
     # Common settings
     APP_NAME: str = "GuildRoster"
@@ -19,7 +22,6 @@ class Settings(BaseSettings):
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: str = "5432"
     POSTGRES_DB: str = "guildroster"
-    SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
     def __init__(self, **values):
         super().__init__(**values)
@@ -28,9 +30,13 @@ class Settings(BaseSettings):
         elif self.ENV == "prod":
             # Use production DB name or override via env
             self.POSTGRES_DB = os.getenv("POSTGRES_DB", self.POSTGRES_DB)
-        self.SQLALCHEMY_DATABASE_URI = (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}" \
+
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        return (
+            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+
 
 settings = Settings()
