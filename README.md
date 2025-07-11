@@ -65,15 +65,19 @@ pip install -r requirements.txt
 From the project root, start the development server with:
 
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
 
 - The API will be available at: `http://localhost:8000`
 - Swagger UI: `http://localhost:8000/docs`  # TODO: Not yet implemented
 
 **Note:**
-- Always run Uvicorn from the project root and use the correct module path (`main:app`).
+- Always run Uvicorn from the project root and use the correct module path (`app.main:app`).
 - If you see an error like `Could not import module "main"`, it usually means you are either in the wrong directory or using the wrong import path. Double-check your working directory and the command.
+
+### FastAPI App Structure
+
+The main FastAPI app is now located in `app/main.py`. This file sets up logging, database initialization, and provides a root health check endpoint. You can add routers, middleware, and other features to this file as your project grows.
 
 ## API Documentation
 
