@@ -196,6 +196,12 @@ To run tests, ensure you are in the project root directory and use:
 pytest
 ```
 
+To measure test coverage, this project uses [pytest-cov](https://pytest-cov.readthedocs.io/). Run:
+
+```bash
+pytest --cov=app
+```
+
 If you encounter import errors (e.g., `ModuleNotFoundError: No module named 'app'`), run:
 
 ```bash
