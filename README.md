@@ -81,23 +81,36 @@ FastAPI automatically generates interactive API docs:
 ```
 .
 ├── app/
+│   ├── __init__.py
 │   ├── main.py
-│   ├── api/
-│   ├── models/
-│   ├── schemas/
-│   ├── core/
-│   └── ...
+│   └── __pycache__/
 ├── tests/
+│   ├── features/
+│   ├── models/
 ├── requirements.txt
 ├── README.md
 └── ...
 ```
 
+- The `app/` directory contains the FastAPI application code.
+- The `tests/` directory contains test modules, organized by feature and model.
+
 ## Testing
+
+To run tests, ensure you are in the project root directory and use:
 
 ```bash
 pytest
 ```
+
+If you encounter import errors (e.g., `ModuleNotFoundError: No module named 'app'`), run:
+
+```bash
+PYTHONPATH=$(pwd) pytest
+```
+
+- All test directories should contain an `__init__.py` file for best compatibility.
+- Test discovery and imports are set up for standard Python and pytest usage.
 
 ## Deployment
 
