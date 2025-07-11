@@ -7,6 +7,11 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
+    """
+    Application settings loaded from environment variables or .env file.
+    Handles environment-specific configuration for database and secrets.
+    """
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8"
     )
@@ -24,6 +29,9 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "guildroster"
 
     def __init__(self, **values):
+        """
+        Initialize settings and adjust database name for test/prod environments.
+        """
         super().__init__(**values)
         if self.ENV == "test":
             self.POSTGRES_DB = f"{self.POSTGRES_DB}_test"
@@ -33,6 +41,9 @@ class Settings(BaseSettings):
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """
+        Construct the SQLAlchemy database URI from current settings.
+        """
         return (
             f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
