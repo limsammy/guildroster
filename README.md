@@ -100,13 +100,13 @@ FastAPI automatically generates interactive API docs:
 
 Here is the schema for the database with the tables and their relationships (Designed with [wwwsqldesigner](https://github.com/ondras/wwwsqldesigner)):
 
-![Schema](./guildroster_schema_v0.2.png)
+![Schema](./guildroster_schema_v0.3.png)
 
 ### Schema Description
 
 The GuildRoster database schema is designed to manage guilds, teams, members, raids, and attendance for a World of Warcraft guild environment. Here’s an overview of the main tables and their relationships:
 
-- **Accounts**:  
+- **Users**:  
   Stores user account information, including username, password, invite code, superuser status, and the guilds they belong to.
 
 - **Guilds**:  
@@ -135,23 +135,23 @@ The GuildRoster database schema is designed to manage guilds, teams, members, ra
 
 #### Relationships
 
-- **Accounts ↔ Guilds**:  
-  An account can belong to multiple guilds.
+- **Users ↔ Guilds**:  
+  An account can have many guilds.
 
 - **Guilds ↔ Members**:  
   A guild has many members.
 
 - **Guilds ↔ Teams**:  
-  A guild can have multiple teams.
+  A guild can have many teams.
 
 - **Members ↔ Toons**:  
-  A member can have multiple toons (characters).
+  A member can have many toons (characters).
 
 - **Teams ↔ Members**:  
-  Teams are composed of multiple members.
+  Teams are composed of many members.
 
 - **Teams ↔ Raids**:  
-  Each team can participate in multiple raids.
+  Each team can participate in many raids.
 
 - **Raids ↔ Scenarios**:  
   Each raid is associated with a scenario (raid instance) from the lookup table.
