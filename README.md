@@ -10,7 +10,7 @@ A FastAPI-based web and API application to manage and track your guild's roster 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Running the Application](#running-the-application)
+  - [Running Locally (Development)](#running-locally-development)
 - [API Documentation](#api-documentation)
 - [Project Structure](#project-structure)
 - [Testing](#testing)
@@ -48,6 +48,7 @@ Briefly describe what your application does, its purpose, and the main use cases
 - `PostgreSQL`
 - `Docker`
 - `psycopg2`
+- `Alembic` (for database migrations)
 
 ### Installation
 
@@ -59,17 +60,20 @@ pyenv activate guildroster
 pip install -r requirements.txt
 ```
 
-# REST OF README IS WIP
+### Running Locally (Development)
 
-### Running the Application
+From the project root, start the development server with:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
 - The API will be available at: `http://localhost:8000`
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Swagger UI: `http://localhost:8000/docs`  # TODO: Not yet implemented
+
+**Note:**
+- Always run Uvicorn from the project root and use the full module path (`app.main:app`).
+- If you see an error like `Could not import module "main"`, it usually means you are either in the wrong directory or using the wrong import path. Double-check your working directory and the command.
 
 ## API Documentation
 
