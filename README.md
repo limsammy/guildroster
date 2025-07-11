@@ -32,21 +32,22 @@ Briefly describe what your application does, its purpose, and the main use cases
 
 ## Tech Stack
 
-- Python 3.13.5
-- FastAPI
-- Uvicorn (ASGI server)
-- Pytest
-- PostgreSQL
-- Docker
-- SQLAlchemy
+- `Python 3.13.5`
+- `FastAPI`
+- `Uvicorn` (ASGI server)
+- `Pytest`
+- `PostgreSQL`
+- `Docker`
+- `SQLAlchemy`
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.13.5
-- PostgreSQL
-- Docker
+- `Python 3.13.5`
+- `PostgreSQL`
+- `Docker`
+- `psycopg2`
 
 ### Installation
 
