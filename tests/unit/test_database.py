@@ -7,7 +7,7 @@ from app.config import settings
 def test_engine_uri():
     # SQLAlchemy censors the password in the URL string
     expected_uri = settings.SQLALCHEMY_DATABASE_URI.replace(
-        settings.POSTGRES_PASSWORD, "***"
+        settings.DB_PASSWORD, "***"
     )
     assert str(database.engine.url) == expected_uri
 
