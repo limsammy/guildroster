@@ -65,14 +65,14 @@ pip install -r requirements.txt
 From the project root, start the development server with:
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn main:app --reload
 ```
 
 - The API will be available at: `http://localhost:8000`
 - Swagger UI: `http://localhost:8000/docs`  # TODO: Not yet implemented
 
 **Note:**
-- Always run Uvicorn from the project root and use the full module path (`app.main:app`).
+- Always run Uvicorn from the project root and use the correct module path (`main:app`).
 - If you see an error like `Could not import module "main"`, it usually means you are either in the wrong directory or using the wrong import path. Double-check your working directory and the command.
 
 ## API Documentation
@@ -106,21 +106,17 @@ FastAPI automatically generates interactive API docs:
 
 ### App Factory Pattern
 
-This project uses the **app factory design pattern** for creating the FastAPI application instance. Instead of creating the app at the top level, a function (commonly called `create_app`) is used to construct and configure the FastAPI app. This approach makes it easier to:
+This project uses the **app factory design pattern** for creating the FastAPI application instance. The factory function `create_app` is located in `app/__init__.py`. The main entrypoint for running the app is `main.py` at the project root, which imports and uses this factory.
 
-- Configure the app differently for development, testing, and production environments
-- Register routes, dependencies, and extensions in a modular way
-- Support testing by creating isolated app instances with custom settings
-
-### Example Usage
+#### Example Usage
 
 ```python
-from app.main import create_app
+from app import create_app
 
 app = create_app()
 ```
 
-- In production, the app factory is called by the ASGI server (e.g., Uvicorn or Gunicorn).
+- In production, the app factory is called by the ASGI server (e.g., Uvicorn or Gunicorn) via `main.py`.
 - In tests, you can call `create_app(test_config)` to inject test-specific settings.
 
 ### Benefits
