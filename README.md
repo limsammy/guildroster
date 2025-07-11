@@ -84,7 +84,9 @@ FastAPI automatically generates interactive API docs:
 ├── app/
 │   ├── __init__.py
 │   ├── main.py
-│   └── __pycache__/
+│   ├── config.py
+│   ├── database.py
+│   └── utils/
 ├── tests/
 │   ├── features/
 │   ├── models/
@@ -94,7 +96,7 @@ FastAPI automatically generates interactive API docs:
 ```
 
 - The `app/` directory contains the FastAPI application code.
-- The `tests/` directory contains test modules, organized by feature and model.
+- The `tests/` directory contains test modules, organized by `features/` and `models/` subdirectories.
 
 ## Schema
 
