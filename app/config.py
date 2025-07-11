@@ -2,26 +2,24 @@ import os
 import pathlib
 from functools import lru_cache
 
-from pydantic import BaseSettings, PostgresDsn, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
     # Common settings
     APP_NAME: str = "GuildRoster"
-    ENV: str = Field("dev", env="ENV")
-    SECRET_KEY: str = Field("supersecret", env="SECRET_KEY")
+    ENV: str = "dev"
+    SECRET_KEY: str = "supersecret"
 
     # Database settings
-    POSTGRES_USER: str = Field("guildroster", env="POSTGRES_USER")
-    POSTGRES_PASSWORD: str = Field("password", env="POSTGRES_PASSWORD")
-    POSTGRES_SERVER: str = Field("localhost", env="POSTGRES_SERVER")
-    POSTGRES_PORT: str = Field("5432", env="POSTGRES_PORT")
-    POSTGRES_DB: str = Field("guildroster", env="POSTGRES_DB")
+    POSTGRES_USER: str = "guildroster"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_PORT: str = "5432"
+    POSTGRES_DB: str = "guildroster"
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
     def __init__(self, **values):
         super().__init__(**values)
