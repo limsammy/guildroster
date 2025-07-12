@@ -10,6 +10,9 @@ logger = get_logger(__name__)
 logger.info(
     f"Starting {settings.APP_NAME} v{settings.VERSION} in {settings.ENV} environment"
 )
+logger.info(
+    f"Postgres user: {settings.DB_USER} password: {settings.DB_PASSWORD}"
+)
 
 
 @asynccontextmanager
@@ -20,16 +23,22 @@ async def lifespan(app: FastAPI):
     # (Optional) Add shutdown logic here
 
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    description=settings.APP_DESCRIPTION,
-    version=settings.VERSION,
-    lifespan=lifespan,
-)
+def create_app() -> FastAPI:
+    """App Factory to create a FastAPI app instance."""
+    app = FastAPI(
+        title=settings.APP_NAME,
+        description=settings.APP_DESCRIPTION,
+        version=settings.VERSION,
+        lifespan=lifespan,
+    )
+
+    @app.get("/")
+    def read_root():
+        """Health check endpoint."""
+        return {"status": "ok", "message": "GuildRoster API is running"}
+
+    return app
+
+
+app = create_app()
 logger.info(f"Created {settings.APP_NAME} v{settings.VERSION} app instance")
-
-
-@app.get("/")
-def read_root():
-    """Health check endpoint."""
-    return {"status": "ok", "message": "GuildRoster API is running"}
