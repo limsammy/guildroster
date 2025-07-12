@@ -32,6 +32,11 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Include routers
+    from app.routers import user
+
+    app.include_router(user.router)
+
     @app.get("/")
     def read_root():
         """Health check endpoint."""
