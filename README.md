@@ -257,6 +257,25 @@ PYTHONPATH=$(pwd) pytest
 - All test directories should contain an `__init__.py` file for best compatibility.
 - Test discovery and imports are set up for standard Python and pytest usage.
 
+## Database Migrations
+
+This project uses Alembic for database migrations. When you add or modify models:
+
+1. **Generate a migration file:**
+   ```bash
+   alembic revision --autogenerate -m "Description of changes"
+   ```
+
+2. **Apply the migration:**
+   ```bash
+   alembic upgrade head
+   ```
+
+**Important Notes:**
+- Always review auto-generated migrations before applying them
+- Test migrations on a copy of your database first
+- Ensure all models are imported in `app/models/__init__.py` for Alembic to detect them
+
 ## Deployment
 
 - [Instructions for deploying to production, e.g., using Gunicorn, Docker, etc.]
