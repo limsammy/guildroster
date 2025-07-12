@@ -12,6 +12,9 @@ from app.schemas.token import (
     TokenCreateResponse,
 )
 from app.utils.auth import require_superuser
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(
     prefix="/tokens",
@@ -27,6 +30,9 @@ def create_token(
     current_user: User = Depends(require_superuser),
 ):
     """Create a new token (superuser only)."""
+    logger.info(
+        f"Creating {token_data.token_type} token by user {current_user.username}"
+    )
     # Validate token type
     if token_data.token_type not in ["user", "system", "api"]:
         raise HTTPException(
@@ -118,6 +124,7 @@ def delete_token(
     current_user: User = Depends(require_superuser),
 ):
     """Delete a token (superuser only)."""
+    logger.info(f"Deleting token {token_id} by user {current_user.username}")
     token = db.query(Token).filter(Token.id == token_id).first()
     if not token:
         raise HTTPException(
