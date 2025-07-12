@@ -15,6 +15,9 @@ pip install -r requirements.txt
 # Configure environment
 cp .env.example .env  # Edit with your settings
 
+# Create a development token for testing
+python scripts/create_token.py --type system --name "Development Token"
+
 # Run the app
 uvicorn app.main:app --reload
 
@@ -32,6 +35,8 @@ pytest
 - PostgreSQL database with SQLAlchemy ORM
 - Alembic migrations
 - Comprehensive test suite with pytest
+- **Full API authentication** - All endpoints require valid tokens
+- Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
 - Guild and team management (planned)
 
@@ -54,6 +59,9 @@ app/
 ├── routers/         # API endpoints
 └── utils/           # Utilities
 
+scripts/
+└── create_token.py  # Token creation utility
+
 tests/
 ├── model/           # Model tests
 ├── unit/            # Unit tests
@@ -62,16 +70,125 @@ tests/
 
 ## API Endpoints
 
+**Note:** All endpoints now require authentication. Use the token created in the setup steps.
+
+### Health Check
+- `GET /` - Health check (requires any valid token)
+
 ### Users
-- `GET /users/` - List users (paginated)
-- `GET /users/{id}` - Get user by ID
-- `GET /users/username/{username}` - Get user by username
+- `GET /users/` - List users (paginated, requires any valid token)
+- `GET /users/{id}` - Get user by ID (requires any valid token)
+- `GET /users/username/{username}` - Get user by username (requires any valid token)
 
 ### Tokens
 - `POST /tokens/` - Create new token (superuser only)
 - `GET /tokens/` - List tokens (superuser only)
 - `GET /tokens/{id}` - Get token by ID (superuser only)
 - `DELETE /tokens/{id}` - Delete token (superuser only)
+
+## Creating API Tokens
+
+Before testing the API, you need to create a token for authentication. Use the provided script:
+
+```bash
+# Create a system token for development/testing
+python scripts/create_token.py --type system --name "Development Token"
+
+# Create an API token for frontend applications
+python scripts/create_token.py --type api --name "Frontend App"
+
+# Create a user token (requires existing user ID)
+python scripts/create_token.py --type user --user-id 1 --name "User Token"
+
+# Create a token with expiration (30 days)
+python scripts/create_token.py --type system --name "Temporary Token" --expires 30
+```
+
+The script will output the token key that you can use in your API requests.
+
+## API Testing Examples
+
+**Note:** All endpoints now require authentication. Replace `YOUR_TOKEN` with the token key from the setup step (e.g., the output from `python scripts/create_token.py --type system --name "Development Token"`).
+
+### Health Check
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/
+```
+
+### User Endpoints
+```bash
+# Get all users (paginated)
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/
+
+# Get user by ID
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/1
+
+# Get user by username
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/username/someuser
+```
+
+### Token Endpoints (require superuser authentication)
+```bash
+# Create a system token
+curl -X POST http://localhost:8000/tokens/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "token_type": "system",
+    "name": "Test System Token"
+  }'
+
+# Create a user token
+curl -X POST http://localhost:8000/tokens/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "token_type": "user",
+    "user_id": 1,
+    "name": "Test User Token"
+  }'
+
+# Get all tokens
+curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/tokens/
+
+# Get tokens by type
+curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  "http://localhost:8000/tokens/?token_type=system"
+
+# Get specific token
+curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/tokens/1
+
+# Delete a token
+curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/tokens/1
+
+# Deactivate a token
+curl -X POST -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/tokens/1/deactivate
+
+# Activate a token
+curl -X POST -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/tokens/1/activate
+```
+
+### Testing Authentication
+```bash
+# Should return 401 Unauthorized
+curl http://localhost:8000/tokens/
+
+# Should return 401 Unauthorized
+curl -X POST http://localhost:8000/tokens/ \
+  -H "Content-Type: application/json" \
+  -d '{"token_type": "system", "name": "Test"}'
+
+# Test with invalid token
+curl -H "Authorization: Bearer invalid_token" \
+  http://localhost:8000/tokens/
+```
+
+**Note:** Replace `YOUR_SUPERUSER_TOKEN` with an actual token from your database. You'll need to create a superuser and token first through your application or database.
 
 ## Database Schema
 
