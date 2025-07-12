@@ -20,5 +20,9 @@ class User(Base):
 
     # guilds = relationship("Guild", back_populates="members")
 
+    tokens = relationship(
+        "Token", back_populates="user", cascade="all, delete-orphan"
+    )
+
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
