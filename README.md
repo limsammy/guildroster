@@ -138,6 +138,37 @@ alembic revision --autogenerate -m "Description"
 alembic upgrade head
 ```
 
+### Logging
+
+The application uses a centralized logging utility that provides both console and file output with daily rotation.
+
+**Usage:**
+```python
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+# Log levels
+logger.debug("Debug information")
+logger.info("General information")
+logger.warning("Warning messages")
+logger.error("Error messages")
+logger.critical("Critical errors")
+```
+
+**Features:**
+- **Console output** with colorized formatting
+- **File output** with daily rotation (keeps 7 days of logs)
+- **Structured format** with timestamp, level, module name, and message
+- **Automatic log directory creation** (`logs/app.log`)
+
+**Example output:**
+```
+INFO     | 2024-01-15 10:30:45 | app.main | Starting GuildRoster v0.1.0 in dev environment
+WARNING  | 2024-01-15 10:30:46 | app.routers.user | User not found: unknown_user
+ERROR    | 2024-01-15 10:30:47 | app.database | Database connection failed
+```
+
 ## Contributing
 
 1. Fork the repository
