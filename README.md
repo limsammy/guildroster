@@ -67,18 +67,37 @@ tests/
 - `GET /users/{id}` - Get user by ID
 - `GET /users/username/{username}` - Get user by username
 
+### Tokens
+- `POST /tokens/` - Create new token (superuser only)
+- `GET /tokens/` - List tokens (superuser only)
+- `GET /tokens/{id}` - Get token by ID (superuser only)
+- `DELETE /tokens/{id}` - Delete token (superuser only)
+
 ## Database Schema
 
-The application uses a relational database with tables for:
+The application uses a relational database with the following core tables and relationships:
+
+![Database Schema](schema.png)
+
+**Core Tables:**
 - **Users** - Authentication and user management
-- **Guilds** - Guild information
+- **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
+- **Guilds** - Guild information and settings
 - **Teams** - Team organization within guilds
 - **Members** - Guild member profiles
-- **Toons** - Character information
+- **Toons** - Character information for guild members
 - **Raids** - Raid scheduling and tracking
 - **Attendance** - Raid attendance records
 - **Scenarios** - Raid instance lookup
 - **Invites** - User registration system
+
+**Key Relationships:**
+- Users can belong to multiple guilds and have multiple tokens
+- Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
+- Guilds contain multiple teams and members
+- Members can have multiple characters (toons)
+- Raids track attendance for specific scenarios
+- Invites control user registration and guild membership
 
 ## Development
 
@@ -129,4 +148,4 @@ alembic upgrade head
 
 ## License
 
-MIT
+TODO
