@@ -58,7 +58,10 @@ cd guildroster
 pyenv virtualenv 3.13.5 guildroster
 pyenv activate guildroster
 pip install -r requirements.txt
+cp .env.example .env  # Copy and configure your environment variables
 ```
+
+Edit `.env` to match your local or production environment before running the app.
 
 ### Running Locally (Development)
 
