@@ -9,7 +9,12 @@ from app.models.user import User
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
-security = HTTPBearer(auto_error=False)
+# Configure security scheme for OpenAPI docs
+security = HTTPBearer(
+    auto_error=False,
+    description="Enter your API token in the format: Bearer <token>",
+    scheme_name="BearerAuth",
+)
 
 
 def get_current_token(
