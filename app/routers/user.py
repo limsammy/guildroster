@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserResponse, UserListResponse
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(
     prefix="/users",
@@ -17,6 +20,7 @@ def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Retrieve a list of users with pagination.
     """
+    logger.debug(f"Getting users with skip={skip}, limit={limit}")
     users = db.query(User).offset(skip).limit(limit).all()
     total = db.query(User).count()
 
@@ -30,6 +34,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     """
     Retrieve a specific user by ID.
     """
+    logger.debug(f"Getting user by ID: {user_id}")
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(
@@ -43,6 +48,7 @@ def get_user_by_username(username: str, db: Session = Depends(get_db)):
     """
     Retrieve a specific user by username.
     """
+    logger.debug(f"Getting user by username: {username}")
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise HTTPException(
