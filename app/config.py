@@ -12,30 +12,36 @@ class Settings(BaseSettings):
     Handles environment-specific configuration for database and secrets.
     """
 
-    # Load environment variables from .env file
-    config: ClassVar = dotenv_values(".env")
-
     # App settings
-    APP_NAME: str = config.get("APP_NAME") or "GuildRoster"
+    APP_NAME: str = "GuildRoster"
     APP_DESCRIPTION: str = (
-        config.get("APP_DESCRIPTION")
-        or "GuildRoster is a tool for managing your guild's roster and tracking attendance."
+        "GuildRoster is a tool for managing your guild's roster and tracking attendance."
     )
-    VERSION: str = config.get("VERSION") or "0.1.0"
-    ENV: str = config.get("ENV") or "dev"
-    SECRET_KEY: str = config.get("SECRET_KEY") or "supersecret"
+    VERSION: str = "0.1.0"
+    ENV: str = "dev"
+    SECRET_KEY: str = "supersecret"
 
-    DB_USER: str = config.get("DB_USER") or "guildroster"
-    DB_PASSWORD: str = config.get("DB_PASSWORD") or "password"
-    DB_HOST: str = config.get("DB_HOST") or "localhost"
-    DB_PORT: str = config.get("DB_PORT") or "5432"
-    DB_NAME: str = config.get("DB_NAME") or "guildroster"
+    DB_USER: str = "guildroster"
+    DB_PASSWORD: str = "password"
+    DB_HOST: str = "localhost"
+    DB_PORT: str = "5432"
+    DB_NAME: str = "guildroster"
 
     def __init__(self, **values):
         super().__init__(**values)
-        # Automatic test DB switching
-        if "PYTEST_CURRENT_TEST" in os.environ:
-            object.__setattr__(self, "DB_NAME", f"{self.DB_NAME}_test")
+        # Load environment variables from .env file
+        env_file = (
+            ".env.test" if "PYTEST_CURRENT_TEST" in os.environ else ".env"
+        )
+        try:
+            config = dotenv_values(env_file)
+            # Override defaults with values from .env file
+            for key, value in config.items():
+                if hasattr(self, key):
+                    object.__setattr__(self, key, value)
+        except FileNotFoundError:
+            # .env file doesn't exist, use defaults
+            pass
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
