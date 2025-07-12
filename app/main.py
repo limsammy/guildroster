@@ -10,9 +10,7 @@ logger = get_logger(__name__)
 logger.info(
     f"Starting {settings.APP_NAME} v{settings.VERSION} in {settings.ENV} environment"
 )
-logger.info(
-    f"Postgres user: {settings.DB_USER} password: {settings.DB_PASSWORD}"
-)
+logger.info(f"Postgres user: {settings.DB_USER} password: [REDACTED]")
 
 
 @asynccontextmanager
@@ -33,9 +31,10 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    from app.routers import user
+    from app.routers import user, token
 
     app.include_router(user.router)
+    app.include_router(token.router)
 
     @app.get("/")
     def read_root():
