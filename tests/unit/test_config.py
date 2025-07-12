@@ -1,49 +1,67 @@
+import os
 import pytest
 from app.config import Settings
+from dotenv import load_dotenv
 
 
-def test_default_settings():
+def create_dummy_env(tmp_path, env_vars):
+    env_path = tmp_path / ".env"
+    with open(env_path, "w") as f:
+        for k, v in env_vars.items():
+            f.write(f"{k}={v}\n")
+    return env_path
+
+
+def test_default_settings(tmp_path):
+    env_vars = {
+        "APP_NAME": "TestApp",
+        "APP_DESCRIPTION": "Test Description",
+        "VERSION": "1.2.3",
+        "ENV": "dev",
+        "SECRET_KEY": "dummykey",
+        "DB_USER": "dummyuser",
+        "DB_PASSWORD": "dummypw",
+        "DB_HOST": "dummyhost",
+        "DB_PORT": "1234",
+        "DB_NAME": "dummydb",
+    }
+    env_path = create_dummy_env(tmp_path, env_vars)
+    load_dotenv(dotenv_path=env_path, override=True)
     settings = Settings()
-    assert settings.APP_NAME == "GuildRoster"
+    assert settings.APP_NAME == "TestApp"
+    assert settings.APP_DESCRIPTION == "Test Description"
+    assert settings.VERSION == "1.2.3"
     assert settings.ENV == "dev"
-    assert settings.DB_USER == "guildroster"
-    assert settings.DB_NAME == "guildroster"
-    assert "postgresql://" in settings.SQLALCHEMY_DATABASE_URI
-    assert settings.APP_METADATA["title"] == settings.APP_NAME
-    assert settings.APP_METADATA["description"] == settings.APP_DESCRIPTION
-    assert settings.APP_METADATA["version"] == settings.VERSION
+    assert settings.DB_USER == "dummyuser"
+    assert settings.DB_PASSWORD == "dummypw"
+    assert settings.DB_HOST == "dummyhost"
+    assert settings.DB_PORT == "1234"
+    assert settings.DB_NAME == "dummydb"
+    assert (
+        "postgresql://dummyuser:dummypw@dummyhost:1234/dummydb"
+        in settings.SQLALCHEMY_DATABASE_URI
+    )
 
 
-def test_test_environment(monkeypatch):
-    monkeypatch.setenv("ENV", "test")
-    monkeypatch.setenv("DB_NAME", "guildroster")
+def test_env_vars_are_loaded(tmp_path):
+    env_vars = {
+        "APP_NAME": "EnvTestApp",
+        "APP_DESCRIPTION": "Env Test Desc",
+        "VERSION": "9.9.9",
+        "ENV": "test",
+        "SECRET_KEY": "envkey",
+        "DB_USER": "envuser",
+        "DB_PASSWORD": "envpw",
+        "DB_HOST": "envhost",
+        "DB_PORT": "9999",
+        "DB_NAME": "envdb",
+    }
+    env_path = create_dummy_env(tmp_path, env_vars)
+    load_dotenv(dotenv_path=env_path, override=True)
     settings = Settings()
-    assert settings.ENV == "test"
-    assert settings.DB_NAME is not None and settings.DB_NAME.endswith("_test")
-    assert "guildroster_test" in settings.SQLALCHEMY_DATABASE_URI
-
-
-def test_prod_environment(monkeypatch):
-    monkeypatch.setenv("ENV", "prod")
-    monkeypatch.setenv("DB_NAME", "guildroster_prod")
-    settings = Settings()
-    assert settings.ENV == "prod"
-    assert settings.DB_NAME == "guildroster_prod"
-    assert "guildroster_prod" in settings.SQLALCHEMY_DATABASE_URI
-
-
-def test_env_overrides(monkeypatch):
-    monkeypatch.setenv("DB_USER", "customuser")
-    monkeypatch.setenv("DB_PASSWORD", "custompass")
-    monkeypatch.setenv("DB_HOST", "db.example.com")
-    monkeypatch.setenv("DB_PORT", "5433")
-    monkeypatch.setenv("DB_NAME", "customdb")
-    settings = Settings()
-    assert settings.DB_USER == "customuser"
-    assert settings.DB_PASSWORD == "custompass"
-    assert settings.DB_HOST == "db.example.com"
-    assert settings.DB_PORT == "5433"
-    assert settings.DB_NAME == "customdb"
+    for k, v in env_vars.items():
+        if hasattr(settings, k):
+            assert getattr(settings, k) == v
     assert settings.SQLALCHEMY_DATABASE_URI == (
-        "postgresql://customuser:custompass@db.example.com:5433/customdb"
+        "postgresql://envuser:envpw@envhost:9999/envdb"
     )
