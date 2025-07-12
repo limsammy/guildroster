@@ -129,6 +129,12 @@ pytest --cov=app
 PYTHONPATH=$(pwd) pytest
 ```
 
+### Type Checking and Linting
+
+This project uses [mypy](http://mypy-lang.org/) for static type checking. Due to the dynamic nature of SQLAlchemy ORM and Pydantic integration, some mypy errors (such as assignments to SQLAlchemy model fields, or passing ORM models to Pydantic schemas) are expected and safe to ignore. These are well-known false positives and do not affect runtime correctness.
+
+If you see `# type: ignore` comments in the codebase, they are used only for these unavoidable cases. All other mypy errors should be fixed or reported.
+
 ### Database Migrations
 ```bash
 # Generate migration
