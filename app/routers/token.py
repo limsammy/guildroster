@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.database import get_db
 from app.models.token import Token
@@ -58,7 +58,7 @@ def create_token(
     # Create token based on type
     if token_data.token_type == "user":
         token = Token.create_user_token(
-            user_id=token_data.user_id, name=token_data.name
+            user_id=token_data.user_id, name=token_data.name  # type: ignore[arg-type]
         )
     elif token_data.token_type == "system":
         token = Token.create_system_token(name=token_data.name)
@@ -67,8 +67,8 @@ def create_token(
 
     # Set additional fields
     if token_data.expires_at:
-        token.expires_at = token_data.expires_at
-    token.is_active = token_data.is_active
+        token.expires_at = token_data.expires_at  # type: ignore[assignment]
+    token.is_active = token_data.is_active  # type: ignore[assignment]
 
     db.add(token)
     db.commit()
@@ -81,7 +81,7 @@ def create_token(
 def get_tokens(
     skip: int = 0,
     limit: int = 100,
-    token_type: str = None,
+    token_type: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_superuser),
 ):
@@ -99,7 +99,7 @@ def get_tokens(
     tokens = query.offset(skip).limit(limit).all()
     total = query.count()
 
-    return TokenListResponse(tokens=tokens, total=total)
+    return TokenListResponse(tokens=tokens, total=total)  # type: ignore[arg-type]
 
 
 @router.get("/{token_id}", response_model=TokenResponse)
@@ -150,7 +150,7 @@ def deactivate_token(
             status_code=status.HTTP_404_NOT_FOUND, detail="Token not found"
         )
 
-    token.is_active = False
+    token.is_active = False  # type: ignore[assignment]
     db.commit()
 
     return {"message": "Token deactivated successfully"}
@@ -169,7 +169,7 @@ def activate_token(
             status_code=status.HTTP_404_NOT_FOUND, detail="Token not found"
         )
 
-    token.is_active = True
+    token.is_active = True  # type: ignore[assignment]
     db.commit()
 
     return {"message": "Token activated successfully"}

@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime, timedelta
 import secrets
+from typing import Optional
 
 from app.database import Base
 
@@ -28,7 +29,10 @@ class Token(Base):
 
     @classmethod
     def create_user_token(
-        cls, user_id: int, name: str = None, expires_in_days: int = None
+        cls,
+        user_id: int,
+        name: Optional[str] = None,
+        expires_in_days: Optional[int] = None,
     ) -> "Token":
         """Create a new user token."""
         token = cls(
@@ -38,12 +42,12 @@ class Token(Base):
             name=name,
         )
         if expires_in_days:
-            token.expires_at = datetime.now() + timedelta(days=expires_in_days)
+            token.expires_at = datetime.now() + timedelta(days=expires_in_days)  # type: ignore[assignment]
         return token
 
     @classmethod
     def create_system_token(
-        cls, name: str, expires_in_days: int = None
+        cls, name: Optional[str], expires_in_days: Optional[int] = None
     ) -> "Token":
         """Create a new system token."""
         token = cls(
@@ -58,7 +62,7 @@ class Token(Base):
 
     @classmethod
     def create_api_token(
-        cls, name: str, expires_in_days: int = None
+        cls, name: Optional[str], expires_in_days: Optional[int] = None
     ) -> "Token":
         """Create a new API token."""
         token = cls(
@@ -73,10 +77,10 @@ class Token(Base):
 
     def is_expired(self) -> bool:
         """Check if the token has expired."""
-        if not self.expires_at:
+        if not self.expires_at:  # type: ignore[truthy-bool]
             return False
-        return datetime.now() > self.expires_at
+        return datetime.now() > self.expires_at  # type: ignore[return-value]
 
     def is_valid(self) -> bool:
         """Check if the token is valid (active and not expired)."""
-        return self.is_active and not self.is_expired()
+        return self.is_active and not self.is_expired()  # type: ignore[return-value]
