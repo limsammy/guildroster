@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from app.utils.logger import get_logger
 from app.database import Base, engine
 from contextlib import asynccontextmanager
 
 from app.config import settings
+from app.models.token import Token
+from app.utils.auth import require_any_token
 
 logger = get_logger(__name__)
 
@@ -37,7 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(token.router)
 
     @app.get("/")
-    def read_root():
+    def read_root(current_token: Token = Depends(require_any_token)):
         """Health check endpoint."""
         return {"status": "ok", "message": "GuildRoster API is running"}
 

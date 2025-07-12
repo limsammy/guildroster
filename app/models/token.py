@@ -40,6 +40,7 @@ class Token(Base):
             user_id=user_id,
             token_type="user",
             name=name,
+            is_active=True,
         )
         if expires_in_days:
             token.expires_at = datetime.now() + timedelta(days=expires_in_days)  # type: ignore[assignment]
@@ -55,6 +56,7 @@ class Token(Base):
             user_id=None,
             token_type="system",
             name=name,
+            is_active=True,
         )
         if expires_in_days:
             token.expires_at = datetime.now() + timedelta(days=expires_in_days)
@@ -70,6 +72,7 @@ class Token(Base):
             user_id=None,
             token_type="api",
             name=name,
+            is_active=True,
         )
         if expires_in_days:
             token.expires_at = datetime.now() + timedelta(days=expires_in_days)

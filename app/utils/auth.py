@@ -101,3 +101,11 @@ def require_superuser(user: User = Depends(require_user)) -> User:
             detail="Superuser access required",
         )
     return user
+
+
+def require_any_token(token: Token = Depends(get_current_token)) -> Token:
+    """Require any valid token (user, system, or API token)."""
+    logger.debug(
+        f"require_any_token called with token type: {token.token_type}"
+    )
+    return token

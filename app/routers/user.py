@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
+from app.models.token import Token
 from app.schemas.user import UserResponse, UserListResponse
+from app.utils.auth import require_any_token
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -16,7 +18,12 @@ router = APIRouter(
 
 
 @router.get("/", response_model=UserListResponse)
-def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
     """
     Retrieve a list of users with pagination.
     """
@@ -30,7 +37,11 @@ def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
+def get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
     """
     Retrieve a specific user by ID.
     """
@@ -44,7 +55,11 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/username/{username}", response_model=UserResponse)
-def get_user_by_username(username: str, db: Session = Depends(get_db)):
+def get_user_by_username(
+    username: str,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
     """
     Retrieve a specific user by username.
     """

@@ -3,14 +3,25 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.user import User
+from app.models.token import Token
 
 
 class TestUserRouter:
+    def _create_test_token(self, db_session: Session) -> str:
+        """Create a test system token and return its key."""
+        token = Token.create_system_token("Test Token")
+        db_session.add(token)
+        db_session.commit()
+        return token.key  # type: ignore[return-value]
+
     def test_get_users_empty_database(
         self, client: TestClient, db_session: Session
     ):
         """Test getting users when database is empty."""
-        response = client.get("/users/")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -27,7 +38,10 @@ class TestUserRouter:
         db_session.add_all([user1, user2, user3])
         db_session.commit()
 
-        response = client.get("/users/")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -53,8 +67,11 @@ class TestUserRouter:
         db_session.add_all(users)
         db_session.commit()
 
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
         # Test limit
-        response = client.get("/users/?limit=2")
+        response = client.get("/users/?limit=2", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -62,7 +79,7 @@ class TestUserRouter:
         assert data["total"] == 5
 
         # Test skip
-        response = client.get("/users/?skip=2&limit=2")
+        response = client.get("/users/?skip=2&limit=2", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -77,7 +94,10 @@ class TestUserRouter:
         db_session.add(user)
         db_session.commit()
 
-        response = client.get(f"/users/{user.id}")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get(f"/users/{user.id}", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -90,7 +110,10 @@ class TestUserRouter:
         self, client: TestClient, db_session: Session
     ):
         """Test getting user by non-existent ID."""
-        response = client.get("/users/999")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/999", headers=headers)
         assert response.status_code == 404
 
         data = response.json()
@@ -100,7 +123,10 @@ class TestUserRouter:
         self, client: TestClient, db_session: Session
     ):
         """Test getting user with invalid ID format."""
-        response = client.get("/users/invalid")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/invalid", headers=headers)
         assert response.status_code == 422  # Validation error
 
     def test_get_user_by_username_success(
@@ -111,7 +137,10 @@ class TestUserRouter:
         db_session.add(user)
         db_session.commit()
 
-        response = client.get("/users/username/testuser")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/username/testuser", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -122,7 +151,10 @@ class TestUserRouter:
         self, client: TestClient, db_session: Session
     ):
         """Test getting user by non-existent username."""
-        response = client.get("/users/username/nonexistent")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/username/nonexistent", headers=headers)
         assert response.status_code == 404
 
         data = response.json()
@@ -136,8 +168,11 @@ class TestUserRouter:
         db_session.add(user)
         db_session.commit()
 
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
         # Try with different case
-        response = client.get("/users/username/testuser")
+        response = client.get("/users/username/testuser", headers=headers)
         assert response.status_code == 404
 
     def test_user_response_structure(
@@ -148,7 +183,10 @@ class TestUserRouter:
         db_session.add(user)
         db_session.commit()
 
-        response = client.get(f"/users/{user.id}")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get(f"/users/{user.id}", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -180,7 +218,10 @@ class TestUserRouter:
         db_session.add(user)
         db_session.commit()
 
-        response = client.get("/users/")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -229,7 +270,10 @@ class TestUserRouter:
         db_session.add_all([user1, user2, user3])
         db_session.commit()
 
-        response = client.get("/users/")
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/users/", headers=headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -246,3 +290,44 @@ class TestUserRouter:
 
         assert users_by_name["superuser"]["is_active"] is True
         assert users_by_name["superuser"]["is_superuser"] is True
+
+    def test_get_users_unauthorized(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test that getting users without authentication returns 401."""
+        response = client.get("/users/")
+        assert response.status_code == 401
+
+    def test_get_user_by_id_unauthorized(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test that getting user by ID without authentication returns 401."""
+        response = client.get("/users/1")
+        assert response.status_code == 401
+
+    def test_get_user_by_username_unauthorized(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test that getting user by username without authentication returns 401."""
+        response = client.get("/users/username/testuser")
+        assert response.status_code == 401
+
+    def test_health_check_unauthorized(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test that health check without authentication returns 401."""
+        response = client.get("/")
+        assert response.status_code == 401
+
+    def test_health_check_authorized(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test that health check with authentication returns 200."""
+        token_key = self._create_test_token(db_session)
+        headers = {"Authorization": f"Bearer {token_key}"}
+
+        response = client.get("/", headers=headers)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert "GuildRoster API is running" in data["message"]
