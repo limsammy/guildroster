@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 
 # Load environment variables from .env file
 from dotenv import dotenv_values
+import os
 
 
 class Settings(BaseSettings):
@@ -29,6 +30,12 @@ class Settings(BaseSettings):
     DB_HOST: str = config.get("DB_HOST") or "localhost"
     DB_PORT: str = config.get("DB_PORT") or "5432"
     DB_NAME: str = config.get("DB_NAME") or "guildroster"
+
+    def __init__(self, **values):
+        super().__init__(**values)
+        # Automatic test DB switching
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            object.__setattr__(self, "DB_NAME", "guildroster_test")
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
