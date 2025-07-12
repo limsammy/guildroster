@@ -37,13 +37,20 @@ def db_session():
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_db(db_session):
+def clean_db():
     """Clean the database between tests by deleting all data."""
     yield
-    # Delete all data from all tables
-    for table in reversed(Base.metadata.sorted_tables):
-        db_session.execute(table.delete())
-    db_session.commit()
+    # Create a fresh session for cleanup
+    cleanup_session = TestingSessionLocal()
+    try:
+        # Delete all data from all tables
+        for table in reversed(Base.metadata.sorted_tables):
+            cleanup_session.execute(table.delete())
+        cleanup_session.commit()
+    except Exception:
+        cleanup_session.rollback()
+    finally:
+        cleanup_session.close()
 
 
 @pytest.fixture(scope="function")
