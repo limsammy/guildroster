@@ -2,288 +2,131 @@
 
 A FastAPI-based web and API application to manage and track your guild's roster across multiple teams in World of Warcraft.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running Locally (Development)](#running-locally-development)
-- [API Documentation](#api-documentation)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## Overview
-
-Briefly describe what your application does, its purpose, and the main use cases.
-
-## Features
-
-- FastAPI-powered RESTful API
-- Interactive API docs (Swagger UI & ReDoc)
-- [Add more features here]
-
-## Tech Stack
-
-- `Python 3.13.5`
-- `FastAPI`
-- `Uvicorn` (ASGI server)
-- `Pytest`
-- `PostgreSQL`
-- `Docker`
-- `SQLAlchemy`
-
-## Getting Started
-
-### Prerequisites
-
-- `Python 3.13.5`
-- `PostgreSQL`
-- `Docker`
-- `psycopg2`
-- `Alembic` (for database migrations)
-
-### Installation
+## Quick Start
 
 ```bash
+# Clone and setup
 git clone https://github.com/limsammy/guildroster.git
 cd guildroster
 pyenv virtualenv 3.13.5 guildroster
 pyenv activate guildroster
 pip install -r requirements.txt
-cp .env.example .env  # Copy and configure your environment variables
-```
 
-Edit `.env` to match your local or production environment before running the app.
+# Configure environment
+cp .env.example .env  # Edit with your settings
 
-### Running Locally (Development)
-
-From the project root, start the development server with:
-
-```bash
+# Run the app
 uvicorn app.main:app --reload
+
+# Run tests
+pytest
 ```
 
-- The API will be available at: `http://localhost:8000`
-- Swagger UI: `http://localhost:8000/docs`  # TODO: Not yet implemented
+- **API:** http://localhost:8000
+- **Docs:** http://localhost:8000/docs
+- **Health Check:** http://localhost:8000
 
-**Note:**
-- Always run Uvicorn from the project root and use the correct module path (`app.main:app`).
-- If you see an error like `Could not import module "main"`, it usually means you are either in the wrong directory or using the wrong import path. Double-check your working directory and the command.
+## Features
 
-### FastAPI App Structure
+- FastAPI REST API with automatic documentation
+- PostgreSQL database with SQLAlchemy ORM
+- Alembic migrations
+- Comprehensive test suite with pytest
+- User management with authentication-ready structure
+- Guild and team management (planned)
 
-The main FastAPI app is now located in `app/main.py`. This file sets up logging, database initialization, and provides a root health check endpoint. You can add routers, middleware, and other features to this file as your project grows.
+## Tech Stack
 
-## API Documentation
-
-FastAPI automatically generates interactive API docs:
-
-- **Swagger UI:** `/docs`
-- **ReDoc:** `/redoc`
+- **Backend:** FastAPI, SQLAlchemy, PostgreSQL
+- **Testing:** Pytest, TestClient
+- **Migrations:** Alembic
+- **Python:** 3.13.5
 
 ## Project Structure
 
 ```
-.
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config.py
-│   ├── database.py
-│   └── utils/
-├── tests/
-│   ├── features/
-│   ├── models/
-├── requirements.txt
-├── README.md
-└── ...
+app/
+├── main.py          # FastAPI app entry point
+├── config.py        # Environment configuration
+├── database.py      # SQLAlchemy setup
+├── models/          # Database models
+├── schemas/         # Pydantic schemas
+├── routers/         # API endpoints
+└── utils/           # Utilities
+
+tests/
+├── model/           # Model tests
+├── unit/            # Unit tests
+└── feature/         # Integration tests
 ```
 
-- The `app/` directory contains the FastAPI application code.
-- The `tests/` directory contains test modules, organized by `features/` and `models/` subdirectories.
+## API Endpoints
 
+### Users
+- `GET /users/` - List users (paginated)
+- `GET /users/{id}` - Get user by ID
+- `GET /users/username/{username}` - Get user by username
 
-### App Factory Pattern
+## Database Schema
 
-This project uses the **app factory design pattern** for creating the FastAPI application instance. The factory function `create_app` is located in `app/__init__.py`. The main entrypoint for running the app is `main.py` at the project root, which imports and uses this factory.
+The application uses a relational database with tables for:
+- **Users** - Authentication and user management
+- **Guilds** - Guild information
+- **Teams** - Team organization within guilds
+- **Members** - Guild member profiles
+- **Toons** - Character information
+- **Raids** - Raid scheduling and tracking
+- **Attendance** - Raid attendance records
+- **Scenarios** - Raid instance lookup
+- **Invites** - User registration system
 
-#### Example Usage
+## Development
 
-```python
-from app import create_app
+### Prerequisites
+- Python 3.13.5
+- PostgreSQL
+- pyenv (recommended)
 
-app = create_app()
+### Environment Setup
+Create a `.env` file with:
+```env
+DB_USER=guildroster
+DB_PASSWORD=password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=guildroster
+SECRET_KEY=your-secret-key
 ```
 
-- In production, the app factory is called by the ASGI server (e.g., Uvicorn or Gunicorn) via `main.py`.
-- In tests, you can call `create_app(test_config)` to inject test-specific settings.
-
-### Benefits
-- Clean separation of configuration and initialization
-- Easier to test and extend
-- Flexible for different environments
-
----
-
-## Schema
-
-Here is the schema for the database with the tables and their relationships (Designed with [wwwsqldesigner](https://github.com/ondras/wwwsqldesigner)):
-
-![Schema](./schema.png)
-
-### Schema Description
-
-The GuildRoster database schema is designed to manage guilds, teams, members, raids, attendance, and an invite-based signup system for a World of Warcraft guild environment. Here’s an overview of the main tables, their fields, and relationships:
-
-- **Invites**:  
-  - `id`: Primary key
-  - `code`: Unique invite code
-  - `created_by`: User ID of the superuser who generated the invite
-  - `used_by`: User ID of the user who redeemed the invite (nullable)
-  - `created_at`: When the invite was created
-  - `date_used`: When the invite was used (nullable)
-  - `is_active`: Whether the invite is still valid
-
-- **Users**:  
-  - `id`: Primary key
-  - `username`: Unique username
-  - `password`: Hashed password
-  - `invite_code`: Code used to sign up (references Invites.code)
-  - `is_superuser`: Whether the user is a superuser
-  - `created_at`: When the user was created
-  - `guilds`: Relationship to guilds the user belongs to
-  - `updated_at`: When the user was last updated
-
-- **Guilds**:  
-  - `id`: Primary key
-  - `name`: Guild name
-  - `teams`: Relationship to teams in the guild
-  - `members`: Relationship to members in the guild
-  - `created_at`: When the guild was created
-  - `updated_at`: When the guild was last updated
-
-- **Teams**:  
-  - `id`: Primary key
-  - `name`: Team name
-  - `members`: Relationship to members in the team
-  - `raids`: Relationship to raids for the team
-  - `created_at`: When the team was created
-  - `updated_at`: When the team was last updated
-
-- **Members**:  
-  - `id`: Primary key
-  - `display_name`: Member's display name
-  - `discord_username`: Discord username
-  - `toons`: Relationship to toons (characters) for the member
-  - `created_at`: When the member was created
-  - `updated_at`: When the member was last updated
-
-- **Toons**:  
-  - `id`: Primary key
-  - `username`: Toon (character) name
-  - `is_main`: Whether this is the member's main toon
-  - `created_at`: When the toon was created
-  - `updated_at`: When the toon was last updated
-
-- **Raids**:  
-  - `id`: Primary key
-  - `datetime`: Date and time of the raid
-  - `scenario_id`: Foreign key to Scenarios.id
-  - `difficulty`: Enum for raid difficulty
-  - `size`: Enum for raid size
-  - `created_at`: When the raid was created
-  - `updated_at`: When the raid was last updated
-
-- **Attendance**:  
-  - `id`: Primary key
-  - `raid_id`: Foreign key to Raids.id
-  - `toon_id`: Foreign key to Toons.id
-  - `is_present`: Whether the toon was present at the raid
-  - `created_at`: When the attendance record was created
-  - `date_modified`: When the attendance record was last modified (if applicable)
-  - `updated_at`: When the attendance record was last updated
-
-- **Scenarios**:  
-  - `id`: Primary key
-  - `name`: Scenario name
-  - `created_at`: When the scenario was created
-  - `date_modified`: When the scenario was last modified (if applicable)
-  - `updated_at`: When the scenario was last updated
-
-**Field Notes:**
-- `created_at`: Timestamp for when the record was first created.
-- `updated_at`: Timestamp for the most recent update to the record.
-- `date_modified`: Used in some tables for additional tracking of modification events (may be redundant with `updated_at` in some cases).
-
-**Relationships:**
-- **Invites ↔ Users**: Each invite is created by a superuser (`created_by`) and, once used, is linked to the user who redeemed it (`used_by`). Users reference the invite code they used to sign up.
-- **Users ↔ Guilds**: An account can have many guilds.
-- **Guilds ↔ Members**: A guild has many members.
-- **Guilds ↔ Teams**: A guild can have many teams.
-- **Members ↔ Toons**: A member can have many toons (characters).
-- **Teams ↔ Members**: Teams are composed of many members.
-- **Teams ↔ Raids**: Each team can participate in many raids.
-- **Raids ↔ Scenarios**: Each raid is associated with a scenario (raid instance) from the lookup table.
-- **Raids ↔ Attendance ↔ Toons**: Attendance records link toons to raids, tracking their presence.
-
-## Testing
-
-To run tests, ensure you are in the project root directory and use:
-
+### Testing
 ```bash
+# Run all tests
 pytest
-```
 
-To measure test coverage, this project uses [pytest-cov](https://pytest-cov.readthedocs.io/). Run:
-
-```bash
+# With coverage
 pytest --cov=app
-```
 
-If you encounter import errors (e.g., `ModuleNotFoundError: No module named 'app'`), run:
-
-```bash
+# Fix import issues
 PYTHONPATH=$(pwd) pytest
 ```
 
-- All test directories should contain an `__init__.py` file for best compatibility.
-- Test discovery and imports are set up for standard Python and pytest usage.
+### Database Migrations
+```bash
+# Generate migration
+alembic revision --autogenerate -m "Description"
 
-## Database Migrations
-
-This project uses Alembic for database migrations. When you add or modify models:
-
-1. **Generate a migration file:**
-   ```bash
-   alembic revision --autogenerate -m "Description of changes"
-   ```
-
-2. **Apply the migration:**
-   ```bash
-   alembic upgrade head
-   ```
-
-**Important Notes:**
-- Always review auto-generated migrations before applying them
-- Test migrations on a copy of your database first
-- Ensure all models are imported in `app/models/__init__.py` for Alembic to detect them
-
-## Deployment
-
-- [Instructions for deploying to production, e.g., using Gunicorn, Docker, etc.]
+# Apply migration
+alembic upgrade head
+```
 
 ## Contributing
 
-Contributions are welcome! Please open issues or submit pull requests.
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
 
 ## License
 
-[MIT](LICENSE) (or your license of choice)
+MIT
