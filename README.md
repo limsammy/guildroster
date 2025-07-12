@@ -26,12 +26,17 @@ pytest
 ```
 
 - **API:** http://localhost:8000
-- **Docs:** http://localhost:8000/docs
+- **Interactive Docs (Swagger UI):** http://localhost:8000/docs
+- **Alternative Docs (ReDoc):** http://localhost:8000/redoc
+- **OpenAPI Spec:** http://localhost:8000/openapi.json
 - **Health Check:** http://localhost:8000
 
 ## Features
 
-- FastAPI REST API with automatic documentation
+- **FastAPI REST API with automatic documentation**
+  - Interactive Swagger UI at `/docs`
+  - Professional ReDoc interface at `/redoc`
+  - OpenAPI specification at `/openapi.json`
 - PostgreSQL database with SQLAlchemy ORM
 - Alembic migrations
 - Comprehensive test suite with pytest
@@ -67,6 +72,55 @@ tests/
 ├── unit/            # Unit tests
 └── feature/         # Integration tests
 ```
+
+## API Documentation
+
+GuildRoster automatically generates comprehensive API documentation using FastAPI's built-in OpenAPI support.
+
+### Interactive Documentation
+
+- **Swagger UI**: http://localhost:8000/docs
+  - Interactive API explorer
+  - Try endpoints directly in your browser
+  - Real-time request/response testing
+  - Authentication support (Bearer tokens)
+
+- **ReDoc**: http://localhost:8000/redoc
+  - Professional documentation interface
+  - Better for sharing with non-technical users
+  - Clean, organized layout
+
+- **OpenAPI Specification**: http://localhost:8000/openapi.json
+  - Raw OpenAPI 3.0 specification
+  - Used by API clients and tools
+  - Machine-readable format
+
+### Using the Interactive Docs
+
+1. **Start the application**:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+2. **Create a token for testing**:
+   ```bash
+   python scripts/create_token.py --type system --name "API Testing"
+   ```
+
+3. **Access the docs**:
+   - Visit http://localhost:8000/docs
+   - Click the "Authorize" button (🔒 icon)
+   - Enter your token: `Bearer YOUR_TOKEN_HERE`
+   - Now you can test all endpoints interactively
+
+### Documentation Features
+
+✅ **Automatic Schema Generation** - All Pydantic models are documented  
+✅ **Authentication Support** - Bearer token auth is fully integrated  
+✅ **Request/Response Examples** - Auto-generated examples for all endpoints  
+✅ **Validation Rules** - Shows required fields, data types, and constraints  
+✅ **Error Responses** - All possible HTTP status codes are documented  
+✅ **Always Up-to-Date** - Documentation matches your actual API code  
 
 ## API Endpoints
 
@@ -244,6 +298,38 @@ pytest --cov=app
 
 # Fix import issues
 PYTHONPATH=$(pwd) pytest
+```
+
+### API Documentation Development
+
+When developing new endpoints, the documentation is automatically generated from your code:
+
+- **Function docstrings** become endpoint descriptions
+- **Pydantic models** become request/response schemas  
+- **Type hints** become parameter documentation
+- **Dependencies** (like auth) are automatically documented
+
+Example:
+```python
+@router.get("/users/{user_id}", response_model=UserResponse)
+def get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
+    """
+    Retrieve a specific user by ID.
+    
+    **Parameters:**
+    - `user_id`: The unique identifier of the user
+    
+    **Returns:**
+    - User object with all details
+    
+    **Authentication:**
+    - Requires any valid token
+    """
+    # Implementation here
 ```
 
 ### Type Checking and Linting
