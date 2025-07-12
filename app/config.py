@@ -35,7 +35,7 @@ class Settings(BaseSettings):
         super().__init__(**values)
         # Automatic test DB switching
         if "PYTEST_CURRENT_TEST" in os.environ:
-            object.__setattr__(self, "DB_NAME", "guildroster_test")
+            object.__setattr__(self, "DB_NAME", f"{self.DB_NAME}_test")
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
