@@ -38,9 +38,12 @@ def db_session():
 
 @pytest.fixture(scope="function", autouse=True)
 def clean_db(db_session):
-    """Clean the database between tests by rolling back any changes."""
+    """Clean the database between tests by deleting all data."""
     yield
-    db_session.rollback()
+    # Delete all data from all tables
+    for table in reversed(Base.metadata.sorted_tables):
+        db_session.execute(table.delete())
+    db_session.commit()
 
 
 @pytest.fixture(scope="function")
