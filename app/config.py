@@ -1,4 +1,3 @@
-import os
 from typing import ClassVar
 from pydantic_settings import BaseSettings
 
@@ -25,7 +24,6 @@ class Settings(BaseSettings):
     ENV: str = config.get("ENV") or "dev"
     SECRET_KEY: str = config.get("SECRET_KEY") or "supersecret"
 
-    # Database settings
     DB_USER: str = config.get("DB_USER") or "guildroster"
     DB_PASSWORD: str = config.get("DB_PASSWORD") or "password"
     DB_HOST: str = config.get("DB_HOST") or "localhost"
