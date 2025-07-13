@@ -18,6 +18,9 @@ cp .env.example .env  # Edit with your settings
 # Create a development token for testing
 python scripts/create_token.py --type system --name "Development Token"
 
+# Create a superuser with password hashing
+python scripts/create_superuser.py
+
 # Run the app
 uvicorn app.main:app --reload
 
@@ -130,9 +133,13 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /` - Health check (requires any valid token)
 
 ### Users
+- `POST /users/` - Create new user (superuser only)
+- `POST /users/login` - Authenticate user and get token
 - `GET /users/` - List users (paginated, requires any valid token)
 - `GET /users/{id}` - Get user by ID (requires any valid token)
 - `GET /users/username/{username}` - Get user by username (requires any valid token)
+- `PUT /users/{id}` - Update user (superuser only)
+- `DELETE /users/{id}` - Delete user (superuser only)
 
 ### Tokens
 - `POST /tokens/` - Create new token (superuser only)
@@ -160,6 +167,56 @@ python scripts/create_token.py --type system --name "Temporary Token" --expires 
 
 The script will output the token key that you can use in your API requests.
 
+## User Authentication
+
+The application now supports secure user authentication with password hashing using bcrypt.
+
+### Creating a Superuser
+
+To create the first superuser account:
+
+```bash
+python scripts/create_superuser.py
+```
+
+This interactive script will:
+- Prompt for username and password
+- Hash the password securely using bcrypt
+- Create a superuser account
+- Generate an authentication token
+- Display the token for API access
+
+### User Login
+
+Users can authenticate and get tokens via the login endpoint:
+
+```bash
+curl -X POST http://localhost:8000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "your_username",
+    "password": "your_password"
+  }'
+```
+
+This returns:
+```json
+{
+  "access_token": "your_token_here",
+  "token_type": "bearer",
+  "user_id": 1,
+  "username": "your_username",
+  "is_superuser": false
+}
+```
+
+### Password Security
+
+- **Hashing**: All passwords are hashed using bcrypt with automatic salting
+- **Verification**: Password verification is done securely without storing plain text
+- **Strength**: Passwords must be at least 8 characters long
+- **Storage**: Only hashed passwords are stored in the database
+
 ## API Testing Examples
 
 **Note:** All endpoints now require authentication. Replace `YOUR_TOKEN` with the token key from the setup step (e.g., the output from `python scripts/create_token.py --type system --name "Development Token"`).
@@ -171,6 +228,25 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/
 
 ### User Endpoints
 ```bash
+# Create a new user (superuser only)
+curl -X POST http://localhost:8000/users/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "username": "newuser",
+    "password": "securepassword123",
+    "is_active": true,
+    "is_superuser": false
+  }'
+
+# Login and get token
+curl -X POST http://localhost:8000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "newuser",
+    "password": "securepassword123"
+  }'
+
 # Get all users (paginated)
 curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/
 
@@ -179,6 +255,20 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/1
 
 # Get user by username
 curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/username/someuser
+
+# Update user (superuser only)
+curl -X PUT http://localhost:8000/users/1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "username": "updateduser",
+    "password": "newpassword123",
+    "is_active": true
+  }'
+
+# Delete user (superuser only)
+curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/users/1
 ```
 
 ### Token Endpoints (require superuser authentication)
