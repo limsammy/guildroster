@@ -12,7 +12,7 @@ from app.schemas.user import (
     UserLogin,
 )
 from app.utils.auth import require_any_token, security, require_superuser
-from app.utils.password import get_password_hash, verify_password
+from app.utils.password import hash_password, verify_password
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -51,7 +51,7 @@ def create_user(
         )
 
     # Hash the password
-    hashed_password = get_password_hash(user_data.password)
+    hashed_password = hash_password(user_data.password)
 
     # Create user
     user = User(
@@ -247,7 +247,7 @@ def update_user(
         user.username = user_data.username  # type: ignore[assignment]
 
     if user_data.password is not None:
-        user.hashed_password = get_password_hash(user_data.password)  # type: ignore[assignment]
+        user.hashed_password = hash_password(user_data.password)  # type: ignore[assignment]
 
     if user_data.is_active is not None:
         user.is_active = user_data.is_active  # type: ignore[assignment]

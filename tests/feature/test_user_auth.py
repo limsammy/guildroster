@@ -8,14 +8,14 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.models.token import Token
-from app.utils.password import get_password_hash
+from app.utils.password import hash_password
 
 
 class TestUserAuthentication:
     def _create_test_superuser(self, db_session: Session) -> tuple[User, str]:
         """Create a test superuser and return user and token."""
         # Create superuser
-        hashed_password = get_password_hash("superpassword123")
+        hashed_password = hash_password("superpassword123")
         user = User(
             username="superuser",
             hashed_password=hashed_password,
@@ -94,7 +94,7 @@ class TestUserAuthentication:
     ):
         """Test user creation by regular user (not superuser)."""
         # Create regular user
-        hashed_password = get_password_hash("userpassword123")
+        hashed_password = hash_password("userpassword123")
         user = User(
             username="regularuser",
             hashed_password=hashed_password,

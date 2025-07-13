@@ -43,7 +43,7 @@ pytest
 - PostgreSQL database with SQLAlchemy ORM
 - Alembic migrations
 - Comprehensive test suite with pytest
-- **Secure password hashing** using bcrypt with automatic salting
+- **Secure password hashing** using PBKDF2 with SHA256 and automatic salting
 - **Full API authentication** - All endpoints require valid tokens
 - Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
@@ -60,7 +60,7 @@ pytest
 
 GuildRoster implements secure password authentication following industry best practices:
 
-- **bcrypt Hashing**: All passwords are hashed using bcrypt with automatic salting
+- **PBKDF2 Hashing**: All passwords are hashed using PBKDF2 with SHA256 and automatic salting
 - **Secure Storage**: Only hashed passwords are stored in the database
 - **Token-Based Access**: Successful authentication returns secure API tokens
 - **Password Validation**: Minimum 8 characters with strength requirements
@@ -225,7 +225,7 @@ This returns:
 
 ### Password Security
 
-- **Hashing**: All passwords are hashed using bcrypt with automatic salting
+- **Hashing**: All passwords are hashed using PBKDF2 with SHA256 and automatic salting
 - **Verification**: Password verification is done securely without storing plain text
 - **Strength**: Passwords must be at least 8 characters long
 - **Storage**: Only hashed passwords are stored in the database
