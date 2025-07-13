@@ -124,7 +124,7 @@ class TestUserAuthentication:
     def test_login_success(self, client: TestClient, db_session: Session):
         """Test successful user login."""
         # Create user
-        hashed_password = get_password_hash("userpassword123")
+        hashed_password = hash_password("userpassword123")
         user = User(
             username="testuser",
             hashed_password=hashed_password,
@@ -151,7 +151,7 @@ class TestUserAuthentication:
     ):
         """Test login with wrong password."""
         # Create user
-        hashed_password = get_password_hash("userpassword123")
+        hashed_password = hash_password("userpassword123")
         user = User(
             username="testuser",
             hashed_password=hashed_password,
@@ -180,7 +180,7 @@ class TestUserAuthentication:
     def test_login_inactive_user(self, client: TestClient, db_session: Session):
         """Test login with inactive user."""
         # Create inactive user
-        hashed_password = get_password_hash("userpassword123")
+        hashed_password = hash_password("userpassword123")
         user = User(
             username="inactiveuser",
             hashed_password=hashed_password,
@@ -202,7 +202,7 @@ class TestUserAuthentication:
         headers = {"Authorization": f"Bearer {token_key}"}
 
         # Create user to update
-        hashed_password = get_password_hash("oldpassword123")
+        hashed_password = hash_password("oldpassword123")
         user = User(
             username="updateuser",
             hashed_password=hashed_password,
@@ -233,7 +233,7 @@ class TestUserAuthentication:
         headers = {"Authorization": f"Bearer {token_key}"}
 
         # Create user to delete
-        hashed_password = get_password_hash("userpassword123")
+        hashed_password = hash_password("userpassword123")
         user = User(
             username="deleteuser",
             hashed_password=hashed_password,
