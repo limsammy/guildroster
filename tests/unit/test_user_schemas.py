@@ -68,8 +68,8 @@ class TestUserResponse:
             updated_at=datetime.now(),
         )
 
-        # Test conversion using from_orm
-        user_response = UserResponse.from_orm(user_model)
+        # Test conversion using model_validate
+        user_response = UserResponse.model_validate(user_model)
         assert user_response.id == 1
         assert user_response.username == "testuser"
         assert user_response.is_active is True

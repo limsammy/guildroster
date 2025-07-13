@@ -163,7 +163,7 @@ def get_users(
     total = db.query(User).count()
 
     return UserListResponse(
-        users=[UserResponse.from_orm(user) for user in users], total=total
+        users=[UserResponse.model_validate(user) for user in users], total=total
     )
 
 
