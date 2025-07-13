@@ -133,8 +133,8 @@ class TestTokenResponse:
             is_active=True,
         )
 
-        # Test conversion using from_orm
-        token_response = TokenResponse.from_orm(token_model)
+        # Test conversion using model_validate
+        token_response = TokenResponse.model_validate(token_model)
         assert token_response.id == 1
         assert token_response.key == "test_key"
         assert token_response.token_type == "user"

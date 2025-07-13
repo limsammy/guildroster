@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db, engine
 from app.models.user import User
 from app.models.token import Token
-from app.utils.password import get_password_hash
+from app.utils.password import hash_password
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -45,7 +45,7 @@ def create_superuser(username: str, password: str, db: Session) -> User:
         raise ValueError(f"User '{username}' already exists")
 
     # Hash the password
-    hashed_password = get_password_hash(password)
+    hashed_password = hash_password(password)
 
     # Create superuser
     user = User(
