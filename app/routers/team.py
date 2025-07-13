@@ -151,11 +151,11 @@ def update_team(
             raise HTTPException(
                 status_code=400, detail="Team name already exists in this guild"
             )
-                team.name = team_in.name  # type: ignore[assignment]
-    
+        team.name = team_in.name  # type: ignore[assignment]
+
     if team_in.description is not None:
         team.description = team_in.description  # type: ignore[assignment]
-    
+
     if team_in.is_active is not None:
         team.is_active = team_in.is_active  # type: ignore[assignment]
 
