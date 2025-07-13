@@ -2,6 +2,48 @@
 
 A FastAPI-based web and API application to manage and track your guild's roster across multiple teams in World of Warcraft.
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Password Authentication](#password-authentication)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+  - [Interactive Documentation](#interactive-documentation)
+  - [Using the Interactive Docs](#using-the-interactive-docs)
+  - [Documentation Features](#documentation-features)
+- [API Endpoints](#api-endpoints)
+  - [Health Check](#health-check)
+  - [Users](#users)
+  - [Tokens](#tokens)
+  - [Guilds](#guilds)
+- [Creating API Tokens](#creating-api-tokens)
+- [User Authentication](#user-authentication)
+  - [Creating a Superuser](#creating-a-superuser)
+  - [User Login](#user-login)
+  - [Password Security](#password-security)
+- [Guild Management System](#guild-management-system)
+  - [Guild Features](#guild-features)
+  - [Testing Guild Functionality](#testing-guild-functionality)
+- [API Testing Examples](#api-testing-examples)
+  - [Health Check](#health-check-1)
+  - [User Endpoints](#user-endpoints)
+  - [Token Endpoints](#token-endpoints-require-superuser-authentication)
+  - [Testing Authentication](#testing-authentication)
+  - [Guild Endpoints](#guild-endpoints)
+- [Database Schema](#database-schema)
+- [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Environment Setup](#environment-setup)
+  - [Testing](#testing)
+  - [API Documentation Development](#api-documentation-development)
+  - [Type Checking and Linting](#type-checking-and-linting)
+  - [Database Migrations](#database-migrations)
+  - [Logging](#logging)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Quick Start
 
 ```bash
@@ -238,229 +280,6 @@ This returns:
 - **Strength**: Passwords must be at least 8 characters long
 - **Storage**: Only hashed passwords are stored in the database
 
-## Guild Management System
-
-GuildRoster now includes a comprehensive Guild management system that allows superusers to create, manage, and organize guilds within the application.
-
-### Guild Features
-
-#### **Core Functionality**
-- **Create Guilds**: Superusers can create new guilds with unique names
-- **List Guilds**: Any authenticated user can view all guilds
-- **View Guild Details**: Get specific guild information by ID
-- **Update Guilds**: Superusers can modify guild information
-- **Delete Guilds**: Superusers can remove guilds from the system
-
-#### **Security & Access Control**
-- **Superuser-Only Operations**: Create, update, and delete operations require superuser privileges
-- **Read Access**: Any valid token can view guild information
-- **Unique Names**: Guild names must be unique across the system
-- **Foreign Key Validation**: Guilds must reference valid users as creators
-
-#### **Data Model**
-Each guild contains:
-- **ID**: Unique identifier (auto-generated)
-- **Name**: Unique guild name (max 50 characters)
-- **Created By**: Reference to the user who created the guild
-- **Created At**: Timestamp of creation
-- **Updated At**: Timestamp of last modification
-
-#### **API Response Format**
-```json
-{
-  "id": 1,
-  "name": "Epic Raiders",
-  "created_by": 1,
-  "created_at": "2024-01-15T10:30:45",
-  "updated_at": "2024-01-15T10:30:45"
-}
-```
-
-#### **Error Handling**
-- **400 Bad Request**: Duplicate guild names, invalid data
-- **401 Unauthorized**: Missing or invalid authentication token
-- **403 Forbidden**: Insufficient permissions (non-superuser trying to modify)
-- **404 Not Found**: Guild ID doesn't exist
-
-### Testing Guild Functionality
-
-The Guild system includes comprehensive test coverage:
-
-```bash
-# Run guild-specific tests
-pytest tests/feature/test_guild_router.py -v
-
-# Run all tests including guild tests
-pytest
-```
-
-**Test Coverage:**
-- ✅ Create guild with valid data
-- ✅ Create guild with duplicate name (validation)
-- ✅ Update guild information
-- ✅ Delete guild
-- ✅ Access control (superuser vs regular user)
-- ✅ List guilds
-- ✅ Get guild by ID
-
-## API Testing Examples
-
-**Note:** All endpoints now require authentication. Replace `YOUR_TOKEN` with the token key from the setup step (e.g., the output from `python scripts/create_token.py --type system --name "Development Token"`).
-
-### Health Check
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/
-```
-
-### User Endpoints
-```bash
-# Create a new user (superuser only)
-curl -X POST http://localhost:8000/users/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "username": "newuser",
-    "password": "securepassword123",
-    "is_active": true,
-    "is_superuser": false
-  }'
-
-# Login and get token
-curl -X POST http://localhost:8000/users/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "newuser",
-    "password": "securepassword123"
-  }'
-
-# Get all users (paginated)
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/
-
-# Get user by ID
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/1
-
-# Get user by username
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/username/someuser
-
-# Update user (superuser only)
-curl -X PUT http://localhost:8000/users/1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "username": "updateduser",
-    "password": "newpassword123",
-    "is_active": true
-  }'
-
-# Delete user (superuser only)
-curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/users/1
-```
-
-### Token Endpoints (require superuser authentication)
-```bash
-# Create a system token
-curl -X POST http://localhost:8000/tokens/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "token_type": "system",
-    "name": "Test System Token"
-  }'
-
-# Create a user token
-curl -X POST http://localhost:8000/tokens/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "token_type": "user",
-    "user_id": 1,
-    "name": "Test User Token"
-  }'
-
-# Get all tokens
-curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/
-
-# Get tokens by type
-curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  "http://localhost:8000/tokens/?token_type=system"
-
-# Get specific token
-curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1
-
-# Delete a token
-curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1
-
-# Deactivate a token
-curl -X POST -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1/deactivate
-
-# Activate a token
-curl -X POST -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1/activate
-```
-
-### Testing Authentication
-```bash
-# Should return 401 Unauthorized
-curl http://localhost:8000/tokens/
-
-# Should return 401 Unauthorized
-curl -X POST http://localhost:8000/tokens/ \
-  -H "Content-Type: application/json" \
-  -d '{"token_type": "system", "name": "Test"}'
-
-# Test with invalid token
-curl -H "Authorization: Bearer invalid_token" \
-  http://localhost:8000/tokens/
-```
-
-### Guild Endpoints
-```bash
-# Create a new guild (superuser only)
-curl -X POST http://localhost:8000/guilds/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "name": "Epic Raiders",
-    "created_by": 1
-  }'
-
-# List all guilds (any valid token)
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:8000/guilds/
-
-# Get specific guild by ID (any valid token)
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:8000/guilds/1
-
-# Update guild (superuser only)
-curl -X PUT http://localhost:8000/guilds/1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "name": "Epic Raiders Updated"
-  }'
-
-# Delete guild (superuser only)
-curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/guilds/1
-
-# Test duplicate guild name (should fail)
-curl -X POST http://localhost:8000/guilds/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "name": "Epic Raiders",
-    "created_by": 1
-  }'
-```
-```
-
-**Note:** Replace `YOUR_SUPERUSER_TOKEN` with an actual token from your database. You'll need to create a superuser and token first through your application or database.
 
 ## Database Schema
 
