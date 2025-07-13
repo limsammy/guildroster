@@ -15,11 +15,11 @@ pip install -r requirements.txt
 # Configure environment
 cp .env.example .env  # Edit with your settings
 
-# Create a development token for testing
-python scripts/create_token.py --type system --name "Development Token"
-
-# Create a superuser with password hashing
+# Create your first superuser account
 python scripts/create_superuser.py
+
+# Create additional tokens for testing (optional)
+python scripts/create_token.py --type system --name "Development Token"
 
 # Run the app
 uvicorn app.main:app --reload
@@ -43,6 +43,7 @@ pytest
 - PostgreSQL database with SQLAlchemy ORM
 - Alembic migrations
 - Comprehensive test suite with pytest
+- **Secure password hashing** using bcrypt with automatic salting
 - **Full API authentication** - All endpoints require valid tokens
 - Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
@@ -54,6 +55,18 @@ pytest
 - **Testing:** Pytest, TestClient
 - **Migrations:** Alembic
 - **Python:** 3.13.5
+
+## Password Authentication
+
+GuildRoster implements secure password authentication following industry best practices:
+
+- **bcrypt Hashing**: All passwords are hashed using bcrypt with automatic salting
+- **Secure Storage**: Only hashed passwords are stored in the database
+- **Token-Based Access**: Successful authentication returns secure API tokens
+- **Password Validation**: Minimum 8 characters with strength requirements
+- **No Plain Text**: Passwords are never stored or transmitted in plain text
+
+The authentication system integrates seamlessly with the existing token-based API security, providing both user authentication and API access control.
 
 ## Project Structure
 
