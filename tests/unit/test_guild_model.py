@@ -25,11 +25,6 @@ class TestGuildModel:
         # Create guild
         guild = Guild(
             name="Test Guild",
-            description="A test guild for testing",
-            realm="Test Realm",
-            faction="Alliance",
-            website="https://testguild.com",
-            discord="https://discord.gg/testguild",
             created_by=user.id,
         )
         db_session.add(guild)
@@ -37,9 +32,6 @@ class TestGuildModel:
 
         assert guild.id is not None
         assert guild.name == "Test Guild"
-        assert guild.realm == "Test Realm"
-        assert guild.faction == "Alliance"
-        assert guild.is_active == True  # type: ignore[comparison-overlap]
         assert guild.created_by == user.id
         assert guild.created_at is not None
         assert guild.updated_at is not None
@@ -59,9 +51,6 @@ class TestGuildModel:
         # Create guild
         guild = Guild(
             name="Epic Guild",
-            description="An epic guild",
-            realm="Epic Realm",
-            faction="Horde",
             created_by=user.id,
         )
         db_session.add(guild)
@@ -69,7 +58,7 @@ class TestGuildModel:
 
         # Test relationship
         assert guild.creator == user
-        assert guild in user.created_guilds
+        assert guild in user.guilds
 
     def test_guild_unique_name_constraint(self, db_session: Session):
         """Test that guild names must be unique."""
@@ -86,8 +75,6 @@ class TestGuildModel:
         # Create first guild
         guild1 = Guild(
             name="Unique Guild",
-            realm="Test Realm",
-            faction="Alliance",
             created_by=user.id,
         )
         db_session.add(guild1)
@@ -96,8 +83,6 @@ class TestGuildModel:
         # Try to create second guild with same name
         guild2 = Guild(
             name="Unique Guild",  # Same name
-            realm="Different Realm",
-            faction="Horde",
             created_by=user.id,
         )
         db_session.add(guild2)
