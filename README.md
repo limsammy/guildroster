@@ -2,6 +2,48 @@
 
 A FastAPI-based web and API application to manage and track your guild's roster across multiple teams in World of Warcraft.
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Password Authentication](#password-authentication)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+  - [Interactive Documentation](#interactive-documentation)
+  - [Using the Interactive Docs](#using-the-interactive-docs)
+  - [Documentation Features](#documentation-features)
+- [API Endpoints](#api-endpoints)
+  - [Health Check](#health-check)
+  - [Users](#users)
+  - [Tokens](#tokens)
+  - [Guilds](#guilds)
+- [Creating API Tokens](#creating-api-tokens)
+- [User Authentication](#user-authentication)
+  - [Creating a Superuser](#creating-a-superuser)
+  - [User Login](#user-login)
+  - [Password Security](#password-security)
+- [Guild Management System](#guild-management-system)
+  - [Guild Features](#guild-features)
+  - [Testing Guild Functionality](#testing-guild-functionality)
+- [API Testing Examples](#api-testing-examples)
+  - [Health Check](#health-check-1)
+  - [User Endpoints](#user-endpoints)
+  - [Token Endpoints](#token-endpoints-require-superuser-authentication)
+  - [Testing Authentication](#testing-authentication)
+  - [Guild Endpoints](#guild-endpoints)
+- [Database Schema](#database-schema)
+- [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Environment Setup](#environment-setup)
+  - [Testing](#testing)
+  - [API Documentation Development](#api-documentation-development)
+  - [Type Checking and Linting](#type-checking-and-linting)
+  - [Database Migrations](#database-migrations)
+  - [Logging](#logging)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Quick Start
 
 ```bash
