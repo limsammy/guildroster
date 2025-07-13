@@ -47,7 +47,8 @@ pytest
 - **Full API authentication** - All endpoints require valid tokens
 - Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
-- Guild and team management (planned)
+- **Guild management** - Full CRUD operations with role-based access control
+- Team management (planned)
 
 ## Tech Stack
 
@@ -160,6 +161,13 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /tokens/{id}` - Get token by ID (superuser only)
 - `DELETE /tokens/{id}` - Delete token (superuser only)
 
+### Guilds
+- `POST /guilds/` - Create new guild (superuser only)
+- `GET /guilds/` - List all guilds (any valid token)
+- `GET /guilds/{guild_id}` - Get guild by ID (any valid token)
+- `PUT /guilds/{guild_id}` - Update guild (superuser only)
+- `DELETE /guilds/{guild_id}` - Delete guild (superuser only)
+
 ## Creating API Tokens
 
 Before testing the API, you need to create a token for authentication. Use the provided script:
@@ -229,6 +237,71 @@ This returns:
 - **Verification**: Password verification is done securely without storing plain text
 - **Strength**: Passwords must be at least 8 characters long
 - **Storage**: Only hashed passwords are stored in the database
+
+## Guild Management System
+
+GuildRoster now includes a comprehensive Guild management system that allows superusers to create, manage, and organize guilds within the application.
+
+### Guild Features
+
+#### **Core Functionality**
+- **Create Guilds**: Superusers can create new guilds with unique names
+- **List Guilds**: Any authenticated user can view all guilds
+- **View Guild Details**: Get specific guild information by ID
+- **Update Guilds**: Superusers can modify guild information
+- **Delete Guilds**: Superusers can remove guilds from the system
+
+#### **Security & Access Control**
+- **Superuser-Only Operations**: Create, update, and delete operations require superuser privileges
+- **Read Access**: Any valid token can view guild information
+- **Unique Names**: Guild names must be unique across the system
+- **Foreign Key Validation**: Guilds must reference valid users as creators
+
+#### **Data Model**
+Each guild contains:
+- **ID**: Unique identifier (auto-generated)
+- **Name**: Unique guild name (max 50 characters)
+- **Created By**: Reference to the user who created the guild
+- **Created At**: Timestamp of creation
+- **Updated At**: Timestamp of last modification
+
+#### **API Response Format**
+```json
+{
+  "id": 1,
+  "name": "Epic Raiders",
+  "created_by": 1,
+  "created_at": "2024-01-15T10:30:45",
+  "updated_at": "2024-01-15T10:30:45"
+}
+```
+
+#### **Error Handling**
+- **400 Bad Request**: Duplicate guild names, invalid data
+- **401 Unauthorized**: Missing or invalid authentication token
+- **403 Forbidden**: Insufficient permissions (non-superuser trying to modify)
+- **404 Not Found**: Guild ID doesn't exist
+
+### Testing Guild Functionality
+
+The Guild system includes comprehensive test coverage:
+
+```bash
+# Run guild-specific tests
+pytest tests/feature/test_guild_router.py -v
+
+# Run all tests including guild tests
+pytest
+```
+
+**Test Coverage:**
+- ✅ Create guild with valid data
+- ✅ Create guild with duplicate name (validation)
+- ✅ Update guild information
+- ✅ Delete guild
+- ✅ Access control (superuser vs regular user)
+- ✅ List guilds
+- ✅ Get guild by ID
 
 ## API Testing Examples
 
@@ -345,6 +418,48 @@ curl -H "Authorization: Bearer invalid_token" \
   http://localhost:8000/tokens/
 ```
 
+### Guild Endpoints
+```bash
+# Create a new guild (superuser only)
+curl -X POST http://localhost:8000/guilds/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "name": "Epic Raiders",
+    "created_by": 1
+  }'
+
+# List all guilds (any valid token)
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/guilds/
+
+# Get specific guild by ID (any valid token)
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/guilds/1
+
+# Update guild (superuser only)
+curl -X PUT http://localhost:8000/guilds/1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "name": "Epic Raiders Updated"
+  }'
+
+# Delete guild (superuser only)
+curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  http://localhost:8000/guilds/1
+
+# Test duplicate guild name (should fail)
+curl -X POST http://localhost:8000/guilds/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
+  -d '{
+    "name": "Epic Raiders",
+    "created_by": 1
+  }'
+```
+```
+
 **Note:** Replace `YOUR_SUPERUSER_TOKEN` with an actual token from your database. You'll need to create a superuser and token first through your application or database.
 
 ## Database Schema
@@ -356,22 +471,22 @@ The application uses a relational database with the following core tables and re
 **Core Tables:**
 - **Users** - Authentication and user management
 - **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
-- **Guilds** - Guild information and settings
-- **Teams** - Team organization within guilds
-- **Members** - Guild member profiles
-- **Toons** - Character information for guild members
-- **Raids** - Raid scheduling and tracking
-- **Attendance** - Raid attendance records
-- **Scenarios** - Raid instance lookup
-- **Invites** - User registration system
+- **Guilds** - Guild information and settings (✅ **Implemented**)
+- **Teams** - Team organization within guilds (planned)
+- **Members** - Guild member profiles (planned)
+- **Toons** - Character information for guild members (planned)
+- **Raids** - Raid scheduling and tracking (planned)
+- **Attendance** - Raid attendance records (planned)
+- **Scenarios** - Raid instance lookup (planned)
+- **Invites** - User registration system (planned)
 
 **Key Relationships:**
 - Users can belong to multiple guilds and have multiple tokens
 - Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
-- Guilds contain multiple teams and members
-- Members can have multiple characters (toons)
-- Raids track attendance for specific scenarios
-- Invites control user registration and guild membership
+- **Guilds are created by users and contain multiple teams and members** (✅ **Implemented**)
+- Members can have multiple characters (toons) (planned)
+- Raids track attendance for specific scenarios (planned)
+- Invites control user registration and guild membership (planned)
 
 ## Development
 
