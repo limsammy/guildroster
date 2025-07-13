@@ -1,4 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    Boolean,
+    UniqueConstraint,
+)
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -22,3 +29,8 @@ class Team(Base):
     guild = relationship("Guild", back_populates="teams")
     creator = relationship("User", back_populates="created_teams")
     # members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+
+    # Constraints
+    __table_args__ = (
+        UniqueConstraint("name", "guild_id", name="uq_team_name_guild"),
+    )
