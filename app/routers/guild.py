@@ -7,7 +7,7 @@ from app.models.guild import Guild
 from app.models.user import User
 from app.schemas.guild import GuildCreate, GuildUpdate, GuildResponse
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser_token
+from app.utils.auth import require_any_token, require_superuser
 
 router = APIRouter(prefix="/guilds", tags=["Guilds"])
 
@@ -23,12 +23,12 @@ def get_guild_or_404(db: Session, guild_id: int) -> Guild:
     "/",
     response_model=GuildResponse,
     status_code=201,
-    dependencies=[Depends(require_superuser_token)],
+    dependencies=[Depends(require_superuser)],
 )
 def create_guild(
     guild_in: GuildCreate,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_superuser_token),
+    current_user: User = Depends(require_superuser),
 ):
     """
     Create a new guild. Superuser only.
@@ -82,13 +82,13 @@ def get_guild(
 @router.put(
     "/{guild_id}",
     response_model=GuildResponse,
-    dependencies=[Depends(require_superuser_token)],
+    dependencies=[Depends(require_superuser)],
 )
 def update_guild(
     guild_id: int,
     guild_in: GuildUpdate,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_superuser_token),
+    current_user: User = Depends(require_superuser),
 ):
     """
     Update a guild. Superuser only.
@@ -113,12 +113,12 @@ def update_guild(
 @router.delete(
     "/{guild_id}",
     status_code=204,
-    dependencies=[Depends(require_superuser_token)],
+    dependencies=[Depends(require_superuser)],
 )
 def delete_guild(
     guild_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_superuser_token),
+    current_user: User = Depends(require_superuser),
 ):
     """
     Delete a guild. Superuser only.
