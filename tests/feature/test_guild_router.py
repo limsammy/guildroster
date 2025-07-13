@@ -39,28 +39,31 @@ class TestGuildAPI:
         self, client: TestClient, db_session: Session
     ):
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"name": "Guild1", "created_by": superuser.id}
+        data = {"name": "Guild1", "created_by": superuser_id}
         response = client.post("/guilds/", json=data, headers=headers)
         assert response.status_code == 201
         resp = response.json()
         assert resp["name"] == "Guild1"
-        assert resp["created_by"] == superuser.id
+        assert resp["created_by"] == superuser_id
 
     def test_create_guild_regular_user_forbidden(
         self, client: TestClient, db_session: Session
     ):
         user, token_key = self._create_regular_user(db_session)
+        user_id = user.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"name": "Guild2", "created_by": user.id}
+        data = {"name": "Guild2", "created_by": user_id}
         response = client.post("/guilds/", json=data, headers=headers)
         assert response.status_code == 403
 
     def test_list_guilds(self, client: TestClient, db_session: Session):
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
         # Create a guild
-        data = {"name": "Guild3", "created_by": superuser.id}
+        data = {"name": "Guild3", "created_by": superuser_id}
         client.post("/guilds/", json=data, headers=headers)
         # List guilds
         response = client.get("/guilds/", headers=headers)
@@ -70,9 +73,10 @@ class TestGuildAPI:
 
     def test_get_guild_by_id(self, client: TestClient, db_session: Session):
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
         # Create a guild
-        data = {"name": "Guild4", "created_by": superuser.id}
+        data = {"name": "Guild4", "created_by": superuser_id}
         resp = client.post("/guilds/", json=data, headers=headers)
         guild_id = resp.json()["id"]
         # Get by id
@@ -82,9 +86,10 @@ class TestGuildAPI:
 
     def test_update_guild(self, client: TestClient, db_session: Session):
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
         # Create a guild
-        data = {"name": "Guild5", "created_by": superuser.id}
+        data = {"name": "Guild5", "created_by": superuser_id}
         resp = client.post("/guilds/", json=data, headers=headers)
         guild_id = resp.json()["id"]
         # Update
@@ -97,9 +102,10 @@ class TestGuildAPI:
 
     def test_delete_guild(self, client: TestClient, db_session: Session):
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
         # Create a guild
-        data = {"name": "Guild6", "created_by": superuser.id}
+        data = {"name": "Guild6", "created_by": superuser_id}
         resp = client.post("/guilds/", json=data, headers=headers)
         guild_id = resp.json()["id"]
         # Delete
@@ -113,8 +119,9 @@ class TestGuildAPI:
         self, client: TestClient, db_session: Session
     ):
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before object gets detached
         headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"name": "Guild7", "created_by": superuser.id}
+        data = {"name": "Guild7", "created_by": superuser_id}
         response1 = client.post("/guilds/", json=data, headers=headers)
         assert response1.status_code == 201
         response2 = client.post("/guilds/", json=data, headers=headers)
