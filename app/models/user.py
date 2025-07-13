@@ -19,6 +19,9 @@ class User(Base):
     # invite = relationship("Invite", back_populates="users")
 
     # guilds = relationship("Guild", back_populates="members")
+    guilds = relationship(
+        "Guild", back_populates="creator", cascade="all, delete-orphan"
+    )
 
     tokens = relationship(
         "Token", back_populates="user", cascade="all, delete-orphan"

@@ -2,6 +2,48 @@
 
 A FastAPI-based web and API application to manage and track your guild's roster across multiple teams in World of Warcraft.
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Password Authentication](#password-authentication)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+  - [Interactive Documentation](#interactive-documentation)
+  - [Using the Interactive Docs](#using-the-interactive-docs)
+  - [Documentation Features](#documentation-features)
+- [API Endpoints](#api-endpoints)
+  - [Health Check](#health-check)
+  - [Users](#users)
+  - [Tokens](#tokens)
+  - [Guilds](#guilds)
+- [Creating API Tokens](#creating-api-tokens)
+- [User Authentication](#user-authentication)
+  - [Creating a Superuser](#creating-a-superuser)
+  - [User Login](#user-login)
+  - [Password Security](#password-security)
+- [Guild Management System](#guild-management-system)
+  - [Guild Features](#guild-features)
+  - [Testing Guild Functionality](#testing-guild-functionality)
+- [API Testing Examples](#api-testing-examples)
+  - [Health Check](#health-check-1)
+  - [User Endpoints](#user-endpoints)
+  - [Token Endpoints](#token-endpoints-require-superuser-authentication)
+  - [Testing Authentication](#testing-authentication)
+  - [Guild Endpoints](#guild-endpoints)
+- [Database Schema](#database-schema)
+- [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Environment Setup](#environment-setup)
+  - [Testing](#testing)
+  - [API Documentation Development](#api-documentation-development)
+  - [Type Checking and Linting](#type-checking-and-linting)
+  - [Database Migrations](#database-migrations)
+  - [Logging](#logging)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Quick Start
 
 ```bash
@@ -15,7 +57,10 @@ pip install -r requirements.txt
 # Configure environment
 cp .env.example .env  # Edit with your settings
 
-# Create a development token for testing
+# Create your first superuser account
+python scripts/create_superuser.py
+
+# Create additional tokens for testing (optional)
 python scripts/create_token.py --type system --name "Development Token"
 
 # Run the app
@@ -40,10 +85,12 @@ pytest
 - PostgreSQL database with SQLAlchemy ORM
 - Alembic migrations
 - Comprehensive test suite with pytest
+- **Secure password hashing** using PBKDF2 with SHA256 and automatic salting
 - **Full API authentication** - All endpoints require valid tokens
 - Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
-- Guild and team management (planned)
+- **Guild management** - Full CRUD operations with role-based access control
+- Team management (planned)
 
 ## Tech Stack
 
@@ -51,6 +98,18 @@ pytest
 - **Testing:** Pytest, TestClient
 - **Migrations:** Alembic
 - **Python:** 3.13.5
+
+## Password Authentication
+
+GuildRoster implements secure password authentication following industry best practices:
+
+- **PBKDF2 Hashing**: All passwords are hashed using PBKDF2 with SHA256 and automatic salting
+- **Secure Storage**: Only hashed passwords are stored in the database
+- **Token-Based Access**: Successful authentication returns secure API tokens
+- **Password Validation**: Minimum 8 characters with strength requirements
+- **No Plain Text**: Passwords are never stored or transmitted in plain text
+
+The authentication system integrates seamlessly with the existing token-based API security, providing both user authentication and API access control.
 
 ## Project Structure
 
@@ -130,15 +189,26 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /` - Health check (requires any valid token)
 
 ### Users
+- `POST /users/` - Create new user (superuser only)
+- `POST /users/login` - Authenticate user and get token
 - `GET /users/` - List users (paginated, requires any valid token)
 - `GET /users/{id}` - Get user by ID (requires any valid token)
 - `GET /users/username/{username}` - Get user by username (requires any valid token)
+- `PUT /users/{id}` - Update user (superuser only)
+- `DELETE /users/{id}` - Delete user (superuser only)
 
 ### Tokens
 - `POST /tokens/` - Create new token (superuser only)
 - `GET /tokens/` - List tokens (superuser only)
 - `GET /tokens/{id}` - Get token by ID (superuser only)
 - `DELETE /tokens/{id}` - Delete token (superuser only)
+
+### Guilds
+- `POST /guilds/` - Create new guild (superuser only)
+- `GET /guilds/` - List all guilds (any valid token)
+- `GET /guilds/{guild_id}` - Get guild by ID (any valid token)
+- `PUT /guilds/{guild_id}` - Update guild (superuser only)
+- `DELETE /guilds/{guild_id}` - Delete guild (superuser only)
 
 ## Creating API Tokens
 
@@ -160,89 +230,56 @@ python scripts/create_token.py --type system --name "Temporary Token" --expires 
 
 The script will output the token key that you can use in your API requests.
 
-## API Testing Examples
+## User Authentication
 
-**Note:** All endpoints now require authentication. Replace `YOUR_TOKEN` with the token key from the setup step (e.g., the output from `python scripts/create_token.py --type system --name "Development Token"`).
+The application now supports secure user authentication with password hashing using bcrypt.
 
-### Health Check
+### Creating a Superuser
+
+To create the first superuser account:
+
 ```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/
+python scripts/create_superuser.py
 ```
 
-### User Endpoints
+This interactive script will:
+- Prompt for username and password
+- Hash the password securely using bcrypt
+- Create a superuser account
+- Generate an authentication token
+- Display the token for API access
+
+### User Login
+
+Users can authenticate and get tokens via the login endpoint:
+
 ```bash
-# Get all users (paginated)
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/
-
-# Get user by ID
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/1
-
-# Get user by username
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8000/users/username/someuser
-```
-
-### Token Endpoints (require superuser authentication)
-```bash
-# Create a system token
-curl -X POST http://localhost:8000/tokens/ \
+curl -X POST http://localhost:8000/users/login \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
   -d '{
-    "token_type": "system",
-    "name": "Test System Token"
+    "username": "your_username",
+    "password": "your_password"
   }'
-
-# Create a user token
-curl -X POST http://localhost:8000/tokens/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  -d '{
-    "token_type": "user",
-    "user_id": 1,
-    "name": "Test User Token"
-  }'
-
-# Get all tokens
-curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/
-
-# Get tokens by type
-curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  "http://localhost:8000/tokens/?token_type=system"
-
-# Get specific token
-curl -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1
-
-# Delete a token
-curl -X DELETE -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1
-
-# Deactivate a token
-curl -X POST -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1/deactivate
-
-# Activate a token
-curl -X POST -H "Authorization: Bearer YOUR_SUPERUSER_TOKEN" \
-  http://localhost:8000/tokens/1/activate
 ```
 
-### Testing Authentication
-```bash
-# Should return 401 Unauthorized
-curl http://localhost:8000/tokens/
-
-# Should return 401 Unauthorized
-curl -X POST http://localhost:8000/tokens/ \
-  -H "Content-Type: application/json" \
-  -d '{"token_type": "system", "name": "Test"}'
-
-# Test with invalid token
-curl -H "Authorization: Bearer invalid_token" \
-  http://localhost:8000/tokens/
+This returns:
+```json
+{
+  "access_token": "your_token_here",
+  "token_type": "bearer",
+  "user_id": 1,
+  "username": "your_username",
+  "is_superuser": false
+}
 ```
 
-**Note:** Replace `YOUR_SUPERUSER_TOKEN` with an actual token from your database. You'll need to create a superuser and token first through your application or database.
+### Password Security
+
+- **Hashing**: All passwords are hashed using PBKDF2 with SHA256 and automatic salting
+- **Verification**: Password verification is done securely without storing plain text
+- **Strength**: Passwords must be at least 8 characters long
+- **Storage**: Only hashed passwords are stored in the database
+
 
 ## Database Schema
 
@@ -253,22 +290,22 @@ The application uses a relational database with the following core tables and re
 **Core Tables:**
 - **Users** - Authentication and user management
 - **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
-- **Guilds** - Guild information and settings
-- **Teams** - Team organization within guilds
-- **Members** - Guild member profiles
-- **Toons** - Character information for guild members
-- **Raids** - Raid scheduling and tracking
-- **Attendance** - Raid attendance records
-- **Scenarios** - Raid instance lookup
-- **Invites** - User registration system
+- **Guilds** - Guild information and settings (✅ **Implemented**)
+- **Teams** - Team organization within guilds (planned)
+- **Members** - Guild member profiles (planned)
+- **Toons** - Character information for guild members (planned)
+- **Raids** - Raid scheduling and tracking (planned)
+- **Attendance** - Raid attendance records (planned)
+- **Scenarios** - Raid instance lookup (planned)
+- **Invites** - User registration system (planned)
 
 **Key Relationships:**
 - Users can belong to multiple guilds and have multiple tokens
 - Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
-- Guilds contain multiple teams and members
-- Members can have multiple characters (toons)
-- Raids track attendance for specific scenarios
-- Invites control user registration and guild membership
+- **Guilds are created by users and contain multiple teams and members** (✅ **Implemented**)
+- Members can have multiple characters (toons) (planned)
+- Raids track attendance for specific scenarios (planned)
+- Invites control user registration and guild membership (planned)
 
 ## Development
 
