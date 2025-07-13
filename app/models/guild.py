@@ -17,4 +17,4 @@ class Guild(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
-    creator = relationship("User", back_populates="created_guilds")
+    creator = relationship("User", back_populates="guilds")
