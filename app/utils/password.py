@@ -26,6 +26,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
+    if not plain_password or not hashed_password:
+        return False
+
     logger.debug("Verifying password")
     return pwd_context.verify(plain_password, hashed_password)
 
