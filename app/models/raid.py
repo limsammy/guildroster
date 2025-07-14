@@ -20,7 +20,7 @@ class Raid(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     scheduled_at = Column(DateTime, nullable=False)
-    # scenario_id = Column(Integer, ForeignKey("scenarios.id"), nullable=False)
+    scenario_id = Column(Integer, ForeignKey("scenarios.id"), nullable=False)
     difficulty = Column(String(16), nullable=False)
     size = Column(String(4), nullable=False)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
@@ -29,7 +29,7 @@ class Raid(Base):
 
     # Relationships
     team = relationship("Team", back_populates="raids")
-    # scenario = relationship("Scenario", back_populates="raids")
+    scenario = relationship("Scenario", back_populates="raids")
     # attendance = relationship("Attendance", back_populates="raid", cascade="all, delete-orphan")
 
     __table_args__ = (

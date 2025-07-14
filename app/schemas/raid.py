@@ -7,9 +7,10 @@ from app.models.raid import RAID_DIFFICULTIES, RAID_SIZES
 
 class RaidBase(BaseModel):
     scheduled_at: datetime
+    scenario_id: int = Field(..., description="Scenario ID this raid is for")
     difficulty: str = Field(..., max_length=16)
     size: str = Field(..., max_length=4)
-    team_id: int
+    team_id: int = Field(..., description="Team ID this raid belongs to")
 
     @field_validator("difficulty")
     @classmethod
@@ -32,9 +33,14 @@ class RaidCreate(RaidBase):
 
 class RaidUpdate(BaseModel):
     scheduled_at: Optional[datetime] = None
+    scenario_id: Optional[int] = Field(
+        None, description="Scenario ID this raid is for"
+    )
     difficulty: Optional[str] = Field(None, max_length=16)
     size: Optional[str] = Field(None, max_length=4)
-    team_id: Optional[int] = None
+    team_id: Optional[int] = Field(
+        None, description="Team ID this raid belongs to"
+    )
 
     @field_validator("difficulty")
     @classmethod

@@ -27,6 +27,12 @@ from .member import (
 )
 from .toon import ToonBase, ToonCreate, ToonUpdate, ToonResponse
 from .raid import RaidBase, RaidCreate, RaidUpdate, RaidResponse
+from .scenario import (
+    ScenarioBase,
+    ScenarioCreate,
+    ScenarioUpdate,
+    ScenarioResponse,
+)
 
 __all__ = [
     "UserBase",
@@ -56,4 +62,8 @@ __all__ = [
     "RaidCreate",
     "RaidUpdate",
     "RaidResponse",
+    "ScenarioBase",
+    "ScenarioCreate",
+    "ScenarioUpdate",
+    "ScenarioResponse",
 ]

@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from app.models.user import User
 from app.models.guild import Guild
 from app.models.team import Team
+from app.models.scenario import Scenario
 from app.models.raid import Raid
 from app.models.token import Token
 from app.utils.password import hash_password
@@ -57,14 +58,28 @@ class TestRaidAPI:
 
     def _create_team(self, db_session: Session, guild_id: int, user_id: int):
         """Helper method to create a team."""
+        import uuid
+
         team = Team(
-            name="Test Team",
+            name=f"Test Team {uuid.uuid4().hex[:8]}",
             guild_id=guild_id,
             created_by=user_id,
         )
         db_session.add(team)
         db_session.commit()
         return team.id  # Store ID before making API request
+
+    def _create_scenario(self, db_session: Session):
+        """Helper method to create a scenario."""
+        import uuid
+
+        scenario = Scenario(
+            name=f"Test Scenario {uuid.uuid4().hex[:8]}",
+            is_active=True,
+        )
+        db_session.add(scenario)
+        db_session.commit()
+        return scenario.id  # Store ID before making API request
 
     def test_create_raid_superuser(
         self, client: TestClient, db_session: Session
@@ -73,11 +88,13 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
+            "scenario_id": scenario_id,
             "difficulty": "Normal",
             "size": "10",
             "team_id": team_id,
@@ -86,6 +103,7 @@ class TestRaidAPI:
         assert response.status_code == 201
         resp = response.json()
         assert resp["scheduled_at"] == scheduled_at.isoformat()
+        assert resp["scenario_id"] == scenario_id
         assert resp["difficulty"] == "Normal"
         assert resp["size"] == "10"
         assert resp["team_id"] == team_id
@@ -100,11 +118,13 @@ class TestRaidAPI:
         user_id, token_key = self._create_regular_user(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
+            "scenario_id": scenario_id,
             "difficulty": "Normal",
             "size": "10",
             "team_id": team_id,
@@ -119,11 +139,13 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
+            "scenario_id": scenario_id,
             "difficulty": "Invalid",
             "size": "10",
             "team_id": team_id,
@@ -139,11 +161,13 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
+            "scenario_id": scenario_id,
             "difficulty": "Normal",
             "size": "15",
             "team_id": team_id,
@@ -157,14 +181,37 @@ class TestRaidAPI:
     ):
         """Test creating raid with non-existent team."""
         user_id, token_key = self._create_superuser(db_session)
+        scenario_id = self._create_scenario(db_session)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
+            "scenario_id": scenario_id,
             "difficulty": "Normal",
             "size": "10",
             "team_id": 999,  # Non-existent team
+        }
+        response = client.post("/raids/", json=data, headers=headers)
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"]
+
+    def test_create_raid_scenario_not_found(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test creating raid with non-existent scenario."""
+        user_id, token_key = self._create_superuser(db_session)
+        guild_id = self._create_guild(db_session, user_id)
+        team_id = self._create_team(db_session, guild_id, user_id)
+
+        headers = {"Authorization": f"Bearer {token_key}"}
+        scheduled_at = datetime.now() + timedelta(days=1)
+        data = {
+            "scheduled_at": scheduled_at.isoformat(),
+            "scenario_id": 999,  # Non-existent scenario
+            "difficulty": "Normal",
+            "size": "10",
+            "team_id": team_id,
         }
         response = client.post("/raids/", json=data, headers=headers)
         assert response.status_code == 404
@@ -175,18 +222,21 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         # Create raids
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
+            scenario_id=scenario_id,
             difficulty="Heroic",
             size="25",
             team_id=team_id,
@@ -207,59 +257,113 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team1_id = self._create_team(db_session, guild_id, user_id)
-        team2 = Team(name="Team 2", guild_id=guild_id, created_by=user_id)
-        db_session.add(team2)
-        db_session.commit()
-        team2_id = team2.id  # Store ID before making API request
+        team2_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
-        # Create raids in different teams
+        # Create raids for different teams
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team1_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
+            scenario_id=scenario_id,
             difficulty="Heroic",
             size="25",
+            team_id=team1_id,
+        )
+        raid3 = Raid(
+            scheduled_at=scheduled_at1,
+            scenario_id=scenario_id,
+            difficulty="Normal",
+            size="10",
             team_id=team2_id,
         )
-        db_session.add_all([raid1, raid2])
+        db_session.add_all([raid1, raid2, raid3])
         db_session.commit()
 
         headers = {"Authorization": f"Bearer {token_key}"}
         response = client.get(f"/raids/?team_id={team1_id}", headers=headers)
         assert response.status_code == 200
         raids = response.json()
-        assert len(raids) == 1
-        assert raids[0]["team_id"] == team1_id
+        assert len(raids) == 2
+        assert all(raid["team_id"] == team1_id for raid in raids)
 
-    def test_get_raid_by_id(self, client: TestClient, db_session: Session):
-        """Test getting a raid by ID."""
+    def test_list_raids_filter_by_scenario(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test listing raids filtered by scenario."""
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario1_id = self._create_scenario(db_session)
+        scenario2_id = self._create_scenario(db_session)
+
+        # Create raids for different scenarios
+        scheduled_at1 = datetime.now() + timedelta(days=1)
+        scheduled_at2 = datetime.now() + timedelta(days=2)
+        raid1 = Raid(
+            scheduled_at=scheduled_at1,
+            scenario_id=scenario1_id,
+            difficulty="Normal",
+            size="10",
+            team_id=team_id,
+        )
+        raid2 = Raid(
+            scheduled_at=scheduled_at2,
+            scenario_id=scenario1_id,
+            difficulty="Heroic",
+            size="25",
+            team_id=team_id,
+        )
+        raid3 = Raid(
+            scheduled_at=scheduled_at1,
+            scenario_id=scenario2_id,
+            difficulty="Normal",
+            size="10",
+            team_id=team_id,
+        )
+        db_session.add_all([raid1, raid2, raid3])
+        db_session.commit()
+
+        headers = {"Authorization": f"Bearer {token_key}"}
+        response = client.get(
+            f"/raids/?scenario_id={scenario1_id}", headers=headers
+        )
+        assert response.status_code == 200
+        raids = response.json()
+        assert len(raids) == 2
+        assert all(raid["scenario_id"] == scenario1_id for raid in raids)
+
+    def test_get_raid_by_id(self, client: TestClient, db_session: Session):
+        """Test getting a specific raid by ID."""
+        user_id, token_key = self._create_superuser(db_session)
+        guild_id = self._create_guild(db_session, user_id)
+        team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.get(f"/raids/{raid_id}", headers=headers)
+        response = client.get(f"/raids/{raid.id}", headers=headers)
         assert response.status_code == 200
         resp = response.json()
-        assert resp["id"] == raid_id
         assert resp["scheduled_at"] == scheduled_at.isoformat()
+        assert resp["scenario_id"] == scenario_id
         assert resp["difficulty"] == "Normal"
         assert resp["size"] == "10"
         assert resp["team_id"] == team_id
@@ -274,22 +378,25 @@ class TestRaidAPI:
         assert "not found" in response.json()["detail"]
 
     def test_get_raids_by_team(self, client: TestClient, db_session: Session):
-        """Test getting raids for a specific team."""
+        """Test getting all raids for a specific team."""
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
-        # Create raids for the team
+        # Create raids
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
+            scenario_id=scenario_id,
             difficulty="Heroic",
             size="25",
             team_id=team_id,
@@ -315,6 +422,53 @@ class TestRaidAPI:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
 
+    def test_get_raids_by_scenario(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test getting all raids for a specific scenario."""
+        user_id, token_key = self._create_superuser(db_session)
+        guild_id = self._create_guild(db_session, user_id)
+        team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
+
+        # Create raids
+        scheduled_at1 = datetime.now() + timedelta(days=1)
+        scheduled_at2 = datetime.now() + timedelta(days=2)
+        raid1 = Raid(
+            scheduled_at=scheduled_at1,
+            scenario_id=scenario_id,
+            difficulty="Normal",
+            size="10",
+            team_id=team_id,
+        )
+        raid2 = Raid(
+            scheduled_at=scheduled_at2,
+            scenario_id=scenario_id,
+            difficulty="Heroic",
+            size="25",
+            team_id=team_id,
+        )
+        db_session.add_all([raid1, raid2])
+        db_session.commit()
+
+        headers = {"Authorization": f"Bearer {token_key}"}
+        response = client.get(f"/raids/scenario/{scenario_id}", headers=headers)
+        assert response.status_code == 200
+        raids = response.json()
+        assert len(raids) == 2
+        assert all(raid["scenario_id"] == scenario_id for raid in raids)
+
+    def test_get_raids_by_scenario_not_found(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test getting raids for a non-existent scenario."""
+        user_id, token_key = self._create_superuser(db_session)
+
+        headers = {"Authorization": f"Bearer {token_key}"}
+        response = client.get("/raids/scenario/999", headers=headers)
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"]
+
     def test_update_raid_superuser(
         self, client: TestClient, db_session: Session
     ):
@@ -322,17 +476,18 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         new_scheduled_at = datetime.now() + timedelta(days=2)
@@ -341,12 +496,13 @@ class TestRaidAPI:
             "difficulty": "Heroic",
             "size": "25",
         }
-        response = client.put(f"/raids/{raid_id}", json=data, headers=headers)
+        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 200
         resp = response.json()
         assert resp["scheduled_at"] == new_scheduled_at.isoformat()
         assert resp["difficulty"] == "Heroic"
         assert resp["size"] == "25"
+        assert resp["scenario_id"] == scenario_id
         assert resp["team_id"] == team_id
 
     def test_update_raid_regular_user_forbidden(
@@ -354,23 +510,25 @@ class TestRaidAPI:
     ):
         """Test that regular users cannot update raids."""
         user_id, token_key = self._create_regular_user(db_session)
-        guild_id = self._create_guild(db_session, user_id)
-        team_id = self._create_team(db_session, guild_id, user_id)
+        superuser_id, _ = self._create_superuser(db_session)
+        guild_id = self._create_guild(db_session, superuser_id)
+        team_id = self._create_team(db_session, guild_id, superuser_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {"difficulty": "Heroic"}
-        response = client.put(f"/raids/{raid_id}", json=data, headers=headers)
+        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 403
 
     def test_update_raid_not_found(
@@ -392,21 +550,22 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {"difficulty": "Invalid"}
-        response = client.put(f"/raids/{raid_id}", json=data, headers=headers)
+        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 422
         assert "Invalid difficulty" in response.text
 
@@ -417,21 +576,22 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {"size": "15"}
-        response = client.put(f"/raids/{raid_id}", json=data, headers=headers)
+        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 422
         assert "Invalid size" in response.text
 
@@ -442,21 +602,48 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {"team_id": 999}  # Non-existent team
-        response = client.put(f"/raids/{raid_id}", json=data, headers=headers)
+        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"]
+
+    def test_update_raid_new_scenario_not_found(
+        self, client: TestClient, db_session: Session
+    ):
+        """Test updating raid with non-existent scenario."""
+        user_id, token_key = self._create_superuser(db_session)
+        guild_id = self._create_guild(db_session, user_id)
+        team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
+
+        scheduled_at = datetime.now() + timedelta(days=1)
+        raid = Raid(
+            scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
+            difficulty="Normal",
+            size="10",
+            team_id=team_id,
+        )
+        db_session.add(raid)
+        db_session.commit()
+
+        headers = {"Authorization": f"Bearer {token_key}"}
+        data = {"scenario_id": 999}  # Non-existent scenario
+        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
 
@@ -467,24 +654,25 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.delete(f"/raids/{raid_id}", headers=headers)
+        response = client.delete(f"/raids/{raid.id}", headers=headers)
         assert response.status_code == 204
 
-        # Verify raid was deleted
-        get_response = client.get(f"/raids/{raid_id}", headers=headers)
+        # Verify raid is deleted
+        get_response = client.get(f"/raids/{raid.id}", headers=headers)
         assert get_response.status_code == 404
 
     def test_delete_raid_regular_user_forbidden(
@@ -492,22 +680,24 @@ class TestRaidAPI:
     ):
         """Test that regular users cannot delete raids."""
         user_id, token_key = self._create_regular_user(db_session)
-        guild_id = self._create_guild(db_session, user_id)
-        team_id = self._create_team(db_session, guild_id, user_id)
+        superuser_id, _ = self._create_superuser(db_session)
+        guild_id = self._create_guild(db_session, superuser_id)
+        team_id = self._create_team(db_session, guild_id, superuser_id)
+        scenario_id = self._create_scenario(db_session)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
+            scenario_id=scenario_id,
             difficulty="Normal",
             size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
-        raid_id = raid.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.delete(f"/raids/{raid_id}", headers=headers)
+        response = client.delete(f"/raids/{raid.id}", headers=headers)
         assert response.status_code == 403
 
     def test_delete_raid_not_found(
@@ -525,32 +715,18 @@ class TestRaidAPI:
         self, client: TestClient, db_session: Session
     ):
         """Test that all raid endpoints require authentication."""
-        endpoints = [
-            (
-                "POST",
-                "/raids/",
-                {
-                    "scheduled_at": "2024-01-01T10:00:00",
-                    "difficulty": "Normal",
-                    "size": "10",
-                    "team_id": 1,
-                },
-            ),
-            ("GET", "/raids/", None),
-            ("GET", "/raids/1", None),
-            ("GET", "/raids/team/1", None),
-            ("PUT", "/raids/1", {"difficulty": "Heroic"}),
-            ("DELETE", "/raids/1", None),
-        ]
+        # Test without authentication
+        response = client.get("/raids/")
+        assert response.status_code == 401
 
-        for method, endpoint, data in endpoints:
-            if method == "GET":
-                response = client.get(endpoint)
-            elif method == "POST":
-                response = client.post(endpoint, json=data)
-            elif method == "PUT":
-                response = client.put(endpoint, json=data)
-            elif method == "DELETE":
-                response = client.delete(endpoint)
+        response = client.post("/raids/", json={})
+        assert response.status_code == 401
 
-            assert response.status_code == 401
+        response = client.get("/raids/1")
+        assert response.status_code == 401
+
+        response = client.put("/raids/1", json={})
+        assert response.status_code == 401
+
+        response = client.delete("/raids/1")
+        assert response.status_code == 401
