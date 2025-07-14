@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment,arg-type]
 """
 Unit tests for password hashing utilities.
 """

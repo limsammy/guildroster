@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment]
 import logging
 from app.utils.logger import get_logger, LOG_FILE
 
