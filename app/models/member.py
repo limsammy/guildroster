@@ -36,3 +36,10 @@ class Member(Base):
     guild = relationship("Guild", back_populates="members")
     team = relationship("Team", back_populates="members")
     # toons = relationship("Toon", back_populates="member", cascade="all, delete-orphan")
+
+    # Table constraints
+    __table_args__ = (
+        UniqueConstraint(
+            "guild_id", "display_name", name="uq_member_guild_display_name"
+        ),
+    )
