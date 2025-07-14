@@ -47,11 +47,12 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    from app.routers import user, token, guild
+    from app.routers import user, token, guild, team
 
     app.include_router(user.router)
     app.include_router(token.router)
     app.include_router(guild.router)
+    app.include_router(team.router)
 
     @app.get("/", dependencies=[Depends(security)])
     def read_root(current_token: Token = Depends(require_any_token)):
