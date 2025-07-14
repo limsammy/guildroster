@@ -5,6 +5,7 @@ from typing import List, Optional
 from app.database import get_db
 from app.models.raid import Raid
 from app.models.team import Team
+from app.models.scenario import Scenario
 from app.schemas.raid import RaidCreate, RaidUpdate, RaidResponse
 from app.models.token import Token
 from app.utils.auth import require_any_token, require_superuser
@@ -27,6 +28,13 @@ def get_team_or_404(db: Session, team_id: int) -> Team:
     return team
 
 
+def get_scenario_or_404(db: Session, scenario_id: int) -> Scenario:
+    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    return scenario
+
+
 @router.post(
     "/",
     response_model=RaidResponse,
@@ -44,8 +52,12 @@ def create_raid(
     # Verify team exists
     team = get_team_or_404(db, raid_in.team_id)
 
+    # Verify scenario exists
+    scenario = get_scenario_or_404(db, raid_in.scenario_id)
+
     raid = Raid(
         scheduled_at=raid_in.scheduled_at,
+        scenario_id=raid_in.scenario_id,
         difficulty=raid_in.difficulty,
         size=raid_in.size,
         team_id=raid_in.team_id,
@@ -63,15 +75,18 @@ def create_raid(
 )
 def list_raids(
     team_id: Optional[int] = None,
+    scenario_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_token: Token = Depends(require_any_token),
 ):
     """
-    List raids. Can filter by team_id. Any valid token required.
+    List raids. Can filter by team_id or scenario_id. Any valid token required.
     """
     query = db.query(Raid)
     if team_id:
         query = query.filter(Raid.team_id == team_id)
+    if scenario_id:
+        query = query.filter(Raid.scenario_id == scenario_id)
     raids = query.all()
     return raids
 
@@ -111,6 +126,24 @@ def get_raids_by_team(
     return raids
 
 
+@router.get(
+    "/scenario/{scenario_id}",
+    response_model=List[RaidResponse],
+    dependencies=[Depends(require_any_token)],
+)
+def get_raids_by_scenario(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
+    """
+    Get all raids for a specific scenario. Any valid token required.
+    """
+    scenario = get_scenario_or_404(db, scenario_id)
+    raids = db.query(Raid).filter(Raid.scenario_id == scenario_id).all()
+    return raids
+
+
 @router.put(
     "/{raid_id}",
     response_model=RaidResponse,
@@ -129,6 +162,11 @@ def update_raid(
 
     if raid_in.scheduled_at is not None:
         raid.scheduled_at = raid_in.scheduled_at  # type: ignore[assignment]
+
+    if raid_in.scenario_id is not None:
+        # Verify new scenario exists
+        scenario = get_scenario_or_404(db, raid_in.scenario_id)
+        raid.scenario_id = raid_in.scenario_id  # type: ignore[assignment]
 
     if raid_in.difficulty is not None:
         raid.difficulty = raid_in.difficulty  # type: ignore[assignment]
