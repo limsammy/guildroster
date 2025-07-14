@@ -84,6 +84,7 @@ pytest
 - **Guild management** - Full CRUD operations with role-based access control
 - **Team management** - Full CRUD operations with role-based access control
 - **Member management** - Guild member profiles with team assignments
+- **Toon management** - Character profiles for members with class, role, main/alt, and team assignment
 
 ## Tech Stack
 
@@ -220,6 +221,14 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /members/{member_id}` - Update member (superuser only)
 - `DELETE /members/{member_id}` - Delete member (superuser only)
 
+### Toons
+- `POST /toons/` - Create new toon (superuser only)
+- `GET /toons/` - List all toons (any valid token)
+- `GET /toons/{toon_id}` - Get toon by ID (any valid token)
+- `GET /toons/member/{member_id}` - Get all toons for a member (any valid token)
+- `PUT /toons/{toon_id}` - Update toon (superuser only)
+- `DELETE /toons/{toon_id}` - Delete toon (superuser only)
+
 ## Creating API Tokens
 
 Before testing the API, you need to create a token for authentication. Use the provided script:
@@ -303,7 +312,7 @@ The application uses a relational database with the following core tables and re
 - **Guilds** - Guild information and settings
 - **Teams** - Team organization within guilds
 - **Members** - Guild member profiles
-- **Toons** - Character information for guild members (planned)
+- **Toons** - Character information for guild members (username, class, role, is_main, member_id, created_at, updated_at)
 - **Raids** - Raid scheduling and tracking (planned)
 - **Attendance** - Raid attendance records (planned)
 - **Scenarios** - Raid instance lookup (planned)
@@ -314,7 +323,7 @@ The application uses a relational database with the following core tables and re
 - Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
 - Guilds are created by users and contain multiple teams and members
 - Members can be assigned to teams and have guild-specific profiles
-- Members can have multiple characters (toons) (planned)
+- Members can have multiple characters (toons)
 - Raids track attendance for specific scenarios (planned)
 - Invites control user registration and guild membership (planned)
 
