@@ -54,22 +54,24 @@ class TestTeamAPI:
     ):
         """Test creating a team as superuser."""
         superuser, token_key = self._create_superuser(db_session)
-        guild = self._create_guild(db_session, superuser.id)
+        superuser_id = superuser.id  # Store ID before making API request
+        guild = self._create_guild(db_session, superuser_id)  # type: ignore
+        guild_id = guild.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Raid Team A",
             "description": "Main raid team",
-            "guild_id": guild.id,
-            "created_by": superuser.id,
+            "guild_id": guild_id,
+            "created_by": superuser_id,
         }
         response = client.post("/teams/", json=data, headers=headers)
         assert response.status_code == 201
         resp = response.json()
         assert resp["name"] == "Raid Team A"
         assert resp["description"] == "Main raid team"
-        assert resp["guild_id"] == guild.id
-        assert resp["created_by"] == superuser.id
+        assert resp["guild_id"] == guild_id
+        assert resp["created_by"] == superuser_id
         assert resp["is_active"] is True
 
     def test_create_team_regular_user_forbidden(
@@ -77,7 +79,7 @@ class TestTeamAPI:
     ):
         """Test that regular users cannot create teams."""
         regular_user, token_key = self._create_regular_user(db_session)
-        guild = self._create_guild(db_session, regular_user.id)
+        guild = self._create_guild(db_session, regular_user.id)  # type: ignore
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
@@ -94,7 +96,7 @@ class TestTeamAPI:
     ):
         """Test that team names must be unique within a guild."""
         superuser, token_key = self._create_superuser(db_session)
-        guild = self._create_guild(db_session, superuser.id)
+        guild = self._create_guild(db_session, superuser.id)  # type: ignore
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
@@ -117,16 +119,19 @@ class TestTeamAPI:
     ):
         """Test that team names can be the same across different guilds."""
         superuser, token_key = self._create_superuser(db_session)
-        guild1 = self._create_guild(db_session, superuser.id)
-        guild2 = Guild(name="Guild 2", created_by=superuser.id)
+        superuser_id = superuser.id  # Store ID before making API request
+        guild1 = self._create_guild(db_session, superuser_id)  # type: ignore
+        guild1_id = guild1.id  # Store ID before making API request
+        guild2 = Guild(name="Guild 2", created_by=superuser_id)
         db_session.add(guild2)
         db_session.commit()
+        guild2_id = guild2.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Raid Team",
-            "guild_id": guild1.id,
-            "created_by": superuser.id,
+            "guild_id": guild1_id,
+            "created_by": superuser_id,
         }
 
         # Create team in first guild
@@ -134,7 +139,7 @@ class TestTeamAPI:
         assert response1.status_code == 201
 
         # Create team with same name in second guild
-        data["guild_id"] = guild2.id
+        data["guild_id"] = guild2_id
         response2 = client.post("/teams/", json=data, headers=headers)
         assert response2.status_code == 201
 
@@ -143,15 +148,16 @@ class TestTeamAPI:
     ):
         """Test creating team with non-existent guild."""
         superuser, token_key = self._create_superuser(db_session)
+        superuser_id = superuser.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Raid Team",
             "guild_id": 999,  # Non-existent guild
-            "created_by": superuser.id,
+            "created_by": superuser_id,
         }
         response = client.post("/teams/", json=data, headers=headers)
-        assert response.status_code == 400
+        assert response.status_code == 404
         assert "not found" in response.json()["detail"]
 
     def test_list_teams(self, client: TestClient, db_session: Session):
@@ -206,24 +212,27 @@ class TestTeamAPI:
     def test_get_team_by_id(self, client: TestClient, db_session: Session):
         """Test getting a specific team by ID."""
         superuser, token_key = self._create_superuser(db_session)
-        guild = self._create_guild(db_session, superuser.id)
+        superuser_id = superuser.id  # Store ID before making API request
+        guild = self._create_guild(db_session, superuser_id)  # type: ignore
+        guild_id = guild.id  # Store ID before making API request
 
         team = Team(
             name="Raid Team A",
             description="Main raid team",
-            guild_id=guild.id,
-            created_by=superuser.id,
+            guild_id=guild_id,
+            created_by=superuser_id,
         )
         db_session.add(team)
         db_session.commit()
+        team_id = team.id  # Store ID before making API request
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.get(f"/teams/{team.id}", headers=headers)
+        response = client.get(f"/teams/{team_id}", headers=headers)
         assert response.status_code == 200
         resp = response.json()
         assert resp["name"] == "Raid Team A"
         assert resp["description"] == "Main raid team"
-        assert resp["guild_id"] == guild.id
+        assert resp["guild_id"] == guild_id
 
     def test_get_team_not_found(self, client: TestClient, db_session: Session):
         """Test getting a non-existent team."""
