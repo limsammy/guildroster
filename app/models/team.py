@@ -28,7 +28,7 @@ class Team(Base):
     # Relationships
     guild = relationship("Guild", back_populates="teams")
     creator = relationship("User", back_populates="created_teams")
-    # members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+    members = relationship("Member", back_populates="team")
 
     # Constraints
     __table_args__ = (
