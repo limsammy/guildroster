@@ -90,7 +90,7 @@ pytest
 - Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
 - **Guild management** - Full CRUD operations with role-based access control
-- Team management (planned)
+- **Team management** - Full CRUD operations with role-based access control (✅ **Implemented**)
 
 ## Tech Stack
 
@@ -210,6 +210,14 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /guilds/{guild_id}` - Update guild (superuser only)
 - `DELETE /guilds/{guild_id}` - Delete guild (superuser only)
 
+### Teams
+- `POST /teams/` - Create new team (superuser only)
+- `GET /teams/` - List all teams (any valid token)
+- `GET /teams/{team_id}` - Get team by ID (any valid token)
+- `GET /teams/guild/{guild_id}` - Get all teams for a guild (any valid token)
+- `PUT /teams/{team_id}` - Update team (superuser only)
+- `DELETE /teams/{team_id}` - Delete team (superuser only)
+
 ## Creating API Tokens
 
 Before testing the API, you need to create a token for authentication. Use the provided script:
@@ -291,7 +299,7 @@ The application uses a relational database with the following core tables and re
 - **Users** - Authentication and user management
 - **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
 - **Guilds** - Guild information and settings (✅ **Implemented**)
-- **Teams** - Team organization within guilds (planned)
+- **Teams** - Team organization within guilds (✅ **Implemented**)
 - **Members** - Guild member profiles (planned)
 - **Toons** - Character information for guild members (planned)
 - **Raids** - Raid scheduling and tracking (planned)

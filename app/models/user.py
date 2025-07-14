@@ -27,5 +27,7 @@ class User(Base):
         "Token", back_populates="user", cascade="all, delete-orphan"
     )
 
+    created_teams = relationship("Team", back_populates="creator")
+
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
