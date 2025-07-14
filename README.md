@@ -82,7 +82,8 @@ pytest
 - Token-based authentication system (user, system, and API tokens)
 - User management with authentication-ready structure
 - **Guild management** - Full CRUD operations with role-based access control
-- **Team management** - Full CRUD operations with role-based access control (✅ **Implemented**)
+- **Team management** - Full CRUD operations with role-based access control
+- **Member management** - Guild member profiles with team assignments
 
 ## Tech Stack
 
@@ -210,6 +211,15 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /teams/{team_id}` - Update team (superuser only)
 - `DELETE /teams/{team_id}` - Delete team (superuser only)
 
+### Members
+- `POST /members/` - Create new member (superuser only)
+- `GET /members/` - List all members (any valid token)
+- `GET /members/{member_id}` - Get member by ID (any valid token)
+- `GET /members/guild/{guild_id}` - Get all members for a guild (any valid token)
+- `GET /members/team/{team_id}` - Get all members for a team (any valid token)
+- `PUT /members/{member_id}` - Update member (superuser only)
+- `DELETE /members/{member_id}` - Delete member (superuser only)
+
 ## Creating API Tokens
 
 Before testing the API, you need to create a token for authentication. Use the provided script:
@@ -290,9 +300,9 @@ The application uses a relational database with the following core tables and re
 **Core Tables:**
 - **Users** - Authentication and user management
 - **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
-- **Guilds** - Guild information and settings (✅ **Implemented**)
-- **Teams** - Team organization within guilds (✅ **Implemented**)
-- **Members** - Guild member profiles (planned)
+- **Guilds** - Guild information and settings
+- **Teams** - Team organization within guilds
+- **Members** - Guild member profiles
 - **Toons** - Character information for guild members (planned)
 - **Raids** - Raid scheduling and tracking (planned)
 - **Attendance** - Raid attendance records (planned)
@@ -302,7 +312,8 @@ The application uses a relational database with the following core tables and re
 **Key Relationships:**
 - Users can belong to multiple guilds and have multiple tokens
 - Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
-- **Guilds are created by users and contain multiple teams and members** (✅ **Implemented**)
+- Guilds are created by users and contain multiple teams and members
+- Members can be assigned to teams and have guild-specific profiles
 - Members can have multiple characters (toons) (planned)
 - Raids track attendance for specific scenarios (planned)
 - Invites control user registration and guild membership (planned)
