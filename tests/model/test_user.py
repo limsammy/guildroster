@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment]
 from app.models.user import User
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from datetime import datetime

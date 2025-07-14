@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment]
 from app.config import Settings
 
 

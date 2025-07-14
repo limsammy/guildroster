@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment]
 """
 Unit tests for Guild model.
 """

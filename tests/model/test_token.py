@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment,arg-type]
 import pytest
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError

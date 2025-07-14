@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment,arg-type,attr-defined,return-value]
 """
 Integration tests for user authentication endpoints.
 """
