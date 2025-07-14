@@ -86,6 +86,7 @@ pytest
 - **Member management** - Guild member profiles with team assignments
 - **Toon management** - Character profiles for members with class, role, main/alt, and team assignment
 - **Raid management** - Raid scheduling and tracking with difficulty, size, and team assignments
+- **Scenario management** - Raid instance definitions with active/inactive status control
 
 ## Tech Stack
 
@@ -235,8 +236,17 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /raids/` - List all raids (any valid token)
 - `GET /raids/{raid_id}` - Get raid by ID (any valid token)
 - `GET /raids/team/{team_id}` - Get all raids for a team (any valid token)
+- `GET /raids/scenario/{scenario_id}` - Get all raids for a scenario (any valid token)
 - `PUT /raids/{raid_id}` - Update raid (superuser only)
 - `DELETE /raids/{raid_id}` - Delete raid (superuser only)
+
+### Scenarios
+- `POST /scenarios/` - Create new scenario (superuser only)
+- `GET /scenarios/` - List all scenarios (any valid token)
+- `GET /scenarios/{scenario_id}` - Get scenario by ID (any valid token)
+- `GET /scenarios/active` - Get all active scenarios (any valid token)
+- `PUT /scenarios/{scenario_id}` - Update scenario (superuser only)
+- `DELETE /scenarios/{scenario_id}` - Delete scenario (superuser only)
 
 ## Creating API Tokens
 
@@ -322,9 +332,9 @@ The application uses a relational database with the following core tables and re
 - **Teams** - Team organization within guilds
 - **Members** - Guild member profiles
 - **Toons** - Character information for guild members (username, class, role, is_main, member_id, created_at, updated_at)
-- **Raids** - Raid scheduling and tracking (scheduled_at, difficulty, size, team_id, created_at, updated_at)
+- **Raids** - Raid scheduling and tracking (scheduled_at, difficulty, size, team_id, scenario_id, created_at, updated_at)
+- **Scenarios** - Raid instance definitions (name, is_active, created_at, updated_at)
 - **Attendance** - Raid attendance records (planned)
-- **Scenarios** - Raid instance lookup (planned)
 - **Invites** - User registration system (planned)
 
 **Key Relationships:**
@@ -334,7 +344,8 @@ The application uses a relational database with the following core tables and re
 - Members can be assigned to teams and have guild-specific profiles
 - Members can have multiple characters (toons)
 - Teams can have multiple scheduled raids with different difficulties and sizes
-- Raids track attendance for specific scenarios (planned)
+- Raids are associated with specific scenarios for content tracking
+- Scenarios can be active or inactive to control availability
 - Invites control user registration and guild membership (planned)
 
 ## Development
