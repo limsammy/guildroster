@@ -36,7 +36,9 @@ class Member(Base):
     # Relationships
     guild = relationship("Guild", back_populates="members")
     team = relationship("Team", back_populates="members")
-    # toons = relationship("Toon", back_populates="member", cascade="all, delete-orphan")
+    toons = relationship(
+        "Toon", back_populates="member", cascade="all, delete-orphan"
+    )
 
     # Table constraints
     __table_args__ = (

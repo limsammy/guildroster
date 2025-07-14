@@ -25,6 +25,8 @@ from .member import (
     MemberUpdate,
     MemberResponse,
 )
+from .toon import ToonBase, ToonCreate, ToonUpdate, ToonResponse
+from .raid import RaidBase, RaidCreate, RaidUpdate, RaidResponse
 
 __all__ = [
     "UserBase",
@@ -46,4 +48,12 @@ __all__ = [
     "MemberCreate",
     "MemberUpdate",
     "MemberResponse",
+    "ToonBase",
+    "ToonCreate",
+    "ToonUpdate",
+    "ToonResponse",
+    "RaidBase",
+    "RaidCreate",
+    "RaidUpdate",
+    "RaidResponse",
 ]
