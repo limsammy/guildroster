@@ -5,6 +5,7 @@ from sqlalchemy import (
     Integer,
     String,
     UniqueConstraint,
+    CheckConstraint,
 )
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
@@ -41,5 +42,8 @@ class Member(Base):
     __table_args__ = (
         UniqueConstraint(
             "guild_id", "display_name", name="uq_member_guild_display_name"
+        ),
+        CheckConstraint(
+            "display_name != ''", name="ck_member_display_name_not_empty"
         ),
     )
