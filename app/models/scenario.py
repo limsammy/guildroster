@@ -28,5 +28,5 @@ class Scenario(Base):
 
     # Table constraints
     __table_args__ = (
-        CheckConstraint("name != ''", name="ck_scenario_name_not_empty"),
+        CheckConstraint("TRIM(name) != ''", name="ck_scenario_name_not_empty"),
     )
