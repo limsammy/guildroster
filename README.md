@@ -85,6 +85,7 @@ pytest
 - **Team management** - Full CRUD operations with role-based access control
 - **Member management** - Guild member profiles with team assignments
 - **Toon management** - Character profiles for members with class, role, main/alt, and team assignment
+- **Raid management** - Raid scheduling and tracking with difficulty, size, and team assignments
 
 ## Tech Stack
 
@@ -229,6 +230,14 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /toons/{toon_id}` - Update toon (superuser only)
 - `DELETE /toons/{toon_id}` - Delete toon (superuser only)
 
+### Raids
+- `POST /raids/` - Create new raid (superuser only)
+- `GET /raids/` - List all raids (any valid token)
+- `GET /raids/{raid_id}` - Get raid by ID (any valid token)
+- `GET /raids/team/{team_id}` - Get all raids for a team (any valid token)
+- `PUT /raids/{raid_id}` - Update raid (superuser only)
+- `DELETE /raids/{raid_id}` - Delete raid (superuser only)
+
 ## Creating API Tokens
 
 Before testing the API, you need to create a token for authentication. Use the provided script:
@@ -313,7 +322,7 @@ The application uses a relational database with the following core tables and re
 - **Teams** - Team organization within guilds
 - **Members** - Guild member profiles
 - **Toons** - Character information for guild members (username, class, role, is_main, member_id, created_at, updated_at)
-- **Raids** - Raid scheduling and tracking (planned)
+- **Raids** - Raid scheduling and tracking (scheduled_at, difficulty, size, team_id, created_at, updated_at)
 - **Attendance** - Raid attendance records (planned)
 - **Scenarios** - Raid instance lookup (planned)
 - **Invites** - User registration system (planned)
@@ -324,6 +333,7 @@ The application uses a relational database with the following core tables and re
 - Guilds are created by users and contain multiple teams and members
 - Members can be assigned to teams and have guild-specific profiles
 - Members can have multiple characters (toons)
+- Teams can have multiple scheduled raids with different difficulties and sizes
 - Raids track attendance for specific scenarios (planned)
 - Invites control user registration and guild membership (planned)
 
