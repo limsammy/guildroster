@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment]
 import pytest
 from datetime import datetime, timedelta
 from pydantic import ValidationError

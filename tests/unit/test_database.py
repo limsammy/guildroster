@@ -1,3 +1,4 @@
+# type: ignore[comparison-overlap,assignment]
 import pytest
 from sqlalchemy.orm import Session
 from app import database
