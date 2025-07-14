@@ -19,6 +19,12 @@ from .team import (
     TeamUpdate,
     TeamResponse,
 )
+from .member import (
+    MemberBase,
+    MemberCreate,
+    MemberUpdate,
+    MemberResponse,
+)
 
 __all__ = [
     "UserBase",
@@ -36,4 +42,8 @@ __all__ = [
     "TeamCreate",
     "TeamUpdate",
     "TeamResponse",
+    "MemberBase",
+    "MemberCreate",
+    "MemberUpdate",
+    "MemberResponse",
 ]
