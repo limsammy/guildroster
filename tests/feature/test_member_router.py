@@ -146,11 +146,16 @@ class TestMemberAPI:
         superuser, token_key = self._create_superuser(db_session)
         guild = self._create_guild(db_session, superuser.id)
         team = self._create_team(db_session, guild.id, superuser.id)
+
+        # Store IDs in local variables to avoid DetachedInstanceError
+        guild_id = guild.id
+        team_id = team.id
+
         # Add members
         member1 = Member(
-            display_name="Member 1", guild_id=guild.id, team_id=team.id
+            display_name="Member 1", guild_id=guild_id, team_id=team_id
         )
-        member2 = Member(display_name="Member 2", guild_id=guild.id)
+        member2 = Member(display_name="Member 2", guild_id=guild_id)
         db_session.add_all([member1, member2])
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
@@ -165,17 +170,22 @@ class TestMemberAPI:
         superuser, token_key = self._create_superuser(db_session)
         guild1 = self._create_guild(db_session, superuser.id, name="Guild 1")
         guild2 = self._create_guild(db_session, superuser.id, name="Guild 2")
-        member1 = Member(display_name="Member 1", guild_id=guild1.id)
-        member2 = Member(display_name="Member 2", guild_id=guild2.id)
+
+        # Store IDs in local variables to avoid DetachedInstanceError
+        guild1_id = guild1.id
+        guild2_id = guild2.id
+
+        member1 = Member(display_name="Member 1", guild_id=guild1_id)
+        member2 = Member(display_name="Member 2", guild_id=guild2_id)
         db_session.add_all([member1, member2])
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
         response = client.get(
-            f"/members/?guild_id={guild1.id}", headers=headers
+            f"/members/?guild_id={guild1_id}", headers=headers
         )
         assert response.status_code == 200
         members = response.json()
-        assert all(m["guild_id"] == guild1.id for m in members)
+        assert all(m["guild_id"] == guild1_id for m in members)
 
     def test_list_members_filter_by_team(
         self, client: TestClient, db_session: Session
@@ -188,24 +198,34 @@ class TestMemberAPI:
         team2 = self._create_team(
             db_session, guild.id, superuser.id, name="Team 2"
         )
+
+        # Store IDs in local variables to avoid DetachedInstanceError
+        guild_id = guild.id
+        team1_id = team1.id
+        team2_id = team2.id
+
         member1 = Member(
-            display_name="Member 1", guild_id=guild.id, team_id=team1.id
+            display_name="Member 1", guild_id=guild_id, team_id=team1_id
         )
         member2 = Member(
-            display_name="Member 2", guild_id=guild.id, team_id=team2.id
+            display_name="Member 2", guild_id=guild_id, team_id=team2_id
         )
         db_session.add_all([member1, member2])
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.get(f"/members/?team_id={team1.id}", headers=headers)
+        response = client.get(f"/members/?team_id={team1_id}", headers=headers)
         assert response.status_code == 200
         members = response.json()
-        assert all(m["team_id"] == team1.id for m in members)
+        assert all(m["team_id"] == team1_id for m in members)
 
     def test_get_member_by_id(self, client: TestClient, db_session: Session):
         superuser, token_key = self._create_superuser(db_session)
         guild = self._create_guild(db_session, superuser.id)
-        member = Member(display_name="Test Member", guild_id=guild.id)
+
+        # Store ID in local variable to avoid DetachedInstanceError
+        guild_id = guild.id
+
+        member = Member(display_name="Test Member", guild_id=guild_id)
         db_session.add(member)
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
@@ -228,11 +248,15 @@ class TestMemberAPI:
     ):
         superuser, token_key = self._create_superuser(db_session)
         guild = self._create_guild(db_session, superuser.id)
-        member = Member(display_name="GuildMember", guild_id=guild.id)
+
+        # Store ID in local variable to avoid DetachedInstanceError
+        guild_id = guild.id
+
+        member = Member(display_name="GuildMember", guild_id=guild_id)
         db_session.add(member)
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.get(f"/members/guild/{guild.id}", headers=headers)
+        response = client.get(f"/members/guild/{guild_id}", headers=headers)
         assert response.status_code == 200
         members = response.json()
         assert any(m["display_name"] == "GuildMember" for m in members)
@@ -241,13 +265,18 @@ class TestMemberAPI:
         superuser, token_key = self._create_superuser(db_session)
         guild = self._create_guild(db_session, superuser.id)
         team = self._create_team(db_session, guild.id, superuser.id)
+
+        # Store IDs in local variables to avoid DetachedInstanceError
+        guild_id = guild.id
+        team_id = team.id
+
         member = Member(
-            display_name="TeamMember", guild_id=guild.id, team_id=team.id
+            display_name="TeamMember", guild_id=guild_id, team_id=team_id
         )
         db_session.add(member)
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.get(f"/members/team/{team.id}", headers=headers)
+        response = client.get(f"/members/team/{team_id}", headers=headers)
         assert response.status_code == 200
         members = response.json()
         assert any(m["display_name"] == "TeamMember" for m in members)
@@ -257,7 +286,11 @@ class TestMemberAPI:
     ):
         superuser, token_key = self._create_superuser(db_session)
         guild = self._create_guild(db_session, superuser.id)
-        member = Member(display_name="Old Name", guild_id=guild.id)
+
+        # Store ID in local variable to avoid DetachedInstanceError
+        guild_id = guild.id
+
+        member = Member(display_name="Old Name", guild_id=guild_id)
         db_session.add(member)
         db_session.commit()
         headers = {"Authorization": f"Bearer {token_key}"}
@@ -281,7 +314,11 @@ class TestMemberAPI:
         superuser, token_key = self._create_superuser(db_session)
         regular_user, reg_token = self._create_regular_user(db_session)
         guild = self._create_guild(db_session, superuser.id)
-        member = Member(display_name="Test Member", guild_id=guild.id)
+
+        # Store ID in local variable to avoid DetachedInstanceError
+        guild_id = guild.id
+
+        member = Member(display_name="Test Member", guild_id=guild_id)
         db_session.add(member)
         db_session.commit()
         headers = {"Authorization": f"Bearer {reg_token}"}
