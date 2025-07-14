@@ -58,8 +58,10 @@ class TestRaidAPI:
 
     def _create_team(self, db_session: Session, guild_id: int, user_id: int):
         """Helper method to create a team."""
+        import uuid
+
         team = Team(
-            name="Test Team",
+            name=f"Test Team {uuid.uuid4().hex[:8]}",
             guild_id=guild_id,
             created_by=user_id,
         )
@@ -69,8 +71,10 @@ class TestRaidAPI:
 
     def _create_scenario(self, db_session: Session):
         """Helper method to create a scenario."""
+        import uuid
+
         scenario = Scenario(
-            name="Test Scenario",
+            name=f"Test Scenario {uuid.uuid4().hex[:8]}",
             is_active=True,
         )
         db_session.add(scenario)
