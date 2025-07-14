@@ -68,12 +68,16 @@ class TestMemberAPI:
         guild = self._create_guild(db_session, superuser.id)
         team = self._create_team(db_session, guild.id, superuser.id)
 
+        # Store IDs in local variables to avoid DetachedInstanceError
+        guild_id = guild.id
+        team_id = team.id
+
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "display_name": "Test Member",
             "rank": "Officer",
-            "guild_id": guild.id,
-            "team_id": team.id,
+            "guild_id": guild_id,
+            "team_id": team_id,
             "join_date": datetime.now().isoformat(),
         }
         response = client.post("/members/", json=data, headers=headers)
@@ -81,8 +85,8 @@ class TestMemberAPI:
         resp = response.json()
         assert resp["display_name"] == "Test Member"
         assert resp["rank"] == "Officer"
-        assert resp["guild_id"] == guild.id
-        assert resp["team_id"] == team.id
+        assert resp["guild_id"] == guild_id
+        assert resp["team_id"] == team_id
         assert resp["is_active"] is True
 
     def test_create_member_regular_user_forbidden(
@@ -123,11 +127,16 @@ class TestMemberAPI:
         guild1 = self._create_guild(db_session, superuser.id, name="Guild 1")
         guild2 = self._create_guild(db_session, superuser.id, name="Guild 2")
         team = self._create_team(db_session, guild2.id, superuser.id)
+
+        # Store IDs in local variables to avoid DetachedInstanceError
+        guild1_id = guild1.id
+        team_id = team.id
+
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "display_name": "Test Member",
-            "guild_id": guild1.id,
-            "team_id": team.id,
+            "guild_id": guild1_id,
+            "team_id": team_id,
         }
         response = client.post("/members/", json=data, headers=headers)
         assert response.status_code == 400
