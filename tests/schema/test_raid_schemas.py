@@ -13,12 +13,14 @@ class TestRaidSchemas:
     def test_raid_base_valid(self):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
             "difficulty": RAID_DIFFICULTIES[0],
             "size": RAID_SIZES[0],
             "team_id": 1,
         }
         raid = RaidBase(**data)
         assert raid.scheduled_at == data["scheduled_at"]
+        assert raid.scenario_id == 1
         assert raid.difficulty == RAID_DIFFICULTIES[0]
         assert raid.size == RAID_SIZES[0]
         assert raid.team_id == 1
@@ -27,6 +29,7 @@ class TestRaidSchemas:
     def test_raid_base_invalid_difficulty(self, bad_diff):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
             "difficulty": bad_diff,
             "size": RAID_SIZES[0],
             "team_id": 1,
@@ -38,6 +41,7 @@ class TestRaidSchemas:
     def test_raid_base_invalid_size(self, bad_size):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
             "difficulty": RAID_DIFFICULTIES[0],
             "size": bad_size,
             "team_id": 1,
@@ -48,11 +52,13 @@ class TestRaidSchemas:
     def test_raid_create(self):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 2,
             "difficulty": RAID_DIFFICULTIES[1],
             "size": RAID_SIZES[1],
             "team_id": 2,
         }
         raid = RaidCreate(**data)
+        assert raid.scenario_id == 2
         assert raid.difficulty == RAID_DIFFICULTIES[1]
         assert raid.size == RAID_SIZES[1]
         assert raid.team_id == 2
@@ -62,21 +68,24 @@ class TestRaidSchemas:
         raid = RaidUpdate(**data)
         assert raid.difficulty == RAID_DIFFICULTIES[2]
         assert raid.scheduled_at is None
+        assert raid.scenario_id is None
         assert raid.size is None
         assert raid.team_id is None
 
     def test_raid_update_invalid(self):
-        # Only set the field being tested, and use correct types
+        # Test invalid difficulty
         with pytest.raises(ValueError):
-            RaidUpdate(difficulty="Impossible")
+            RaidUpdate(difficulty="Impossible")  # type: ignore[arg-type]
+        # Test invalid size
         with pytest.raises(ValueError):
-            RaidUpdate(size="abc")
+            RaidUpdate(size="abc")  # type: ignore[arg-type]
 
     def test_raid_response_serialization(self):
         now = datetime.utcnow()
         data = {
             "id": 1,
             "scheduled_at": now,
+            "scenario_id": 1,
             "difficulty": RAID_DIFFICULTIES[0],
             "size": RAID_SIZES[0],
             "team_id": 1,
@@ -86,6 +95,7 @@ class TestRaidSchemas:
         raid = RaidResponse(**data)
         assert raid.id == 1
         assert raid.scheduled_at == now
+        assert raid.scenario_id == 1
         assert raid.difficulty == RAID_DIFFICULTIES[0]
         assert raid.size == RAID_SIZES[0]
         assert raid.team_id == 1
