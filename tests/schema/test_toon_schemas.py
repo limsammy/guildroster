@@ -109,5 +109,5 @@ class TestToonSchemas:
         toon = ToonResponse(**data)
         assert toon.class_ == "Druid"
         # Output uses alias
-        out = toon.dict(by_alias=True)
+        out = toon.model_dump(by_alias=True)
         assert out["class"] == "Druid"

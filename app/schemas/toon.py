@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -24,13 +24,15 @@ class ToonBase(BaseModel):
     role: str = Field(..., max_length=20)
     is_main: bool = False
 
-    @validator("class_")
+    @field_validator("class_")
+    @classmethod
     def validate_class(cls, v):
         if v not in WOW_CLASSES:
             raise ValueError(f"Invalid class: {v}")
         return v
 
-    @validator("role")
+    @field_validator("role")
+    @classmethod
     def validate_role(cls, v):
         if v not in WOW_ROLES:
             raise ValueError(f"Invalid role: {v}")
@@ -47,13 +49,15 @@ class ToonUpdate(BaseModel):
     role: Optional[str] = Field(None, max_length=20)
     is_main: Optional[bool] = None
 
-    @validator("class_")
+    @field_validator("class_")
+    @classmethod
     def validate_class(cls, v):
         if v is not None and v not in WOW_CLASSES:
             raise ValueError(f"Invalid class: {v}")
         return v
 
-    @validator("role")
+    @field_validator("role")
+    @classmethod
     def validate_role(cls, v):
         if v is not None and v not in WOW_ROLES:
             raise ValueError(f"Invalid role: {v}")
@@ -66,6 +70,7 @@ class ToonResponse(ToonBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
