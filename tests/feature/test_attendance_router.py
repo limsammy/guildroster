@@ -226,6 +226,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
@@ -238,7 +239,7 @@ class TestAttendanceAPI:
                 },
                 {
                     "raid_id": test_data["raid_id"],
-                    "toon_id": toon2.id,
+                    "toon_id": toon2_id,
                     "is_present": False,
                     "notes": "No show",
                 },
@@ -251,7 +252,7 @@ class TestAttendanceAPI:
         assert resp[0]["raid_id"] == test_data["raid_id"]
         assert resp[0]["toon_id"] == test_data["toon_id"]
         assert resp[0]["is_present"] is True
-        assert resp[1]["toon_id"] == toon2.id
+        assert resp[1]["toon_id"] == toon2_id
         assert resp[1]["is_present"] is False
 
     def test_list_attendance(self, client: TestClient, db_session: Session):
@@ -339,6 +340,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records for both toons
         attendance1 = Attendance(
@@ -347,7 +349,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=False
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=False
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
@@ -377,6 +379,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records for both toons
         attendance1 = Attendance(
@@ -385,7 +388,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=False
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=False
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
@@ -460,6 +463,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records with different present status
         attendance1 = Attendance(
@@ -468,7 +472,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=False
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=False
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
@@ -540,6 +544,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records for both toons in same raid
         attendance1 = Attendance(
@@ -548,7 +553,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=False
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=False
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
@@ -617,6 +622,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records for both toons
         attendance1 = Attendance(
@@ -625,7 +631,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=False
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=False
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
@@ -760,6 +766,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records
         attendance1 = Attendance(
@@ -768,7 +775,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=True
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=True
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
@@ -879,6 +886,7 @@ class TestAttendanceAPI:
         )
         db_session.add(toon2)
         db_session.commit()
+        toon2_id = toon2.id  # Capture the ID immediately after commit
 
         # Create attendance records
         attendance1 = Attendance(
@@ -887,7 +895,7 @@ class TestAttendanceAPI:
             is_present=True,
         )
         attendance2 = Attendance(
-            raid_id=test_data["raid_id"], toon_id=toon2.id, is_present=False
+            raid_id=test_data["raid_id"], toon_id=toon2_id, is_present=False
         )
         db_session.add_all([attendance1, attendance2])
         db_session.commit()
