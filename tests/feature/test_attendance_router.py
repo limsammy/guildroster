@@ -796,6 +796,9 @@ class TestAttendanceAPI:
             ]
         }
         response = client.put("/attendance/bulk", json=data, headers=headers)
+        if response.status_code != 200:
+            print(f"Response status: {response.status_code}")
+            print(f"Response body: {response.text}")
         assert response.status_code == 200
         resp = response.json()
         assert len(resp) == 2

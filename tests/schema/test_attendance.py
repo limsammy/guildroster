@@ -205,8 +205,8 @@ class TestAttendanceBulkUpdate:
         }
         bulk_update = AttendanceBulkUpdate(**data)
         assert len(bulk_update.attendance_records) == 2
-        assert bulk_update.attendance_records[0]["id"] == 1
-        assert bulk_update.attendance_records[1]["id"] == 2
+        assert bulk_update.attendance_records[0].id == 1
+        assert bulk_update.attendance_records[1].id == 2
 
     def test_bulk_update_missing_id(self):
         """Test that missing id field is caught."""
@@ -217,9 +217,7 @@ class TestAttendanceBulkUpdate:
         }
         with pytest.raises(ValidationError) as exc_info:
             AttendanceBulkUpdate(**data)
-        assert "Each attendance record must have an 'id' field" in str(
-            exc_info.value
-        )
+        assert "Field required" in str(exc_info.value)
 
     def test_bulk_update_invalid_notes(self):
         """Test that invalid notes in bulk update are caught."""
