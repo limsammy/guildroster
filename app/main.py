@@ -3,10 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.utils.logger import get_logger
 from app.database import Base, engine
 from contextlib import asynccontextmanager
+import logging
 
 from app.config import settings
 from app.models.token import Token
 from app.utils.auth import require_any_token, security
+
+# Configure SQLAlchemy logging to be less verbose
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.dialects").setLevel(logging.WARNING)
 
 logger = get_logger(__name__)
 
