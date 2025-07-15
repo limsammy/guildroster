@@ -229,6 +229,39 @@ def list_attendance(
     return attendance_records
 
 
+@router.put(
+    "/bulk",
+    response_model=List[AttendanceResponse],
+    dependencies=[Depends(require_superuser)],
+)
+def update_attendance_bulk(
+    bulk_in: AttendanceBulkUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_superuser),
+):
+    """
+    Update multiple attendance records. Superuser only.
+    """
+    updated_records = []
+
+    for record in bulk_in.attendance_records:
+        attendance = get_attendance_or_404(db, record.id)
+        update_data = record.model_dump(exclude_unset=True, exclude={"id"})
+        if "is_present" in update_data:
+            attendance.is_present = update_data["is_present"]  # type: ignore[assignment]
+        if "notes" in update_data:
+            attendance.notes = update_data["notes"]  # type: ignore[assignment]
+        updated_records.append(attendance)
+
+    db.commit()
+
+    # Refresh all updated records
+    for record in updated_records:
+        db.refresh(record)
+
+    return updated_records
+
+
 @router.get(
     "/{attendance_id}",
     response_model=AttendanceResponse,
@@ -355,39 +388,6 @@ def update_attendance(
     db.commit()
     db.refresh(attendance)
     return attendance
-
-
-@router.put(
-    "/bulk",
-    response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_superuser)],
-)
-def update_attendance_bulk(
-    bulk_in: AttendanceBulkUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_superuser),
-):
-    """
-    Update multiple attendance records. Superuser only.
-    """
-    updated_records = []
-
-    for record in bulk_in.attendance_records:
-        attendance = get_attendance_or_404(db, record.id)
-        update_data = record.model_dump(exclude_unset=True, exclude={"id"})
-        if "is_present" in update_data:
-            attendance.is_present = update_data["is_present"]  # type: ignore[assignment]
-        if "notes" in update_data:
-            attendance.notes = update_data["notes"]  # type: ignore[assignment]
-        updated_records.append(attendance)
-
-    db.commit()
-
-    # Refresh all updated records
-    for record in updated_records:
-        db.refresh(record)
-
-    return updated_records
 
 
 @router.delete(
