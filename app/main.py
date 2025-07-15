@@ -56,6 +56,7 @@ def create_app() -> FastAPI:
         toon,
         raid,
         scenario,
+        attendance,
     )
 
     app.include_router(user.router)
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(toon.router)
     app.include_router(raid.router)
     app.include_router(scenario.router)
+    app.include_router(attendance.router)
 
     @app.get("/", dependencies=[Depends(security)])
     def read_root(current_token: Token = Depends(require_any_token)):
