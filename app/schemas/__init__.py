@@ -33,6 +33,16 @@ from .scenario import (
     ScenarioUpdate,
     ScenarioResponse,
 )
+from .attendance import (
+    AttendanceBase,
+    AttendanceCreate,
+    AttendanceUpdate,
+    AttendanceResponse,
+    AttendanceBulkCreate,
+    AttendanceBulkUpdate,
+    AttendanceStats,
+    AttendanceReport,
+)
 
 __all__ = [
     "UserBase",
@@ -66,4 +76,12 @@ __all__ = [
     "ScenarioCreate",
     "ScenarioUpdate",
     "ScenarioResponse",
+    "AttendanceBase",
+    "AttendanceCreate",
+    "AttendanceUpdate",
+    "AttendanceResponse",
+    "AttendanceBulkCreate",
+    "AttendanceBulkUpdate",
+    "AttendanceStats",
+    "AttendanceReport",
 ]
