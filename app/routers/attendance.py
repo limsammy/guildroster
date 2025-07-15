@@ -15,6 +15,7 @@ from app.schemas.attendance import (
     AttendanceResponse,
     AttendanceBulkCreate,
     AttendanceBulkUpdate,
+    AttendanceBulkUpdateItem,
     AttendanceStats,
     AttendanceReport,
 )
@@ -373,7 +374,7 @@ def update_attendance_bulk(
 
     for record in bulk_in.attendance_records:
         attendance = get_attendance_or_404(db, record.id)
-        update_data = record.model_dump(exclude_unset=True)
+        update_data = record.model_dump(exclude_unset=True, exclude={"id"})
         if "is_present" in update_data:
             attendance.is_present = update_data["is_present"]  # type: ignore[assignment]
         if "notes" in update_data:
