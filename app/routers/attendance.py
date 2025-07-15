@@ -489,11 +489,11 @@ def get_toon_attendance_stats(
     for record in reversed(attendance_records):  # Start from most recent
         if record.is_present:
             temp_streak += 1
-            if current_streak == 0:  # This is the current streak
-                current_streak = temp_streak
+            current_streak = temp_streak  # Update current streak continuously
         else:
             longest_streak = max(longest_streak, temp_streak)
             temp_streak = 0
+            current_streak = 0  # Reset current streak when we hit an absence
 
     # Check if the longest streak is the current one
     longest_streak = max(longest_streak, temp_streak)
@@ -560,11 +560,11 @@ def get_member_attendance_stats(
     for record in reversed(attendance_records):
         if record.is_present:
             temp_streak += 1
-            if current_streak == 0:
-                current_streak = temp_streak
+            current_streak = temp_streak  # Update current streak continuously
         else:
             longest_streak = max(longest_streak, temp_streak)
             temp_streak = 0
+            current_streak = 0  # Reset current streak when we hit an absence
 
     longest_streak = max(longest_streak, temp_streak)
 
@@ -628,11 +628,11 @@ def get_team_attendance_stats(
     for record in reversed(attendance_records):
         if record.is_present:
             temp_streak += 1
-            if current_streak == 0:
-                current_streak = temp_streak
+            current_streak = temp_streak  # Update current streak continuously
         else:
             longest_streak = max(longest_streak, temp_streak)
             temp_streak = 0
+            current_streak = 0  # Reset current streak when we hit an absence
 
     longest_streak = max(longest_streak, temp_streak)
 
