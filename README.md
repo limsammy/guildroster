@@ -87,6 +87,7 @@ pytest
 - **Toon management** - Character profiles for members with class, role, main/alt, and team assignment
 - **Raid management** - Raid scheduling and tracking with difficulty, size, and team assignments
 - **Scenario management** - Raid instance definitions with active/inactive status control
+- **Attendance tracking** - Comprehensive raid attendance system with individual and bulk operations, filtering, statistics, and streak tracking
 
 ## Tech Stack
 
@@ -248,6 +249,134 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /scenarios/{scenario_id}` - Update scenario (superuser only)
 - `DELETE /scenarios/{scenario_id}` - Delete scenario (superuser only)
 
+### Attendance
+- `POST /attendance/` - Create new attendance record (superuser only)
+- `POST /attendance/bulk` - Create multiple attendance records (superuser only)
+- `GET /attendance/` - List attendance records with filtering (any valid token)
+- `GET /attendance/{attendance_id}` - Get specific attendance record (any valid token)
+- `GET /attendance/raid/{raid_id}` - Get all attendance for a raid (any valid token)
+- `GET /attendance/toon/{toon_id}` - Get all attendance for a toon (any valid token)
+- `GET /attendance/member/{member_id}` - Get all attendance for a member's toons (any valid token)
+- `GET /attendance/team/{team_id}` - Get all attendance for a team (any valid token)
+- `PUT /attendance/{attendance_id}` - Update attendance record (superuser only)
+- `PUT /attendance/bulk` - Update multiple attendance records (superuser only)
+- `DELETE /attendance/{attendance_id}` - Delete attendance record (superuser only)
+- `GET /attendance/stats/raid/{raid_id}` - Get attendance statistics for a raid (any valid token)
+- `GET /attendance/stats/toon/{toon_id}` - Get attendance statistics for a toon (any valid token)
+- `GET /attendance/stats/member/{member_id}` - Get attendance statistics for a member (any valid token)
+- `GET /attendance/stats/team/{team_id}` - Get attendance statistics for a team (any valid token)
+- `GET /attendance/report/date-range` - Get attendance report for date range (any valid token)
+
+## Attendance System
+
+The attendance system provides comprehensive tracking of raid participation with powerful filtering, statistics, and reporting capabilities.
+
+### Core Features
+
+**Individual & Bulk Operations**
+- Create single or multiple attendance records
+- Update attendance status and notes
+- Bulk operations support up to 100 records per request
+
+**Flexible Filtering**
+- Filter by raid, toon, member, team, or attendance status
+- Date range filtering for historical analysis
+- Multiple filter combinations supported
+
+**Comprehensive Statistics**
+- **Raid Stats**: Present/absent counts, attendance percentage
+- **Toon Stats**: Individual character attendance tracking with streaks
+- **Member Stats**: Combined attendance across all member's toons
+- **Team Stats**: Team-wide attendance analysis
+
+**Advanced Analytics**
+- **Streak Tracking**: Current and longest attendance streaks
+- **Attendance Reports**: Date range reports with detailed breakdowns
+- **Performance Metrics**: Attendance percentages and trends
+
+### Usage Examples
+
+**Create Attendance Record**
+```bash
+curl -X POST http://localhost:8000/attendance/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "raid_id": 1,
+    "toon_id": 2,
+    "is_present": true,
+    "notes": "On time and ready"
+  }'
+```
+
+**Bulk Create Attendance**
+```bash
+curl -X POST http://localhost:8000/attendance/bulk \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "attendance_records": [
+      {
+        "raid_id": 1,
+        "toon_id": 2,
+        "is_present": true,
+        "notes": "On time"
+      },
+      {
+        "raid_id": 1,
+        "toon_id": 3,
+        "is_present": false,
+        "notes": "No show"
+      }
+    ]
+  }'
+```
+
+**Get Toon Statistics**
+```bash
+curl -X GET http://localhost:8000/attendance/stats/toon/2 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "total_raids": 10,
+  "raids_attended": 8,
+  "raids_missed": 2,
+  "attendance_percentage": 80.0,
+  "current_streak": 3,
+  "longest_streak": 5,
+  "last_attendance": "2024-01-15T20:00:00"
+}
+```
+
+**Filter Attendance Records**
+```bash
+curl -X GET "http://localhost:8000/attendance/?team_id=1&is_present=true&start_date=2024-01-01T00:00:00&end_date=2024-01-31T23:59:59" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Data Model
+
+**Attendance Record Fields:**
+- `id` - Unique identifier
+- `raid_id` - Associated raid
+- `toon_id` - Character who attended
+- `is_present` - Whether the toon was present (true/false)
+- `notes` - Optional notes about attendance
+- `created_at` - Record creation timestamp
+- `updated_at` - Last update timestamp
+
+**Statistics Response:**
+- `total_raids` - Total number of raids
+- `raids_attended` - Number of raids attended
+- `raids_missed` - Number of raids missed
+- `attendance_percentage` - Percentage attendance rate
+- `current_streak` - Current consecutive attendance streak
+- `longest_streak` - Longest consecutive attendance streak
+- `last_attendance` - Date of last attendance (if any)
+
 ## Creating API Tokens
 
 Before testing the API, you need to create a token for authentication. Use the provided script:
@@ -334,7 +463,7 @@ The application uses a relational database with the following core tables and re
 - **Toons** - Character information for guild members (username, class, role, is_main, member_id, created_at, updated_at)
 - **Raids** - Raid scheduling and tracking (scheduled_at, difficulty, size, team_id, scenario_id, created_at, updated_at)
 - **Scenarios** - Raid instance definitions (name, is_active, created_at, updated_at)
-- **Attendance** - Raid attendance records (planned)
+- **Attendance** - Raid attendance records with presence tracking, notes, and statistics
 - **Invites** - User registration system (planned)
 
 **Key Relationships:**
