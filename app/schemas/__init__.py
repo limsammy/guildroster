@@ -40,6 +40,7 @@ from .attendance import (
     AttendanceResponse,
     AttendanceBulkCreate,
     AttendanceBulkUpdate,
+    AttendanceBulkUpdateItem,
     AttendanceStats,
     AttendanceReport,
 )
@@ -82,6 +83,7 @@ __all__ = [
     "AttendanceResponse",
     "AttendanceBulkCreate",
     "AttendanceBulkUpdate",
+    "AttendanceBulkUpdateItem",
     "AttendanceStats",
     "AttendanceReport",
 ]

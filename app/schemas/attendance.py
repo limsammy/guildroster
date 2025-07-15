@@ -45,6 +45,23 @@ class AttendanceUpdate(BaseModel):
         return v
 
 
+class AttendanceBulkUpdateItem(BaseModel):
+    id: int = Field(..., description="Attendance record ID to update")
+    is_present: Optional[bool] = Field(
+        None, description="Whether the toon was present at the raid"
+    )
+    notes: Optional[str] = Field(
+        None, max_length=500, description="Optional notes about attendance"
+    )
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v):
+        if v is not None and v.strip() == "":
+            raise ValueError("Notes cannot be empty or whitespace only")
+        return v
+
+
 class AttendanceResponse(AttendanceBase):
     id: int
     created_at: datetime
@@ -66,28 +83,12 @@ class AttendanceBulkCreate(BaseModel):
 
 
 class AttendanceBulkUpdate(BaseModel):
-    attendance_records: List[AttendanceUpdate] = Field(
+    attendance_records: List[AttendanceBulkUpdateItem] = Field(
         ...,
         description="List of attendance records to update. Each record should have 'id' and optional 'is_present' and 'notes' fields",
         min_length=1,
         max_length=100,  # Limit bulk operations to prevent abuse
     )
-
-    @field_validator("attendance_records")
-    @classmethod
-    def validate_attendance_records(cls, v):
-        for record in v:
-            if not hasattr(record, "id") or record.id is None:
-                raise ValueError(
-                    "Each attendance record must have an 'id' field"
-                )
-            if (
-                hasattr(record, "notes")
-                and record.notes is not None
-                and str(record.notes).strip() == ""
-            ):
-                raise ValueError("Notes cannot be empty or whitespace only")
-        return v
 
 
 class AttendanceStats(BaseModel):
