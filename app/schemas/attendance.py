@@ -66,7 +66,7 @@ class AttendanceBulkCreate(BaseModel):
 
 
 class AttendanceBulkUpdate(BaseModel):
-    attendance_records: List[dict] = Field(
+    attendance_records: List[AttendanceUpdate] = Field(
         ...,
         description="List of attendance records to update. Each record should have 'id' and optional 'is_present' and 'notes' fields",
         min_length=1,
@@ -77,14 +77,14 @@ class AttendanceBulkUpdate(BaseModel):
     @classmethod
     def validate_attendance_records(cls, v):
         for record in v:
-            if "id" not in record:
+            if not hasattr(record, "id") or record.id is None:
                 raise ValueError(
                     "Each attendance record must have an 'id' field"
                 )
             if (
-                "notes" in record
-                and record["notes"] is not None
-                and record["notes"].strip() == ""
+                hasattr(record, "notes")
+                and record.notes is not None
+                and str(record.notes).strip() == ""
             ):
                 raise ValueError("Notes cannot be empty or whitespace only")
         return v

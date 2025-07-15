@@ -372,14 +372,12 @@ def update_attendance_bulk(
     updated_records = []
 
     for record in bulk_in.attendance_records:
-        attendance = get_attendance_or_404(db, record["id"])
-
-        if "is_present" in record:
-            attendance.is_present = record["is_present"]  # type: ignore[assignment]
-
-        if "notes" in record:
-            attendance.notes = record["notes"]  # type: ignore[assignment]
-
+        attendance = get_attendance_or_404(db, record.id)
+        update_data = record.model_dump(exclude_unset=True)
+        if "is_present" in update_data:
+            attendance.is_present = update_data["is_present"]  # type: ignore[assignment]
+        if "notes" in update_data:
+            attendance.notes = update_data["notes"]  # type: ignore[assignment]
         updated_records.append(attendance)
 
     db.commit()
