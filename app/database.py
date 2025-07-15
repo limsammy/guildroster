@@ -3,7 +3,9 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
 
 # SQLAlchemy engine for database connections
-engine = create_engine(settings.SQLALCHEMY_DATABASE_URI, echo=True, future=True)
+engine = create_engine(
+    settings.SQLALCHEMY_DATABASE_URI, echo=False, future=True
+)
 
 # Factory for creating new database sessions
 SessionLocal = sessionmaker(
