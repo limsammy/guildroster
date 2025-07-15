@@ -6,3 +6,4 @@ from .member import Member
 from .toon import Toon
 from .raid import Raid
 from .scenario import Scenario
+from .attendance import Attendance

@@ -48,6 +48,9 @@ class Toon(Base):
 
     # Relationships
     member = relationship("Member", back_populates="toons")
+    attendance = relationship(
+        "Attendance", back_populates="toon", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint(

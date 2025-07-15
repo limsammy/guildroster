@@ -30,7 +30,9 @@ class Raid(Base):
     # Relationships
     team = relationship("Team", back_populates="raids")
     scenario = relationship("Scenario", back_populates="raids")
-    # attendance = relationship("Attendance", back_populates="raid", cascade="all, delete-orphan")
+    attendance = relationship(
+        "Attendance", back_populates="raid", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint(
