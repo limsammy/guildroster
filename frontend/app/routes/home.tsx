@@ -1,7 +1,6 @@
 import type { Route } from "./+types/home";
 import { Navigation } from "../components/layout/Navigation";
 import { Hero } from "../components/sections/Hero";
-import { Features } from "../components/sections/Features";
 import { Footer } from "../components/layout/Footer";
 
 export function meta({}: Route.MetaArgs) {
@@ -20,9 +19,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     <div className="min-h-screen bg-slate-900">
       <Navigation />
       <Hero />
-      <div id="features">
-        <Features />
-      </div>
       <Footer />
     </div>
   );
