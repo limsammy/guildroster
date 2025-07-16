@@ -1,10 +1,13 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { Navigation } from "../components/layout/Navigation";
+import { Hero } from "../components/sections/Hero";
+import { Features } from "../components/sections/Features";
+import { Footer } from "../components/layout/Footer";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "GuildRoster - Command Your Guild's Destiny" },
+    { name: "description", content: "Track attendance, manage rosters, and lead your team to victory in Azeroth's greatest challenges with GuildRoster." },
   ];
 }
 
@@ -13,5 +16,14 @@ export function loader({ context }: Route.LoaderArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  return <Welcome message={loaderData.message} />;
+  return (
+    <div className="min-h-screen bg-slate-900">
+      <Navigation />
+      <Hero />
+      <div id="features">
+        <Features />
+      </div>
+      <Footer />
+    </div>
+  );
 }
