@@ -214,12 +214,14 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
               <div className="grid grid-cols-2 gap-4">
-                <Button className="h-16" variant="secondary">
-                  <div className="text-center">
-                    <div className="text-2xl mb-1">👥</div>
-                    <div className="text-sm">Manage Members</div>
-                  </div>
-                </Button>
+                <Link to="/members">
+                  <Button className="h-16" variant="secondary">
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">👥</div>
+                      <div className="text-sm">Manage Members</div>
+                    </div>
+                  </Button>
+                </Link>
                 <Button className="h-16" variant="secondary">
                   <div className="text-center">
                     <div className="text-2xl mb-1">📋</div>
