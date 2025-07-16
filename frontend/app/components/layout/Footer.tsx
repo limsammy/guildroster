@@ -18,7 +18,7 @@ export const Footer: React.FC = () => {
           {/* Bottom */}
           <div className="border-t border-slate-700/50 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-slate-400 text-sm">
-              © 2024 GuildRoster. All rights reserved.
+              © 2025 GuildRoster. All rights reserved.
             </p>
             <p className="text-slate-400 text-sm mt-2 md:mt-0">
               For the Horde! For the Alliance!
