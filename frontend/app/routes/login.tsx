@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Card, Container } from "../components/ui";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
 
 export function meta() {
   return [
@@ -10,6 +11,8 @@ export function meta() {
 }
 
 export default function Login() {
+  const { login, isAuthenticated, error: authError, clearError } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -17,22 +20,28 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      // TODO: Implement actual login logic with API
-      console.log('Login attempt:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For now, just show success
-      alert('Login functionality will be implemented with the API integration');
-    } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      await login(formData);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -59,9 +68,9 @@ export default function Login() {
 
         <Card variant="elevated" className="max-w-md mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6" role="form">
-            {error && (
+            {(error || authError) && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <p className="text-red-400 text-sm">{error}</p>
+                <p className="text-red-400 text-sm">{error || authError}</p>
               </div>
             )}
 
