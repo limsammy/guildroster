@@ -126,10 +126,10 @@ export default function Dashboard() {
               </div>
               <div className="flex gap-3">
                 <Link to="/">
-                  <Button variant="secondary">Home</Button>
+                  <Button variant="primary">Home</Button>
                 </Link>
                 <Link to="/login">
-                  <Button variant="secondary">Logout</Button>
+                  <Button variant="danger">Logout</Button>
                 </Link>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">Recent Raids</h2>
-                <Button size="sm" variant="secondary">
+                <Button size="sm" variant="primary">
                   View All
                 </Button>
               </div>
@@ -214,31 +214,23 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
               <div className="grid grid-cols-2 gap-4">
-                <Link to="/members">
-                  <Button className="h-16" variant="secondary">
-                    <div className="text-center">
-                      <div className="text-2xl mb-1">👥</div>
-                      <div className="text-sm">Manage Members</div>
-                    </div>
+                <Link to="/members" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">👥</div>
+                    <div className="text-sm font-medium">Manage Members</div>
                   </Button>
                 </Link>
-                <Button className="h-16" variant="secondary">
-                  <div className="text-center">
-                    <div className="text-2xl mb-1">📋</div>
-                    <div className="text-sm">Import Logs</div>
-                  </div>
+                <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                  <div className="text-3xl mb-2">📋</div>
+                  <div className="text-sm font-medium">Import Logs</div>
                 </Button>
-                <Button className="h-16" variant="secondary">
-                  <div className="text-center">
-                    <div className="text-2xl mb-1">📊</div>
-                    <div className="text-sm">Attendance</div>
-                  </div>
+                <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                  <div className="text-3xl mb-2">📊</div>
+                  <div className="text-sm font-medium">Attendance</div>
                 </Button>
-                <Button className="h-16" variant="secondary">
-                  <div className="text-center">
-                    <div className="text-2xl mb-1">⚙️</div>
-                    <div className="text-sm">Settings</div>
-                  </div>
+                <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                  <div className="text-3xl mb-2">⚙️</div>
+                  <div className="text-sm font-medium">Settings</div>
                 </Button>
               </div>
             </Card>
@@ -249,7 +241,7 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">Raid Teams</h2>
-                <Button size="sm" variant="secondary">
+                <Button size="sm" variant="primary">
                   Manage Teams
                 </Button>
               </div>

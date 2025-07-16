@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Button } from '../ui/Button';
 import { Link } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -29,20 +28,25 @@ export const Navigation: React.FC = () => {
           <div className="hidden md:flex items-center space-x-8">
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="sm">
-                    Dashboard
-                  </Button>
+                <Link 
+                  to="/dashboard"
+                  className="text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-800/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-900"
+                >
+                  Dashboard
                 </Link>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <button
+                  onClick={handleLogout}
+                  className="text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-800/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-900"
+                >
                   Logout
-                </Button>
+                </button>
               </>
             ) : (
-              <Link to="/login">
-                <Button variant="ghost" size="sm">
-                  Login
-                </Button>
+              <Link 
+                to="/login"
+                className="text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-800/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-900"
+              >
+                Login
               </Link>
             )}
           </div>
@@ -71,20 +75,30 @@ export const Navigation: React.FC = () => {
               <div className="pt-4 space-y-2">
                 {isAuthenticated ? (
                   <>
-                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                      <Button variant="ghost" size="sm" className="w-full">
-                        Dashboard
-                      </Button>
+                    <Link 
+                      to="/dashboard" 
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block w-full text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-700/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-800"
+                    >
+                      Dashboard
                     </Link>
-                    <Button variant="ghost" size="sm" className="w-full" onClick={handleLogout}>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="block w-full text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-700/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-800"
+                    >
                       Logout
-                    </Button>
+                    </button>
                   </>
                 ) : (
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full">
-                      Login
-                    </Button>
+                  <Link 
+                    to="/login" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-700/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-800"
+                  >
+                    Login
                   </Link>
                 )}
               </div>

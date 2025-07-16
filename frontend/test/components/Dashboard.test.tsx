@@ -208,4 +208,28 @@ describe('Dashboard', () => {
       expect(screen.getByText('No raid teams found')).toBeInTheDocument();
     });
   });
+
+  it('shows quick action buttons with proper styling', async () => {
+    const { GuildService } = await import('../../app/api/guilds');
+    const { TeamService } = await import('../../app/api/teams');
+    const { MemberService } = await import('../../app/api/members');
+    const { RaidService } = await import('../../app/api/raids');
+    const { ScenarioService } = await import('../../app/api/scenarios');
+    
+    vi.mocked(GuildService.getGuilds).mockResolvedValue([]);
+    vi.mocked(TeamService.getTeams).mockResolvedValue([]);
+    vi.mocked(MemberService.getMembers).mockResolvedValue([]);
+    vi.mocked(RaidService.getRaids).mockResolvedValue([]);
+    vi.mocked(ScenarioService.getScenarios).mockResolvedValue([]);
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Quick Actions')).toBeInTheDocument();
+      expect(screen.getByText('Manage Members')).toBeInTheDocument();
+      expect(screen.getByText('Import Logs')).toBeInTheDocument();
+      expect(screen.getByText('Attendance')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+    });
+  });
 }); 
