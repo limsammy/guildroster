@@ -39,6 +39,7 @@
     "@types/react-dom": "^19.1.2",
     "@vitest/ui": "^3.2.4",
     "cross-env": "^7.0.3",
+    "cypress": "^14.5.2",
     "jsdom": "^26.1.0",
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3",
