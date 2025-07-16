@@ -1,10 +1,15 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.vite.json" }
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.vite.json"
+    }
   ],
   "compilerOptions": {
+    "module": "ESNext",
     "checkJs": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
