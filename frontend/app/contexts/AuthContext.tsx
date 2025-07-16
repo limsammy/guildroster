@@ -1,161 +1,116 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { AuthService } from '../api/auth';
-import type { User, UserLogin } from '../api/types';
+import AuthService from '../api/auth';
+import type { LoginCredentials, LoginResponse } from '../api/auth';
 
-// Auth state interface
-interface AuthState {
+interface User {
+  user_id: number;
+  username: string;
+  is_superuser: boolean;
+}
+
+interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
   error: string | null;
-}
-
-// Auth actions
-type AuthAction =
-  | { type: 'AUTH_START' }
-  | { type: 'AUTH_SUCCESS'; payload: User }
-  | { type: 'AUTH_FAILURE'; payload: string }
-  | { type: 'AUTH_LOGOUT' }
-  | { type: 'CLEAR_ERROR' };
-
-// Initial state
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
-};
-
-// Auth reducer
-function authReducer(state: AuthState, action: AuthAction): AuthState {
-  switch (action.type) {
-    case 'AUTH_START':
-      return {
-        ...state,
-        isLoading: true,
-        error: null,
-      };
-    case 'AUTH_SUCCESS':
-      return {
-        ...state,
-        user: action.payload,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      };
-    case 'AUTH_FAILURE':
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: action.payload,
-      };
-    case 'AUTH_LOGOUT':
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      };
-    case 'CLEAR_ERROR':
-      return {
-        ...state,
-        error: null,
-      };
-    default:
-      return state;
-  }
-}
-
-// Auth context interface
-interface AuthContextType extends AuthState {
-  login: (credentials: UserLogin) => Promise<void>;
-  logout: () => Promise<void>;
   clearError: () => void;
 }
 
-// Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth provider props
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Auth provider component
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Check authentication status on mount
+  // Initialize auth state on app load
   useEffect(() => {
-    const checkAuth = async () => {
-      if (AuthService.isAuthenticated()) {
-        try {
-          dispatch({ type: 'AUTH_START' });
-          const user = await AuthService.getCurrentUser();
-          dispatch({ type: 'AUTH_SUCCESS', payload: user });
-        } catch (error) {
-          dispatch({ type: 'AUTH_FAILURE', payload: 'Failed to get user info' });
+    const initializeAuth = async () => {
+      try {
+        const currentUser = AuthService.getCurrentUser();
+        if (currentUser && AuthService.isAuthenticated()) {
+          setUser(currentUser);
+        } else if (AuthService.isAuthenticated()) {
+          // If we have a token but no user info, try to validate it
+          const isValid = await AuthService.validateToken();
+          if (isValid) {
+            // For environment tokens, we might not have user info stored
+            // You could add a method to fetch user info from the API
+            setUser({
+              user_id: 0,
+              username: 'API User',
+              is_superuser: true,
+            });
+          }
         }
-      } else {
-        dispatch({ type: 'AUTH_LOGOUT' });
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        AuthService.logout();
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    checkAuth();
+    initializeAuth();
   }, []);
 
-  // Login function
-  const login = async (credentials: UserLogin) => {
+  const login = async (credentials: LoginCredentials) => {
     try {
-      dispatch({ type: 'AUTH_START' });
-      const response = await AuthService.login(credentials);
+      setIsLoading(true);
+      setError(null);
       
-      // Get user info after successful login
-      const user = await AuthService.getCurrentUser();
-      dispatch({ type: 'AUTH_SUCCESS', payload: user });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
-      dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
-      throw error;
+      const response = await AuthService.login(credentials);
+      setUser({
+        user_id: response.user_id,
+        username: response.username,
+        is_superuser: response.is_superuser,
+      });
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Logout function
-  const logout = async () => {
-    try {
-      await AuthService.logout();
-      dispatch({ type: 'AUTH_LOGOUT' });
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear local state even if API call fails
-      dispatch({ type: 'AUTH_LOGOUT' });
-    }
+  const logout = () => {
+    AuthService.logout();
+    setUser(null);
+    setError(null);
   };
 
-  // Clear error function
   const clearError = () => {
-    dispatch({ type: 'CLEAR_ERROR' });
+    setError(null);
   };
 
   const value: AuthContextType = {
-    ...state,
+    user,
+    isAuthenticated: !!user,
+    isLoading,
     login,
     logout,
+    error,
     clearError,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-// Custom hook to use auth context
-export function useAuth() {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}; 
