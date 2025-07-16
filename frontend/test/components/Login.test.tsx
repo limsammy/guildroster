@@ -26,10 +26,17 @@ global.alert = vi.fn();
 const renderLogin = () => {
   const router = createMemoryRouter([
     {
+      path: '/',
+      element: <div>Home</div>,
+    },
+    {
       path: '/login',
       element: <Login />,
     },
-  ]);
+  ], {
+    initialEntries: ['/login'],
+    initialIndex: 1,
+  });
 
   return render(<RouterProvider router={router} />);
 };
@@ -144,11 +151,16 @@ describe('Login Page', () => {
     expect(rememberCheckbox).toHaveAttribute('type', 'checkbox');
   });
 
-  it('has proper error handling structure', () => {
+  it('has proper form structure', () => {
     renderLogin();
 
-    // Error message container should exist but be empty initially
+    // Form should be present with proper role
     const form = screen.getByRole('form');
     expect(form).toBeInTheDocument();
+    
+    // Form should contain all required elements
+    expect(form).toContainElement(screen.getByLabelText('Username'));
+    expect(form).toContainElement(screen.getByLabelText('Password'));
+    expect(form).toContainElement(screen.getByRole('button', { name: 'Sign in' }));
   });
 }); 
