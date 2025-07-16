@@ -1,19 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import AuthService from '../../app/api/auth';
 
-// Mock axios
-vi.mock('axios', () => ({
-  default: {
-    create: vi.fn(() => ({
-      post: vi.fn(),
-      get: vi.fn(),
-      interceptors: {
-        request: { use: vi.fn() },
-        response: { use: vi.fn() },
-      },
-    })),
-  },
-}));
+// Mock axios with hoisted mock
+vi.mock('axios', () => {
+  const mockAxiosInstance = {
+    post: vi.fn(),
+    get: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn() },
+      response: { use: vi.fn() },
+    },
+  };
+
+  return {
+    default: {
+      create: vi.fn(() => mockAxiosInstance),
+    },
+  };
+});
+
+// Import AuthService after mocking axios
+import AuthService from '../../app/api/auth';
 
 // Mock localStorage
 const localStorageMock = {
@@ -56,6 +62,7 @@ describe('AuthService', () => {
         },
       };
 
+      // Get the mocked axios instance
       const axios = await import('axios');
       const mockAxios = axios.default as any;
       mockAxios.create().post.mockResolvedValue(mockResponse);
@@ -73,6 +80,7 @@ describe('AuthService', () => {
     });
 
     it('should throw error on invalid credentials', async () => {
+      // Get the mocked axios instance
       const axios = await import('axios');
       const mockAxios = axios.default as any;
       mockAxios.create().post.mockRejectedValue({
@@ -85,6 +93,7 @@ describe('AuthService', () => {
     });
 
     it('should throw error on validation failure', async () => {
+      // Get the mocked axios instance
       const axios = await import('axios');
       const mockAxios = axios.default as any;
       mockAxios.create().post.mockRejectedValue({

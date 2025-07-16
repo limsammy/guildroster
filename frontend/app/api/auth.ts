@@ -119,7 +119,8 @@ export class AuthService {
    * Get auth token
    */
   static getToken(): string | null {
-    return localStorage.getItem('auth_token') || ENV_TOKEN;
+    const token = localStorage.getItem('auth_token') || ENV_TOKEN;
+    return token || null;
   }
 
   /**

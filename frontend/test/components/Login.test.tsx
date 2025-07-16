@@ -17,11 +17,33 @@ vi.mock('react-router', async () => {
         {children}
       </a>
     ),
+    useNavigate: () => mockNavigate,
   };
 });
 
-// Mock alert
-global.alert = vi.fn();
+// Mock localStorage
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+});
+
+// Mock environment variables
+vi.mock('../../app/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+    error: null,
+    clearError: vi.fn(),
+  }),
+}));
 
 const renderLogin = () => {
   const router = createMemoryRouter([
@@ -44,6 +66,7 @@ const renderLogin = () => {
 describe('Login Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorageMock.getItem.mockReturnValue(null);
   });
 
   it('renders login form with all elements', () => {
@@ -85,7 +108,7 @@ describe('Login Page', () => {
     expect(screen.getByRole('button', { name: 'Signing in...' })).toBeDisabled();
   });
 
-  it('shows alert after successful submission', async () => {
+  it('handles form submission and stores authentication data', async () => {
     renderLogin();
 
     const usernameInput = screen.getByLabelText('Username');
@@ -96,8 +119,20 @@ describe('Login Page', () => {
     fireEvent.change(passwordInput, { target: { value: 'testpass' } });
     fireEvent.click(submitButton);
 
+    // Wait for the loading state
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('Login functionality will be implemented with the API integration');
+      expect(screen.getByRole('button', { name: 'Signing in...' })).toBeInTheDocument();
+    });
+
+    // Wait for the form submission to complete
+    await waitFor(() => {
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', 'dummy-token');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('user_info', JSON.stringify({
+        user_id: 1,
+        username: 'testuser',
+        is_superuser: false,
+      }));
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     }, { timeout: 2000 });
   });
 
@@ -162,5 +197,25 @@ describe('Login Page', () => {
     expect(form).toContainElement(screen.getByLabelText('Username'));
     expect(form).toContainElement(screen.getByLabelText('Password'));
     expect(form).toContainElement(screen.getByRole('button', { name: 'Sign in' }));
+  });
+
+  it('shows already authenticated message when user has token', () => {
+    localStorageMock.getItem.mockReturnValue('existing-token');
+    
+    renderLogin();
+
+    expect(screen.getByText('You are already logged in!')).toBeInTheDocument();
+    expect(screen.getByText('Redirecting to home page...')).toBeInTheDocument();
+    expect(screen.getByText('You are already authenticated and will be redirected shortly.')).toBeInTheDocument();
+  });
+
+  it('does not show login form when already authenticated', () => {
+    localStorageMock.getItem.mockReturnValue('existing-token');
+    
+    renderLogin();
+
+    expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 }); 
