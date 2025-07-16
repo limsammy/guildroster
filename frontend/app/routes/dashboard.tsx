@@ -64,13 +64,13 @@ export default function Dashboard() {
   const totalRaids = raids.length;
   const activeScenarios = scenarios.filter(s => s.is_active).length;
 
-  // Get upcoming raids (next 7 days)
+  // Get recent raids (last 7 days)
   const now = new Date();
-  const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const upcomingRaids = raids.filter(raid => {
+  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const recentRaids = raids.filter(raid => {
     const raidDate = new Date(raid.scheduled_at);
-    return raidDate >= now && raidDate <= nextWeek;
-  }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+    return raidDate >= lastWeek && raidDate <= now;
+  }).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
   // Group teams by guild
   const teamsByGuild = teams.reduce((acc, team) => {
@@ -167,20 +167,20 @@ export default function Dashboard() {
             {/* Upcoming Raids */}
             <Card variant="elevated" className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Upcoming Raids</h2>
+                <h2 className="text-2xl font-bold text-white">Recent Raids</h2>
                 <Button size="sm" variant="secondary">
                   View All
                 </Button>
               </div>
               
-              {upcomingRaids.length === 0 ? (
+              {recentRaids.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">📅</div>
-                  <p className="text-slate-300">No upcoming raids scheduled</p>
+                  <p className="text-slate-300">No recent raids scheduled</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {upcomingRaids.slice(0, 5).map((raid) => {
+                  {recentRaids.slice(0, 5).map((raid) => {
                     const team = teams.find(t => t.id === raid.team_id);
                     const scenario = scenarios.find(s => s.id === raid.scenario_id);
                     const raidDate = new Date(raid.scheduled_at);
@@ -222,8 +222,8 @@ export default function Dashboard() {
                 </Button>
                 <Button className="h-16" variant="secondary">
                   <div className="text-center">
-                    <div className="text-2xl mb-1">⚔️</div>
-                    <div className="text-sm">Create Raid</div>
+                    <div className="text-2xl mb-1">📋</div>
+                    <div className="text-sm">Import Logs</div>
                   </div>
                 </Button>
                 <Button className="h-16" variant="secondary">
