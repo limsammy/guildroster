@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../ui/Button';
+import { Link } from 'react-router';
 
 export const Hero: React.FC = () => {
   return (
@@ -45,9 +46,11 @@ export const Hero: React.FC = () => {
         
         {/* Call to Action */}
         <div className="flex justify-center items-center">
-          <Button size="lg" className="min-w-[200px]">
-            Login
-          </Button>
+          <Link to="/login">
+            <Button size="lg" className="min-w-[200px]">
+              Login
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
