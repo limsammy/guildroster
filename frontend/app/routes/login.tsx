@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import type { Route } from "./+types/login";
 import { Button, Card, Container } from "../components/ui";
 import { Link } from "react-router";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Login - GuildRoster" },
     { name: "description", content: "Login to GuildRoster to manage your guild's roster and track attendance." },
@@ -59,7 +58,7 @@ export default function Login() {
         </div>
 
         <Card variant="elevated" className="max-w-md mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" role="form">
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
                 <p className="text-red-400 text-sm">{error}</p>
