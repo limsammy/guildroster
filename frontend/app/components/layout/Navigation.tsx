@@ -17,20 +17,8 @@ export const Navigation: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-slate-300 hover:text-white transition-colors duration-200">
-              Features
-            </a>
-            <a href="#about" className="text-slate-300 hover:text-white transition-colors duration-200">
-              About
-            </a>
-            <a href="#contact" className="text-slate-300 hover:text-white transition-colors duration-200">
-              Contact
-            </a>
             <Button variant="ghost" size="sm">
               Login
-            </Button>
-            <Button size="sm">
-              Get Started
             </Button>
           </div>
 
@@ -55,33 +43,9 @@ export const Navigation: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-slate-800/90 backdrop-blur-md border-t border-slate-700/50">
-              <a
-                href="#features"
-                className="block px-3 py-2 text-slate-300 hover:text-white transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Features
-              </a>
-              <a
-                href="#about"
-                className="block px-3 py-2 text-slate-300 hover:text-white transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                About
-              </a>
-              <a
-                href="#contact"
-                className="block px-3 py-2 text-slate-300 hover:text-white transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Contact
-              </a>
               <div className="pt-4 space-y-2">
                 <Button variant="ghost" size="sm" className="w-full">
                   Login
-                </Button>
-                <Button size="sm" className="w-full">
-                  Get Started
                 </Button>
               </div>
             </div>
