@@ -1,8 +1,11 @@
 import React from 'react';
 import { Button } from '../ui/Button';
 import { Link } from 'react-router';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const Hero: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated background */}
@@ -46,11 +49,19 @@ export const Hero: React.FC = () => {
         
         {/* Call to Action */}
         <div className="flex justify-center items-center">
-          <Link to="/login">
-            <Button size="lg" className="min-w-[200px]">
-              Login
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard">
+              <Button size="lg" className="min-w-[200px]">
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login">
+              <Button size="lg" className="min-w-[200px]">
+                Login
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </section>

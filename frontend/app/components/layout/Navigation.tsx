@@ -1,29 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { Link } from 'react-router';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('auth_token') || import.meta.env.VITE_AUTH_TOKEN;
-      setIsAuthenticated(!!token);
-    };
-    
-    checkAuth();
-    // Listen for storage changes (when login/logout happens)
-    window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
-  }, []);
+  const { isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_info');
-    setIsAuthenticated(false);
-    window.location.href = '/';
+    logout();
+    setIsMenuOpen(false);
   };
 
   return (
@@ -32,17 +18,26 @@ export const Navigation: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-              GuildRoster
-            </h1>
+            <Link to="/">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                GuildRoster
+              </h1>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {isAuthenticated ? (
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </>
             ) : (
               <Link to="/login">
                 <Button variant="ghost" size="sm">
@@ -75,12 +70,16 @@ export const Navigation: React.FC = () => {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-slate-800/90 backdrop-blur-md border-t border-slate-700/50">
               <div className="pt-4 space-y-2">
                 {isAuthenticated ? (
-                  <Button variant="ghost" size="sm" className="w-full" onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}>
-                    Logout
-                  </Button>
+                  <>
+                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" size="sm" className="w-full">
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button variant="ghost" size="sm" className="w-full" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  </>
                 ) : (
                   <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full">
