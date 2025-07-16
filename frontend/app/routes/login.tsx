@@ -12,25 +12,23 @@ export function meta() {
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Check if user is already authenticated
   useEffect(() => {
-    const token = localStorage.getItem('auth_token') || import.meta.env.VITE_AUTH_TOKEN;
-    if (token) {
-      setIsAuthenticated(true);
+    if (isAuthenticated) {
       // Redirect after a short delay to show the message
       setTimeout(() => {
-        navigate('/');
+        navigate('/dashboard');
       }, 2000);
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,19 +36,8 @@ export default function Login() {
     setError('');
 
     try {
-      // For now, simulate a successful login
-      // In a real implementation, you would call the API here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Store a dummy token to simulate authentication
-      localStorage.setItem('auth_token', 'dummy-token');
-      localStorage.setItem('user_info', JSON.stringify({
-        user_id: 1,
-        username: formData.username,
-        is_superuser: false,
-      }));
-      
-      navigate('/');
+      await login(formData);
+      // Login successful - AuthContext will handle the redirect
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -65,6 +52,18 @@ export default function Login() {
     }));
   };
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-slate-300">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Container maxWidth="sm">
@@ -77,7 +76,7 @@ export default function Login() {
           {isAuthenticated ? (
             <div className="space-y-4">
               <p className="text-green-400 text-lg">You are already logged in!</p>
-              <p className="text-slate-300">Redirecting to home page...</p>
+              <p className="text-slate-300">Redirecting to dashboard...</p>
             </div>
           ) : (
             <p className="text-slate-300">Sign in to your account</p>
@@ -94,9 +93,9 @@ export default function Login() {
         ) : (
           <Card variant="elevated" className="max-w-md mx-auto">
             <form onSubmit={handleSubmit} className="space-y-6" role="form">
-              {error && (
+              {(error || authError) && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                  <p className="text-red-400 text-sm">{error}</p>
+                  <p className="text-red-400 text-sm">{error || authError}</p>
                 </div>
               )}
 

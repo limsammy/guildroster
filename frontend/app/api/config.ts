@@ -4,6 +4,9 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'a
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Environment token for development/testing
+const ENV_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
+
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -16,7 +19,7 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token') || ENV_TOKEN;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }

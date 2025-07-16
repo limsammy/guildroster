@@ -32,17 +32,28 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
-// Mock environment variables
+// Mock AuthContext
+const mockLogin = vi.fn();
+const mockAuthContext: {
+  user: { user_id: number; username: string; is_superuser: boolean } | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: typeof mockLogin;
+  logout: () => void;
+  error: string | null;
+  clearError: () => void;
+} = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  login: mockLogin,
+  logout: vi.fn(),
+  error: null,
+  clearError: vi.fn(),
+};
+
 vi.mock('../../app/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: null,
-    isAuthenticated: false,
-    isLoading: false,
-    login: vi.fn(),
-    logout: vi.fn(),
-    error: null,
-    clearError: vi.fn(),
-  }),
+  useAuth: () => mockAuthContext,
 }));
 
 const renderLogin = () => {
@@ -67,6 +78,11 @@ describe('Login Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue(null);
+    // Reset mock auth context
+    mockAuthContext.user = null;
+    mockAuthContext.isAuthenticated = false;
+    mockAuthContext.isLoading = false;
+    mockAuthContext.error = null;
   });
 
   it('renders login form with all elements', () => {
@@ -108,7 +124,7 @@ describe('Login Page', () => {
     expect(screen.getByRole('button', { name: 'Signing in...' })).toBeDisabled();
   });
 
-  it('handles form submission and stores authentication data', async () => {
+  it('handles form submission and calls login function', async () => {
     renderLogin();
 
     const usernameInput = screen.getByLabelText('Username');
@@ -126,14 +142,11 @@ describe('Login Page', () => {
 
     // Wait for the form submission to complete
     await waitFor(() => {
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', 'dummy-token');
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('user_info', JSON.stringify({
-        user_id: 1,
+      expect(mockLogin).toHaveBeenCalledWith({
         username: 'testuser',
-        is_superuser: false,
-      }));
-      expect(mockNavigate).toHaveBeenCalledWith('/');
-    }, { timeout: 2000 });
+        password: 'testpass',
+      });
+    });
   });
 
   it('requires username and password fields', () => {
@@ -199,23 +212,59 @@ describe('Login Page', () => {
     expect(form).toContainElement(screen.getByRole('button', { name: 'Sign in' }));
   });
 
-  it('shows already authenticated message when user has token', () => {
-    localStorageMock.getItem.mockReturnValue('existing-token');
+  it('shows loading state when checking authentication', () => {
+    mockAuthContext.isLoading = true;
+    
+    renderLogin();
+
+    expect(screen.getByText('Checking authentication...')).toBeInTheDocument();
+  });
+
+  it('shows already authenticated message when user is authenticated', () => {
+    mockAuthContext.isAuthenticated = true;
+    mockAuthContext.user = { user_id: 1, username: 'testuser', is_superuser: false };
     
     renderLogin();
 
     expect(screen.getByText('You are already logged in!')).toBeInTheDocument();
-    expect(screen.getByText('Redirecting to home page...')).toBeInTheDocument();
+    expect(screen.getByText('Redirecting to dashboard...')).toBeInTheDocument();
     expect(screen.getByText('You are already authenticated and will be redirected shortly.')).toBeInTheDocument();
   });
 
   it('does not show login form when already authenticated', () => {
-    localStorageMock.getItem.mockReturnValue('existing-token');
+    mockAuthContext.isAuthenticated = true;
+    mockAuthContext.user = { user_id: 1, username: 'testuser', is_superuser: false };
     
     renderLogin();
 
     expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
+  it('shows error message when login fails', async () => {
+    mockLogin.mockRejectedValue(new Error('Invalid credentials'));
+    
+    renderLogin();
+
+    const usernameInput = screen.getByLabelText('Username');
+    const passwordInput = screen.getByLabelText('Password');
+    const submitButton = screen.getByRole('button', { name: 'Sign in' });
+
+    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+    fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
+    });
+  });
+
+  it('shows auth context error when present', () => {
+    mockAuthContext.error = 'Authentication error from context';
+    
+    renderLogin();
+
+    expect(screen.getByText('Authentication error from context')).toBeInTheDocument();
   });
 }); 

@@ -34,20 +34,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const currentUser = AuthService.getCurrentUser();
-        if (currentUser && AuthService.isAuthenticated()) {
-          setUser(currentUser);
-        } else if (AuthService.isAuthenticated()) {
-          // If we have a token but no user info, try to validate it
-          const isValid = await AuthService.validateToken();
-          if (isValid) {
-            // For environment tokens, we might not have user info stored
-            // You could add a method to fetch user info from the API
-            setUser({
-              user_id: 0,
-              username: 'API User',
-              is_superuser: true,
-            });
+        // Check if we have a token (either from localStorage or environment)
+        if (AuthService.isAuthenticated()) {
+          const currentUser = AuthService.getCurrentUser();
+          
+          if (currentUser) {
+            // We have both token and user info
+            setUser(currentUser);
+          } else {
+            // We have a token but no user info (likely environment token)
+            // Try to validate the token with the backend
+            const isValid = await AuthService.validateToken();
+            if (isValid) {
+              // For environment tokens, create a default user
+              setUser({
+                user_id: 0,
+                username: 'API User',
+                is_superuser: true,
+              });
+            } else {
+              // Token is invalid, clear it
+              AuthService.logout();
+            }
           }
         }
       } catch (err) {
