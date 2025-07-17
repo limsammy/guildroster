@@ -11,6 +11,22 @@ import type { Team, Guild } from '../../app/api/types';
 // Mock the API services
 vi.mock('../../app/api/teams');
 vi.mock('../../app/api/guilds');
+vi.mock('../../app/api/auth', () => ({
+  default: {
+    isAuthenticated: vi.fn(() => true),
+    getCurrentUser: vi.fn(() => ({ user_id: 1, username: 'testuser', is_superuser: true })),
+    login: vi.fn(),
+    logout: vi.fn(),
+    validateToken: vi.fn(() => Promise.resolve(true)),
+  },
+  AuthService: {
+    isAuthenticated: vi.fn(() => true),
+    getCurrentUser: vi.fn(() => ({ user_id: 1, username: 'testuser', is_superuser: true })),
+    login: vi.fn(),
+    logout: vi.fn(),
+    validateToken: vi.fn(() => Promise.resolve(true)),
+  },
+}));
 
 const mockTeamService = vi.mocked(TeamService);
 const mockGuildService = vi.mocked(GuildService);
@@ -314,6 +330,7 @@ describe('Teams', () => {
         expect(mockTeamService.createTeam).toHaveBeenCalledWith({
           name: 'New Team',
           guild_id: 1,
+          created_by: 1,
         });
       });
 

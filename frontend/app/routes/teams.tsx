@@ -47,10 +47,18 @@ export default function Teams() {
   }, []);
 
   const handleAddTeam = async (values: { name: string; guild_id: number }) => {
+    if (!user) {
+      setFormError('User not authenticated');
+      return;
+    }
+    
     try {
       setFormLoading(true);
       setFormError(null);
-      const newTeam = await TeamService.createTeam(values);
+      const newTeam = await TeamService.createTeam({
+        ...values,
+        created_by: user.user_id,
+      });
       setTeams(prev => [...prev, newTeam]);
       setShowAddForm(false);
     } catch (err: any) {
