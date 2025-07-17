@@ -59,7 +59,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 
 ### **Core Management Pages**
 - ✅ **Teams page** - List, create, edit, delete teams
-- ✅ **Toons page** - List, create, edit, delete toons
+- ✅ **Toons page** - List, create, edit, delete toons (with test fixes)
 - ❌ **Raids page** - List, create, edit, delete raids
 - ❌ **Scenarios page** - List, create, edit, delete scenarios
 
@@ -110,6 +110,7 @@ This document outlines the current state of the GuildRoster frontend implementat
    - ✅ Toon detail view
    - ✅ Main/alt toon designation
    - ✅ Tests for toon functionality
+   - ✅ Fixed test issues with multiple element matches and form submission
 
 4. **Member Detail Pages** - Enhanced member management
    - [ ] Individual member detail pages with toon list
@@ -226,7 +227,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 
 ## 🎯 **NEXT STEPS**
 
-### **Immediate Priority (This Week)**
+### **Immediate Priority**
 1. ✅ **Implement Guilds page** - Foundation for guild management
 2. ✅ **GuildForm component** - Reusable form for guild operations
 3. ✅ **Create guild tests** - Ensure functionality works correctly
@@ -234,17 +235,18 @@ This document outlines the current state of the GuildRoster frontend implementat
 5. ✅ **Implement Teams page** - Build on guilds foundation
 6. ✅ **TeamForm component** - Reusable form for team operations
 
-### **Short Term (Next 2 Weeks)**
+### **Short Term**
 1. ✅ **Teams page** - Build on guilds foundation
-2. **Toons page** - Character management
-3. **Basic attendance page** - Core attendance tracking
+2. ✅ **Toons page** - Character management (with test fixes)
+3. **Raids page** - Raid scheduling and management
+4. **Basic attendance page** - Core attendance tracking
 
-### **Medium Term (Next Month)**
+### **Medium Term**
 1. **Raids page** - Raid scheduling
 2. **Scenarios page** - Raid instance management
 3. **Bulk attendance interface** - Efficient operations
 
-### **Long Term (Next Quarter)**
+### **Long Term**
 1. **Advanced analytics** - Charts and reporting
 2. **Calendar view** - Visual scheduling
 3. **Admin features** - User and token management
@@ -268,4 +270,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 - **2024-01-XX**: Completed Members page and form validation fixes
 - **2024-01-XX**: All tests passing for existing functionality
 - **2024-01-XX**: ✅ **COMPLETED** - Guilds page with full CRUD functionality
-- **2024-01-XX**: ✅ **COMPLETED** - Removed faction field from Guild model to match backend API 
+- **2024-01-XX**: ✅ **COMPLETED** - Removed faction field from Guild model to match backend API
+- **2024-01-XX**: ✅ **COMPLETED** - Teams page with full CRUD functionality
+- **2024-01-XX**: ✅ **COMPLETED** - Toons page with full CRUD functionality
+- **2024-01-XX**: ✅ **COMPLETED** - Fixed test issues for multiple element matches and form submission 
