@@ -73,7 +73,6 @@ export default function Dashboard() {
       })
     : raids;
 
-  const totalGuilds = selectedGuild ? 1 : guilds.length;
   const totalTeams = filteredTeams.length;
   const totalMembers = filteredMembers.length;
   const totalRaids = filteredRaids.length;
@@ -163,13 +162,7 @@ export default function Dashboard() {
       <Container>
         <div className="py-8">
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <Card variant="elevated" className="text-center p-6">
-              <div className="text-3xl font-bold text-amber-400 mb-2">{totalGuilds}</div>
-              <div className="text-slate-300">
-                {selectedGuild ? 'Guild' : 'Guilds'}
-              </div>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-blue-400 mb-2">{totalTeams}</div>
               <div className="text-slate-300">

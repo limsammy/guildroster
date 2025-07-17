@@ -141,7 +141,6 @@ describe('Dashboard', () => {
     });
 
     // Check statistics cards
-    expect(screen.getByText('Guilds')).toBeInTheDocument();
     expect(screen.getByText('Members')).toBeInTheDocument();
     expect(screen.getByText('Total Raids')).toBeInTheDocument();
     expect(screen.getByText('Active Scenarios')).toBeInTheDocument();
@@ -152,10 +151,10 @@ describe('Dashboard', () => {
     
     // Check that the statistics values are present (using getAllByText for multiple "1"s)
     const ones = screen.getAllByText('1');
-    expect(ones).toHaveLength(4); // Should have 4 cards with value "1"
+    expect(ones).toHaveLength(3); // Should have 3 cards with value "1" (teams, members, scenarios)
     
     const zeros = screen.getAllByText('0');
-    expect(zeros).toHaveLength(1); // Should have 1 card with value "0"
+    expect(zeros).toHaveLength(1); // Should have 1 card with value "0" (raids)
   });
 
   it('renders error state when API calls fail', async () => {
