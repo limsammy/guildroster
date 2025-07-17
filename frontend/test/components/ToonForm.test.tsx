@@ -11,6 +11,11 @@ const mockMembers: Member[] = [
   { id: 2, display_name: 'Test Member 2', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
 ];
 
+const mockTeams = [
+  { id: 1, name: 'Raid Team', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+  { id: 2, name: 'Bench Team', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+];
+
 const mockToon: Toon = {
   id: 1,
   username: 'TestToon',
@@ -18,6 +23,7 @@ const mockToon: Toon = {
   role: 'DPS',
   is_main: true,
   member_id: 1,
+  team_ids: [],
   created_at: '2024-01-01T00:00:00',
   updated_at: '2024-01-01T00:00:00',
 };
@@ -26,6 +32,7 @@ const renderToonForm = (props = {}) => {
   const defaultProps = {
     mode: 'add' as const,
     members: mockMembers,
+    teams: mockTeams,
     onSubmit: vi.fn(),
     onCancel: vi.fn(),
     ...props,
@@ -255,7 +262,7 @@ describe('ToonForm', () => {
       expect(screen.getByLabelText('Class')).toHaveValue('Mage');
       expect(screen.getByLabelText('Role')).toHaveValue('DPS');
       expect(screen.getByLabelText('Member')).toHaveValue('1');
-      expect(screen.getByRole('checkbox')).toBeChecked();
+      expect(screen.getByLabelText('Main character')).toBeChecked();
     });
 
     it('submits form with updated data', async () => {
