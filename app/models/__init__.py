@@ -4,6 +4,7 @@ from .guild import Guild
 from .team import Team
 from .member import Member
 from .toon import Toon
+from .toon_team import ToonTeam
 from .raid import Raid
 from .scenario import Scenario
 from .attendance import Attendance
