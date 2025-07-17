@@ -54,6 +54,7 @@ export interface Guild {
 
 export interface GuildCreate {
   name: string;
+  created_by: number;
 }
 
 export interface GuildUpdate {

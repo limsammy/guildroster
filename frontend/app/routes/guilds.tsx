@@ -40,10 +40,18 @@ export default function Guilds() {
   }, []);
 
   const handleAddGuild = async (values: { name: string }) => {
+    if (!user) {
+      setFormError('User not authenticated');
+      return;
+    }
+    
     try {
       setFormLoading(true);
       setFormError(null);
-      const newGuild = await GuildService.createGuild(values);
+      const newGuild = await GuildService.createGuild({
+        ...values,
+        created_by: user.user_id,
+      });
       setGuilds(prev => [...prev, newGuild]);
       setShowAddForm(false);
     } catch (err: any) {

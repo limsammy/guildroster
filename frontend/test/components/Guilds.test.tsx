@@ -9,7 +9,7 @@ import { GuildService } from '../../app/api/guilds';
 // Mock the services
 vi.mock('../../app/api/guilds');
 vi.mock('../../app/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 1, username: 'testuser', is_superuser: true } }),
+  useAuth: () => ({ user: { user_id: 1, username: 'testuser', is_superuser: true } }),
 }));
 
 // Mock window.confirm
@@ -129,7 +129,10 @@ describe('Guilds Page', () => {
     const submitButton = screen.getByTestId('guild-form-submit');
     await waitFor(() => expect(submitButton).not.toBeDisabled());
     userEvent.click(submitButton);
-    await waitFor(() => expect(GuildService.createGuild).toHaveBeenCalled());
+    await waitFor(() => expect(GuildService.createGuild).toHaveBeenCalledWith({
+      name: 'New Guild',
+      created_by: 1,
+    }));
     await waitFor(() => expect(screen.queryByTestId('guild-form-modal')).not.toBeInTheDocument());
   });
 
