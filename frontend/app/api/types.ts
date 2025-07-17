@@ -48,22 +48,16 @@ export interface TokenCreate {
 export interface Guild {
   id: number;
   name: string;
-  realm: string;
-  faction: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface GuildCreate {
   name: string;
-  realm: string;
-  faction: string;
 }
 
 export interface GuildUpdate {
   name?: string;
-  realm?: string;
-  faction?: string;
 }
 
 // Team Types
