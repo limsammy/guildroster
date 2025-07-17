@@ -20,6 +20,7 @@ export default function MemberDetail() {
   const [toons, setToons] = useState<Toon[]>([]);
   const [guild, setGuild] = useState<Guild | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showToonForm, setShowToonForm] = useState(false);
@@ -38,13 +39,15 @@ export default function MemberDetail() {
       setLoading(true);
       setError(null);
 
-      const [memberData, toonsData] = await Promise.all([
+      const [memberData, toonsData, teamsData] = await Promise.all([
         MemberService.getMember(memberId),
         ToonService.getToonsByMember(memberId),
+        TeamService.getTeams(),
       ]);
 
       setMember(memberData);
       setToons(toonsData);
+      setTeams(teamsData);
 
       // Load guild and team data
       if (memberData.guild_id) {
@@ -64,7 +67,7 @@ export default function MemberDetail() {
     }
   };
 
-  const handleCreateToon = async (values: { username: string; class: string; role: string; is_main: boolean; member_id: number }) => {
+  const handleCreateToon = async (values: { username: string; class: string; role: string; is_main: boolean; member_id: number; team_ids?: number[] }) => {
     try {
       setFormLoading(true);
       setFormError(null);
@@ -78,7 +81,7 @@ export default function MemberDetail() {
     }
   };
 
-  const handleUpdateToon = async (values: { username: string; class: string; role: string; is_main: boolean; member_id: number }) => {
+  const handleUpdateToon = async (values: { username: string; class: string; role: string; is_main: boolean; member_id: number; team_ids?: number[] }) => {
     if (!editingToon) return;
     try {
       setFormLoading(true);
@@ -147,6 +150,7 @@ export default function MemberDetail() {
             mode={editingToon ? 'edit' : 'add'}
             initialValues={editingToon || { member_id: member.id }}
             members={[member]} // Only show this member
+            teams={teams}
             loading={formLoading}
             error={formError}
             onSubmit={editingToon ? handleUpdateToon : handleCreateToon}

@@ -3,12 +3,13 @@ import { Link } from 'react-router';
 import { Container, Button, Card } from '../components/ui';
 import { ToonForm } from '../components/ui/ToonForm';
 import { MemberSelector } from '../components/ui/MemberSelector';
-import { ToonService, MemberService } from '../api';
-import type { Toon, ToonCreate, ToonUpdate, Member } from '../api/types';
+import { ToonService, MemberService, TeamService } from '../api';
+import type { Toon, ToonCreate, ToonUpdate, Member, Team } from '../api/types';
 
 export default function Toons() {
   const [toons, setToons] = useState<Toon[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -23,6 +24,7 @@ export default function Toons() {
   useEffect(() => {
     loadToons();
     loadMembers();
+    loadTeams();
   }, []);
 
   const loadToons = async () => {
@@ -45,6 +47,15 @@ export default function Toons() {
       setMembers(data);
     } catch (err) {
       console.error('Error loading members:', err);
+    }
+  };
+
+  const loadTeams = async () => {
+    try {
+      const data = await TeamService.getTeams();
+      setTeams(data);
+    } catch (err) {
+      console.error('Error loading teams:', err);
     }
   };
 
@@ -140,6 +151,7 @@ export default function Toons() {
             mode={editingToon ? 'edit' : 'add'}
             initialValues={editingToon || (selectedMember ? { member_id: selectedMember.id } : undefined)}
             members={editingToon ? members : (selectedMember ? [selectedMember] : members)}
+            teams={teams}
             loading={formLoading}
             error={formError}
             onSubmit={editingToon ? handleUpdateToon : handleCreateToon}

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Button, Card } from './';
-import type { Toon, Member } from '../../api/types';
+import type { Toon, Member, Team } from '../../api/types';
 
 interface ToonFormProps {
   mode: 'add' | 'edit';
   initialValues?: Partial<Toon>;
   members: Member[];
+  teams: Team[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { username: string; class: string; role: string; is_main: boolean; member_id: number }) => void;
+  onSubmit: (values: { username: string; class: string; role: string; is_main: boolean; member_id: number; team_ids?: number[] }) => void;
   onCancel: () => void;
   hideMemberSelect?: boolean; // New prop to hide member selection
 }
@@ -34,6 +35,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   mode,
   initialValues = {},
   members,
+  teams,
   loading = false,
   error = null,
   onSubmit,
@@ -45,6 +47,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   const [role, setRole] = useState(initialValues.role || '');
   const [isMain, setIsMain] = useState(initialValues.is_main ?? false);
   const [memberId, setMemberId] = useState<number | ''>(initialValues.member_id ?? '');
+  const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>(initialValues.team_ids || []);
   const [showErrors, setShowErrors] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -57,6 +60,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
       role,
       is_main: isMain,
       member_id: Number(memberId),
+      team_ids: selectedTeamIds.length > 0 ? selectedTeamIds : undefined,
     });
   };
 
@@ -147,6 +151,34 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             {memberError && <div className="text-red-400 text-xs mt-1">{memberError}</div>}
           </div>
         )}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Teams (Optional)
+          </label>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {teams.map(team => (
+              <label key={team.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedTeamIds.includes(team.id)}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setSelectedTeamIds(prev => [...prev, team.id]);
+                    } else {
+                      setSelectedTeamIds(prev => prev.filter(id => id !== team.id));
+                    }
+                  }}
+                  className="w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-2"
+                  disabled={loading}
+                />
+                <span className="ml-2 text-sm text-slate-300">{team.name}</span>
+              </label>
+            ))}
+          </div>
+          {teams.length === 0 && (
+            <p className="text-slate-400 text-xs">No teams available</p>
+          )}
+        </div>
         <div className="mb-6">
           <label className="flex items-center">
             <input

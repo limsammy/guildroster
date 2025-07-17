@@ -10,6 +10,7 @@ from sqlalchemy import (
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from typing import List
 
 from app.database import Base
 
@@ -51,6 +52,15 @@ class Toon(Base):
     attendance = relationship(
         "Attendance", back_populates="toon", cascade="all, delete-orphan"
     )
+    toon_teams = relationship(
+        "ToonTeam", back_populates="toon", cascade="all, delete-orphan"
+    )
+    teams = relationship("Team", secondary="toon_teams", back_populates="toons")
+
+    @property
+    def team_ids(self) -> List[int]:
+        """Get list of team IDs this toon belongs to."""
+        return [team.id for team in self.teams]
 
     __table_args__ = (
         UniqueConstraint(

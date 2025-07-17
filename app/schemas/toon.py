@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 WOW_CLASSES = [
@@ -41,6 +41,7 @@ class ToonBase(BaseModel):
 
 class ToonCreate(ToonBase):
     member_id: int
+    team_ids: Optional[List[int]] = None
 
 
 class ToonUpdate(BaseModel):
@@ -48,6 +49,7 @@ class ToonUpdate(BaseModel):
     class_: Optional[str] = Field(None, alias="class", max_length=20)
     role: Optional[str] = Field(None, max_length=20)
     is_main: Optional[bool] = None
+    team_ids: Optional[List[int]] = None
 
     @field_validator("class_")
     @classmethod
@@ -69,6 +71,7 @@ class ToonResponse(ToonBase):
     member_id: int
     created_at: datetime
     updated_at: datetime
+    team_ids: List[int] = []
 
     model_config = ConfigDict(
         from_attributes=True,

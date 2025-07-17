@@ -32,6 +32,10 @@ class Team(Base):
     raids = relationship(
         "Raid", back_populates="team", cascade="all, delete-orphan"
     )
+    toon_teams = relationship(
+        "ToonTeam", back_populates="team", cascade="all, delete-orphan"
+    )
+    toons = relationship("Toon", secondary="toon_teams", back_populates="teams")
 
     # Constraints
     __table_args__ = (

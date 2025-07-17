@@ -5,6 +5,8 @@ from typing import List, Optional
 from app.database import get_db
 from app.models.toon import Toon
 from app.models.member import Member
+from app.models.team import Team
+from app.models.toon_team import ToonTeam
 from app.schemas.toon import ToonCreate, ToonUpdate, ToonResponse
 from app.models.token import Token
 from app.models.user import User
@@ -41,6 +43,37 @@ def enforce_one_main_toon(
                 status_code=400,
                 detail="A member can have only one main toon.",
             )
+
+
+def update_toon_teams(
+    db: Session, toon_id: int, team_ids: Optional[List[int]] = None
+):
+    """Update team assignments for a toon."""
+    if team_ids is None:
+        return
+
+    # Remove existing team assignments
+    db.query(ToonTeam).filter(ToonTeam.toon_id == toon_id).delete()
+
+    # Add new team assignments
+    for team_id in team_ids:
+        # Verify team exists
+        team = db.query(Team).filter(Team.id == team_id).first()
+        if not team:
+            raise HTTPException(
+                status_code=400, detail=f"Team with ID {team_id} not found."
+            )
+
+        # Check if toon is already assigned to this team
+        existing = (
+            db.query(ToonTeam)
+            .filter(ToonTeam.toon_id == toon_id, ToonTeam.team_id == team_id)
+            .first()
+        )
+
+        if not existing:
+            toon_team = ToonTeam(toon_id=toon_id, team_id=team_id)
+            db.add(toon_team)
 
 
 @router.post(
@@ -81,6 +114,13 @@ def create_toon(
     db.add(toon)
     db.commit()
     db.refresh(toon)
+
+    # Handle team assignments
+    if toon_in.team_ids:
+        update_toon_teams(db, toon.id, toon_in.team_ids)  # type: ignore[arg-type]
+        db.commit()
+        db.refresh(toon)
+
     return toon
 
 
@@ -164,6 +204,11 @@ def update_toon(
     if toon_in.is_main is not None:
         enforce_one_main_toon(db, toon.member_id, toon_in.is_main, toon_id=toon_id)  # type: ignore[arg-type]
         toon.is_main = toon_in.is_main  # type: ignore[assignment]
+
+    # Handle team assignments
+    if toon_in.team_ids is not None:
+        update_toon_teams(db, toon_id, toon_in.team_ids)
+
     db.commit()
     db.refresh(toon)
     return toon

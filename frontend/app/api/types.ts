@@ -111,6 +111,7 @@ export interface Toon {
   role: string;
   is_main: boolean;
   member_id: number;
+  team_ids: number[];
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +122,7 @@ export interface ToonCreate {
   role: string;
   is_main: boolean;
   member_id: number;
+  team_ids?: number[];
 }
 
 export interface ToonUpdate {
@@ -129,6 +131,7 @@ export interface ToonUpdate {
   role?: string;
   is_main?: boolean;
   member_id?: number;
+  team_ids?: number[];
 }
 
 // Scenario Types
