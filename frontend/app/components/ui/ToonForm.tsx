@@ -10,6 +10,7 @@ interface ToonFormProps {
   error?: string | null;
   onSubmit: (values: { username: string; class: string; role: string; is_main: boolean; member_id: number }) => void;
   onCancel: () => void;
+  hideMemberSelect?: boolean; // New prop to hide member selection
 }
 
 // WoW classes and roles from backend
@@ -37,6 +38,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   error = null,
   onSubmit,
   onCancel,
+  hideMemberSelect = false,
 }) => {
   const [username, setUsername] = useState(initialValues.username || '');
   const [class_, setClass] = useState(initialValues.class || '');
@@ -48,7 +50,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!username.trim() || !class_ || !role || !memberId) return;
+    if (!username.trim() || !class_ || !role || (!hideMemberSelect && !memberId)) return;
     onSubmit({
       username: username.trim(),
       class: class_,
@@ -61,7 +63,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   const usernameError = showErrors && !username.trim() ? 'Username is required' : '';
   const classError = showErrors && !class_ ? 'Class is required' : '';
   const roleError = showErrors && !role ? 'Role is required' : '';
-  const memberError = showErrors && !memberId ? 'Member is required' : '';
+  const memberError = showErrors && !hideMemberSelect && !memberId ? 'Member is required' : '';
 
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
@@ -125,24 +127,26 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           </select>
           {roleError && <div className="text-red-400 text-xs mt-1">{roleError}</div>}
         </div>
-        <div className="mb-4">
-          <label htmlFor="toon-member" className="block text-sm font-medium text-slate-300 mb-2">
-            Member
-          </label>
-          <select
-            id="toon-member"
-            value={memberId}
-            onChange={e => setMemberId(e.target.value ? Number(e.target.value) : '')}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            disabled={loading}
-          >
-            <option value="">Select a member</option>
-            {members.map(member => (
-              <option key={member.id} value={member.id}>{member.name}</option>
-            ))}
-          </select>
-          {memberError && <div className="text-red-400 text-xs mt-1">{memberError}</div>}
-        </div>
+        {!hideMemberSelect && (
+          <div className="mb-4">
+            <label htmlFor="toon-member" className="block text-sm font-medium text-slate-300 mb-2">
+              Member
+            </label>
+            <select
+              id="toon-member"
+              value={memberId}
+              onChange={e => setMemberId(e.target.value ? Number(e.target.value) : '')}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              disabled={loading}
+            >
+              <option value="">Select a member</option>
+              {members.map(member => (
+                <option key={member.id} value={member.id}>{member.display_name}</option>
+              ))}
+            </select>
+            {memberError && <div className="text-red-400 text-xs mt-1">{memberError}</div>}
+          </div>
+        )}
         <div className="mb-6">
           <label className="flex items-center">
             <input
@@ -162,7 +166,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           <Button 
             type="submit" 
             variant="primary" 
-            disabled={loading || !username.trim() || !class_ || !role || memberId === ''} 
+            disabled={loading || !username.trim() || !class_ || !role || (!hideMemberSelect && memberId === '')} 
             data-testid="toon-form-submit"
           >
             {loading ? (mode === 'add' ? 'Adding...' : 'Saving...') : (mode === 'add' ? 'Add Toon' : 'Save Changes')}

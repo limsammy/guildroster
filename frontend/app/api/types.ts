@@ -83,7 +83,7 @@ export interface TeamUpdate {
 // Member Types
 export interface Member {
   id: number;
-  name: string;
+  display_name: string;
   guild_id: number;
   team_id?: number;
   created_at: string;
@@ -91,13 +91,13 @@ export interface Member {
 }
 
 export interface MemberCreate {
-  name: string;
+  display_name: string;
   guild_id: number;
   team_id?: number;
 }
 
 export interface MemberUpdate {
-  name?: string;
+  display_name?: string;
   guild_id?: number;
   team_id?: number;
 }

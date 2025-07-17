@@ -60,12 +60,12 @@ export default function Members() {
     fetchData();
   }, []);
 
-  const handleAddMember = async (values: { name: string; guild_id: number; team_id?: number | null }) => {
+  const handleAddMember = async (values: { display_name: string; guild_id: number; team_id?: number | null }) => {
     try {
       setFormLoading(true);
       setFormError(null);
       const memberData = {
-        name: values.name,
+        display_name: values.display_name,
         guild_id: values.guild_id,
         team_id: values.team_id ? values.team_id : undefined,
       };
@@ -81,13 +81,13 @@ export default function Members() {
     }
   };
 
-  const handleEditMember = async (values: { name: string; guild_id: number; team_id?: number | null }) => {
+  const handleEditMember = async (values: { display_name: string; guild_id: number; team_id?: number | null }) => {
     if (!editingMember) return;
     try {
       setFormLoading(true);
       setFormError(null);
       const memberData = {
-        name: values.name,
+        display_name: values.display_name,
         guild_id: values.guild_id,
         team_id: values.team_id ? values.team_id : undefined,
       };
@@ -122,7 +122,7 @@ export default function Members() {
 
   // Filter members based on search and filters
   const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = member.display_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesGuild = selectedGuild === '' || member.guild_id === selectedGuild;
     const matchesTeam = selectedTeam === '' || member.team_id === selectedTeam;
     
@@ -344,7 +344,7 @@ export default function Members() {
                     {filteredMembers.map((member) => (
                       <tr key={member.id} className="border-b border-slate-600/30 hover:bg-slate-800/30">
                         <td className="py-4 px-4">
-                          <div className="font-medium text-white">{member.name}</div>
+                          <div className="font-medium text-white">{member.display_name}</div>
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-slate-300">{getGuildName(member.guild_id)}</span>
@@ -365,9 +365,11 @@ export default function Members() {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex gap-2">
-                            <Button size="sm" variant="ghost">
-                              View
-                            </Button>
+                            <Link to={`/members/${member.id}`}>
+                              <Button size="sm" variant="ghost">
+                                View
+                              </Button>
+                            </Link>
                             <Button 
                               size="sm" 
                               variant="ghost"

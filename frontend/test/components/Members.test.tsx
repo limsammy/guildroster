@@ -98,16 +98,16 @@ describe('Members', () => {
     
     // Mock successful API responses
     vi.mocked(MemberService.getMembers).mockResolvedValue([
-      { id: 1, name: 'Test Member', guild_id: 1, team_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, display_name: 'Test Member', guild_id: 1, team_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, name: 'Test Guild', created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([
       { id: 1, name: 'Test Team', guild_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(ToonService.getToons).mockResolvedValue([
-      { id: 1, name: 'TestToon', class_name: 'Warrior', role: 'Tank', is_main: true, member_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, username: 'TestToon', class: 'Mage', role: 'DPS', is_main: true, member_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
 
     renderMembers();
@@ -183,10 +183,10 @@ describe('Members', () => {
     const { ToonService } = await import('../../app/api/toons');
     
     vi.mocked(MemberService.getMembers).mockResolvedValue([
-      { id: 1, name: 'Test Member', guild_id: 1, team_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, display_name: 'Test Member', guild_id: 1, team_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, name: 'Test Guild', created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([
       { id: 1, name: 'Test Team', guild_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
@@ -208,7 +208,7 @@ describe('Members', () => {
     const { MemberService } = await import('../../app/api/members');
     vi.mocked(MemberService.getMembers).mockResolvedValue([]);
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+      { id: 1, name: 'Test Guild', created_at: '', updated_at: '' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([]);
     vi.mocked(ToonService.getToons).mockResolvedValue([]);
@@ -229,7 +229,7 @@ describe('Members', () => {
     
     vi.mocked(MemberService.getMembers).mockResolvedValue([]);
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+      { id: 1, name: 'Test Guild', created_at: '', updated_at: '' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([]);
     vi.mocked(ToonService.getToons).mockResolvedValue([]);
@@ -270,9 +270,9 @@ describe('Members', () => {
     const { ToonService } = await import('../../app/api/toons');
     
     vi.mocked(MemberService.getMembers).mockResolvedValue([]);
-    vi.mocked(MemberService.createMember).mockResolvedValue({ id: 2, name: 'New Member', guild_id: 1, created_at: '', updated_at: '' });
+    vi.mocked(MemberService.createMember).mockResolvedValue({ id: 2, display_name: 'New Member', guild_id: 1, created_at: '', updated_at: '' });
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+      { id: 1, name: 'Test Guild', created_at: '', updated_at: '' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([]);
     vi.mocked(ToonService.getToons).mockResolvedValue([]);
@@ -297,11 +297,11 @@ describe('Members', () => {
     const { ToonService } = await import('../../app/api/toons');
     
     vi.mocked(MemberService.getMembers).mockResolvedValue([
-      { id: 1, name: 'Test Member', guild_id: 1, created_at: '', updated_at: '' }
+      { id: 1, display_name: 'Test Member', guild_id: 1, created_at: '', updated_at: '' }
     ]);
-    vi.mocked(MemberService.updateMember).mockResolvedValue({ id: 1, name: 'Edited Member', guild_id: 1, created_at: '', updated_at: '' });
+    vi.mocked(MemberService.updateMember).mockResolvedValue({ id: 1, display_name: 'Edited Member', guild_id: 1, created_at: '', updated_at: '' });
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+      { id: 1, name: 'Test Guild', created_at: '', updated_at: '' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([]);
     vi.mocked(ToonService.getToons).mockResolvedValue([]);
@@ -329,7 +329,7 @@ describe('Members', () => {
     vi.mocked(MemberService.getMembers).mockResolvedValue([]);
     vi.mocked(MemberService.createMember).mockRejectedValue(new Error('Create failed'));
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+      { id: 1, name: 'Test Guild', created_at: '', updated_at: '' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([]);
     vi.mocked(ToonService.getToons).mockResolvedValue([]);

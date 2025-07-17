@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Container, Button, Card } from '../components/ui';
 import { ToonForm } from '../components/ui/ToonForm';
+import { MemberSelector } from '../components/ui/MemberSelector';
 import { ToonService, MemberService } from '../api';
 import type { Toon, ToonCreate, ToonUpdate, Member } from '../api/types';
 
@@ -11,6 +12,8 @@ export default function Toons() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showMemberSelector, setShowMemberSelector] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [editingToon, setEditingToon] = useState<Toon | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export default function Toons() {
       await ToonService.createToon(values);
       await loadToons();
       setShowForm(false);
+      setSelectedMember(null);
     } catch (err: any) {
       setFormError(err.response?.data?.detail || 'Failed to create toon');
     } finally {
@@ -90,13 +94,25 @@ export default function Toons() {
 
   const handleCancel = () => {
     setShowForm(false);
+    setShowMemberSelector(false);
+    setSelectedMember(null);
     setEditingToon(null);
     setFormError(null);
   };
 
+  const handleMemberSelect = (member: Member) => {
+    setSelectedMember(member);
+    setShowMemberSelector(false);
+    setShowForm(true);
+  };
+
+  const handleStartCreateToon = () => {
+    setShowMemberSelector(true);
+  };
+
   const getMemberName = (memberId: number) => {
     const member = members.find(m => m.id === memberId);
-    return member?.name || 'Unknown Member';
+    return member?.display_name || 'Unknown Member';
   };
 
   const filteredToons = toons.filter(toon => {
@@ -107,18 +123,28 @@ export default function Toons() {
     return matchesSearch && matchesMember;
   });
 
+  if (showMemberSelector) {
+    return (
+      <MemberSelector
+        onMemberSelect={handleMemberSelect}
+        onCancel={handleCancel}
+      />
+    );
+  }
+
   if (showForm || editingToon) {
     return (
       <Container>
         <div className="py-8">
           <ToonForm
             mode={editingToon ? 'edit' : 'add'}
-            initialValues={editingToon || undefined}
-            members={members}
+            initialValues={editingToon || (selectedMember ? { member_id: selectedMember.id } : undefined)}
+            members={editingToon ? members : (selectedMember ? [selectedMember] : members)}
             loading={formLoading}
             error={formError}
             onSubmit={editingToon ? handleUpdateToon : handleCreateToon}
             onCancel={handleCancel}
+            hideMemberSelect={!editingToon && selectedMember !== null}
           />
         </div>
       </Container>
@@ -147,11 +173,9 @@ export default function Toons() {
           </div>
           <div className="flex gap-3">
             <Link to="/dashboard">
-              <Button variant="secondary">
-                Dashboard
-              </Button>
+              <Button variant="secondary">Back to Dashboard</Button>
             </Link>
-            <Button variant="primary" onClick={() => setShowForm(true)}>
+            <Button onClick={handleStartCreateToon}>
               Add Toon
             </Button>
           </div>
@@ -190,7 +214,7 @@ export default function Toons() {
               >
                 <option value="">All Members</option>
                 {members.map(member => (
-                  <option key={member.id} value={member.id}>{member.name}</option>
+                  <option key={member.id} value={member.id}>{member.display_name}</option>
                 ))}
               </select>
             </div>

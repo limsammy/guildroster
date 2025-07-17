@@ -21,8 +21,8 @@ vi.mock('../../app/api', () => ({
 
 // Mock data
 const mockMembers: Member[] = [
-  { id: 1, name: 'Test Member 1', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-  { id: 2, name: 'Test Member 2', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+  { id: 1, display_name: 'Test Member 1', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+  { id: 2, display_name: 'Test Member 2', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
 ];
 
 const mockToons: Toon[] = [

@@ -126,7 +126,7 @@ describe('Dashboard', () => {
       { id: 1, name: 'Test Team', guild_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(MemberService.getMembers).mockResolvedValue([
-      { id: 1, name: 'Test Member', guild_id: 1, team_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, display_name: 'Test Member', guild_id: 1, team_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(RaidService.getRaids).mockResolvedValue([]);
     vi.mocked(ScenarioService.getScenarios).mockResolvedValue([
