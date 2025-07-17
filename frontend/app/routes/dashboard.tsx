@@ -241,9 +241,11 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">Raid Teams</h2>
-                <Button size="sm" variant="primary">
-                  Manage Teams
-                </Button>
+                <Link to="/teams">
+                  <Button size="sm" variant="primary">
+                    Manage Teams
+                  </Button>
+                </Link>
               </div>
 
               {Object.keys(teamsByGuild).length === 0 ? (
