@@ -58,7 +58,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 ## ❌ **MISSING (Frontend)**
 
 ### **Core Management Pages**
-- ❌ **Teams page** - List, create, edit, delete teams
+- ✅ **Teams page** - List, create, edit, delete teams
 - ❌ **Toons page** - List, create, edit, delete toons
 - ❌ **Raids page** - List, create, edit, delete raids
 - ❌ **Scenarios page** - List, create, edit, delete scenarios
@@ -97,12 +97,12 @@ This document outlines the current state of the GuildRoster frontend implementat
    - ✅ Tests for guild functionality
    - ✅ Removed faction field to match backend API
 
-2. **Teams page** - Required for team organization
-   - [ ] Teams list page (filtered by guild)
-   - [ ] TeamForm component for create/edit
-   - [ ] Team detail view with member list
-   - [ ] Team assignment functionality
-   - [ ] Tests for team functionality
+2. ✅ **Teams page** - Required for team organization
+   - ✅ Teams list page (filtered by guild)
+   - ✅ TeamForm component for create/edit
+   - ✅ Team detail view with member list
+   - ✅ Team assignment functionality
+   - ✅ Tests for team functionality
 
 3. **Toons page** - Character management
    - [ ] Toons list page (filtered by member)
@@ -223,11 +223,11 @@ This document outlines the current state of the GuildRoster frontend implementat
 2. ✅ **GuildForm component** - Reusable form for guild operations
 3. ✅ **Create guild tests** - Ensure functionality works correctly
 4. ✅ **Update navigation** - Add guilds to main navigation
-5. **Implement Teams page** - Build on guilds foundation
-6. **TeamForm component** - Reusable form for team operations
+5. ✅ **Implement Teams page** - Build on guilds foundation
+6. ✅ **TeamForm component** - Reusable form for team operations
 
 ### **Short Term (Next 2 Weeks)**
-1. **Teams page** - Build on guilds foundation
+1. ✅ **Teams page** - Build on guilds foundation
 2. **Toons page** - Character management
 3. **Basic attendance page** - Core attendance tracking
 
