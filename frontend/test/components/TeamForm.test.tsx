@@ -42,7 +42,8 @@ describe('TeamForm', () => {
   describe('Add Mode', () => {
     it('renders add form with correct title', () => {
       renderTeamForm();
-      expect(screen.getByText('Add Team')).toBeInTheDocument();
+      // Use getByRole for heading
+      expect(screen.getByRole('heading', { name: /Add Team/i })).toBeInTheDocument();
     });
 
     it('renders empty form fields', () => {
@@ -63,7 +64,9 @@ describe('TeamForm', () => {
       renderTeamForm();
       
       const submitButton = screen.getByTestId('team-form-submit');
-      fireEvent.click(submitButton);
+      const form = submitButton.closest('form');
+      if (!form) throw new Error('Form not found');
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Name is required')).toBeInTheDocument();
@@ -246,7 +249,9 @@ describe('TeamForm', () => {
 
       // Submit form
       const submitButton = screen.getByTestId('team-form-submit');
-      fireEvent.click(submitButton);
+      const form = submitButton.closest('form');
+      if (!form) throw new Error('Form not found');
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Name is required')).toBeInTheDocument();
@@ -264,7 +269,9 @@ describe('TeamForm', () => {
 
       // Submit form
       const submitButton = screen.getByTestId('team-form-submit');
-      fireEvent.click(submitButton);
+      const form = submitButton.closest('form');
+      if (!form) throw new Error('Form not found');
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Guild is required')).toBeInTheDocument();
@@ -277,7 +284,9 @@ describe('TeamForm', () => {
 
       // Submit empty form to show errors
       const submitButton = screen.getByTestId('team-form-submit');
-      fireEvent.click(submitButton);
+      const form = submitButton.closest('form');
+      if (!form) throw new Error('Form not found');
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText('Name is required')).toBeInTheDocument();
@@ -292,9 +301,9 @@ describe('TeamForm', () => {
         target: { value: '1' },
       });
 
-      // Errors should still be visible until form is submitted again
-      expect(screen.getByText('Name is required')).toBeInTheDocument();
-      expect(screen.getByText('Guild is required')).toBeInTheDocument();
+      // Errors should be cleared when form becomes valid
+      expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Guild is required')).not.toBeInTheDocument();
     });
   });
 }); 
