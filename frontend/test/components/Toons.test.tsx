@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import Toons from '../../app/routes/toons';
-import { ToonService, MemberService } from '../../app/api';
+import { ToonService, MemberService, TeamService } from '../../app/api';
 import type { Toon, Member } from '../../app/api/types';
 
 // Mock the API services
@@ -17,12 +17,15 @@ vi.mock('../../app/api', () => ({
   MemberService: {
     getMembers: vi.fn(),
   },
+  TeamService: {
+    getTeams: vi.fn(),
+  },
 }));
 
 // Mock data
 const mockMembers: Member[] = [
-  { id: 1, display_name: 'Test Member 1', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-  { id: 2, display_name: 'Test Member 2', guild_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+  { id: 1, display_name: 'Test Member 1', guild_id: 1, team_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+  { id: 2, display_name: 'Test Member 2', guild_id: 1, team_id: 1, created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
 ];
 
 const mockToons: Toon[] = [
@@ -75,6 +78,11 @@ describe('Toons', () => {
     (ToonService.createToon as any).mockResolvedValue(mockToons[0]);
     (ToonService.updateToon as any).mockResolvedValue(mockToons[0]);
     (ToonService.deleteToon as any).mockResolvedValue(undefined);
+    
+    // Mock TeamService for MemberSelector
+    vi.mocked(TeamService.getTeams).mockResolvedValue([
+      { id: 1, name: 'Test Team', guild_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
+    ]);
   });
 
   describe('Initial Load', () => {
@@ -254,7 +262,7 @@ describe('Toons', () => {
   });
 
   describe('Add Toon', () => {
-    it('shows add form when add button is clicked', async () => {
+    it('shows member selector when add button is clicked', async () => {
       renderToons();
       
       await waitFor(() => {
@@ -266,10 +274,38 @@ describe('Toons', () => {
       fireEvent.click(addToonElements[0]);
 
       await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Select Member' })).toBeInTheDocument();
+        expect(screen.getByText('Choose a member to create a character for')).toBeInTheDocument();
+      });
+    });
+
+    it('shows toon form after member selection', async () => {
+      renderToons();
+      
+      await waitFor(() => {
+        expect(screen.getByText('Add Toon')).toBeInTheDocument();
+      });
+
+      // Click Add Toon button
+      const addToonElements = screen.getAllByText('Add Toon');
+      fireEvent.click(addToonElements[0]);
+
+      // Wait for member selector to appear
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Select Member' })).toBeInTheDocument();
+      });
+
+      // Select a member
+      const selectButtons = screen.getAllByText('Select');
+      fireEvent.click(selectButtons[0]);
+
+      // Wait for toon form to appear
+      await waitFor(() => {
         expect(screen.getByLabelText('Username')).toBeInTheDocument();
         expect(screen.getByLabelText('Class')).toBeInTheDocument();
         expect(screen.getByLabelText('Role')).toBeInTheDocument();
-        expect(screen.getByLabelText('Member')).toBeInTheDocument();
+        // Member field should be hidden since we're in simplified mode
+        expect(screen.queryByLabelText('Member')).not.toBeInTheDocument();
       });
     });
 
@@ -280,10 +316,20 @@ describe('Toons', () => {
         expect(screen.getByText('Add Toon')).toBeInTheDocument();
       });
 
-      // Use getAllByText to get all "Add Toon" elements and click the first one (the button)
+      // Click Add Toon button
       const addToonElements = screen.getAllByText('Add Toon');
       fireEvent.click(addToonElements[0]);
 
+      // Wait for member selector to appear
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Select Member' })).toBeInTheDocument();
+      });
+
+      // Select a member
+      const selectButtons = screen.getAllByText('Select');
+      fireEvent.click(selectButtons[0]);
+
+      // Wait for toon form to appear
       await waitFor(() => {
         expect(screen.getByLabelText('Username')).toBeInTheDocument();
       });
@@ -297,9 +343,6 @@ describe('Toons', () => {
       });
       fireEvent.change(screen.getByLabelText('Role'), {
         target: { value: 'Healer' },
-      });
-      fireEvent.change(screen.getByLabelText('Member'), {
-        target: { value: '1' },
       });
 
       // Submit form
@@ -327,10 +370,20 @@ describe('Toons', () => {
         expect(screen.getByText('Add Toon')).toBeInTheDocument();
       });
 
-      // Use getAllByText to get all "Add Toon" elements and click the first one (the button)
+      // Click Add Toon button
       const addToonElements = screen.getAllByText('Add Toon');
       fireEvent.click(addToonElements[0]);
 
+      // Wait for member selector to appear
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Select Member' })).toBeInTheDocument();
+      });
+
+      // Select a member
+      const selectButtons = screen.getAllByText('Select');
+      fireEvent.click(selectButtons[0]);
+
+      // Wait for toon form to appear
       await waitFor(() => {
         expect(screen.getByLabelText('Username')).toBeInTheDocument();
       });
@@ -344,9 +397,6 @@ describe('Toons', () => {
       });
       fireEvent.change(screen.getByLabelText('Role'), {
         target: { value: 'DPS' },
-      });
-      fireEvent.change(screen.getByLabelText('Member'), {
-        target: { value: '1' },
       });
 
       // Submit form

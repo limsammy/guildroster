@@ -211,9 +211,11 @@ describe('GuildSwitcher', () => {
       expect(screen.getByText('Guild:')).toBeInTheDocument();
     });
     
-    // Check that the previously selected guild is selected
-    const select = screen.getByRole('combobox') as HTMLSelectElement;
-    expect(select.value).toBe('2');
+    // Wait for the guilds to be loaded and the select to be populated
+    await waitFor(() => {
+      const select = screen.getByRole('combobox') as HTMLSelectElement;
+      expect(select.value).toBe('2');
+    });
     
     // Check that the clear button is visible
     expect(screen.getByText('Clear')).toBeInTheDocument();
