@@ -59,7 +59,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 
 ### **Core Management Pages**
 - ✅ **Teams page** - List, create, edit, delete teams
-- ❌ **Toons page** - List, create, edit, delete toons
+- ✅ **Toons page** - List, create, edit, delete toons
 - ❌ **Raids page** - List, create, edit, delete raids
 - ❌ **Scenarios page** - List, create, edit, delete scenarios
 
@@ -104,12 +104,20 @@ This document outlines the current state of the GuildRoster frontend implementat
    - ✅ Team assignment functionality
    - ✅ Tests for team functionality
 
-3. **Toons page** - Character management
-   - [ ] Toons list page (filtered by member)
-   - [ ] ToonForm component with class/role selection
-   - [ ] Toon detail view
-   - [ ] Main/alt toon designation
-   - [ ] Tests for toon functionality
+3. ✅ **Toons page** - Character management
+   - ✅ Toons list page (filtered by member)
+   - ✅ ToonForm component with class/role selection
+   - ✅ Toon detail view
+   - ✅ Main/alt toon designation
+   - ✅ Tests for toon functionality
+
+4. **Member Detail Pages** - Enhanced member management
+   - [ ] Individual member detail pages with toon list
+   - [ ] Create toons directly from member page (no member dropdown)
+   - [ ] Member-specific toon management interface
+   - [ ] Quick toon creation workflow
+   - [ ] Member-toon relationship visualization
+   - [ ] Tests for member detail functionality
 
 4. **Raids page** - Raid scheduling
    - [ ] Raids list page with date filtering
