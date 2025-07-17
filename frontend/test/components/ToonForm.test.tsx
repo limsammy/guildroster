@@ -44,7 +44,7 @@ describe('ToonForm', () => {
   describe('Add Mode', () => {
     it('renders add form with correct title', () => {
       renderToonForm();
-      expect(screen.getByText('Add Toon')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Add Toon' })).toBeInTheDocument();
     });
 
     it('renders all form fields', () => {
@@ -255,7 +255,7 @@ describe('ToonForm', () => {
       expect(screen.getByLabelText('Class')).toHaveValue('Mage');
       expect(screen.getByLabelText('Role')).toHaveValue('DPS');
       expect(screen.getByLabelText('Member')).toHaveValue('1');
-      expect(screen.getByText('Main character')).toBeChecked();
+      expect(screen.getByRole('checkbox')).toBeChecked();
     });
 
     it('submits form with updated data', async () => {

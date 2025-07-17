@@ -99,7 +99,7 @@ describe('Dashboard', () => {
     
     // Mock successful API responses
     vi.mocked(GuildService.getGuilds).mockResolvedValue([
-      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { id: 1, name: 'Test Guild', created_at: '2024-01-01', updated_at: '2024-01-01' }
     ]);
     vi.mocked(TeamService.getTeams).mockResolvedValue([
       { id: 1, name: 'Test Team', guild_id: 1, created_at: '2024-01-01', updated_at: '2024-01-01' }
@@ -227,9 +227,10 @@ describe('Dashboard', () => {
     await waitFor(() => {
       expect(screen.getByText('Quick Actions')).toBeInTheDocument();
       expect(screen.getByText('Manage Members')).toBeInTheDocument();
-      expect(screen.getByText('Import Logs')).toBeInTheDocument();
-      expect(screen.getByText('Attendance')).toBeInTheDocument();
-      expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText('Manage Toons')).toBeInTheDocument();
+      expect(screen.getByText('Manage Guilds')).toBeInTheDocument();
+      const manageTeamsElements = screen.getAllByText('Manage Teams');
+      expect(manageTeamsElements.length).toBeGreaterThan(0);
     });
   });
 }); 
