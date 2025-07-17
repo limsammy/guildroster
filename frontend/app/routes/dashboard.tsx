@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Button, Card, Container } from "../components/ui";
+import { Button, Card, Container, GuildSwitcher } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { useGuild } from "../contexts/GuildContext";
 import { GuildService } from "../api/guilds";
 import { TeamService } from "../api/teams";
 import { MemberService } from "../api/members";
@@ -18,6 +19,7 @@ export function meta() {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { selectedGuild } = useGuild();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -57,23 +59,36 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  // Calculate statistics
-  const totalGuilds = guilds.length;
-  const totalTeams = teams.length;
-  const totalMembers = members.length;
-  const totalRaids = raids.length;
+  // Calculate statistics (filtered by selected guild if applicable)
+  const filteredTeams = selectedGuild 
+    ? teams.filter(team => team.guild_id === selectedGuild.id)
+    : teams;
+  const filteredMembers = selectedGuild
+    ? members.filter(member => member.guild_id === selectedGuild.id)
+    : members;
+  const filteredRaids = selectedGuild
+    ? raids.filter(raid => {
+        const team = teams.find(t => t.id === raid.team_id);
+        return team && team.guild_id === selectedGuild.id;
+      })
+    : raids;
+
+  const totalGuilds = selectedGuild ? 1 : guilds.length;
+  const totalTeams = filteredTeams.length;
+  const totalMembers = filteredMembers.length;
+  const totalRaids = filteredRaids.length;
   const activeScenarios = scenarios.filter(s => s.is_active).length;
 
-  // Get recent raids (last 7 days)
+  // Get recent raids (last 7 days, filtered by selected guild if applicable)
   const now = new Date();
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const recentRaids = raids.filter(raid => {
+  const recentRaids = filteredRaids.filter(raid => {
     const raidDate = new Date(raid.scheduled_at);
     return raidDate >= lastWeek && raidDate <= now;
   }).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
-  // Group teams by guild
-  const teamsByGuild = teams.reduce((acc, team) => {
+  // Group teams by guild (filtered by selected guild if applicable)
+  const teamsByGuild = filteredTeams.reduce((acc, team) => {
     const guild = guilds.find(g => g.id === team.guild_id);
     const guildName = guild?.name || 'Unknown Guild';
     if (!acc[guildName]) {
@@ -123,14 +138,22 @@ export default function Dashboard() {
                 <p className="text-slate-300 mt-1">
                   Welcome back, {user?.username || 'API User'}!
                 </p>
+                {selectedGuild && (
+                  <p className="text-amber-400 text-sm mt-1">
+                    Viewing: {selectedGuild.name}
+                  </p>
+                )}
               </div>
-              <div className="flex gap-3">
-                <Link to="/">
-                  <Button variant="primary">Home</Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="danger">Logout</Button>
-                </Link>
+              <div className="flex items-center gap-4">
+                <GuildSwitcher />
+                <div className="flex gap-3">
+                  <Link to="/">
+                    <Button variant="primary">Home</Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="danger">Logout</Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -143,19 +166,27 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-amber-400 mb-2">{totalGuilds}</div>
-              <div className="text-slate-300">Guilds</div>
+              <div className="text-slate-300">
+                {selectedGuild ? 'Guild' : 'Guilds'}
+              </div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-blue-400 mb-2">{totalTeams}</div>
-              <div className="text-slate-300">Raid Teams</div>
+              <div className="text-slate-300">
+                {selectedGuild ? 'Teams' : 'Raid Teams'}
+              </div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-green-400 mb-2">{totalMembers}</div>
-              <div className="text-slate-300">Members</div>
+              <div className="text-slate-300">
+                {selectedGuild ? 'Members' : 'Members'}
+              </div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-purple-400 mb-2">{totalRaids}</div>
-              <div className="text-slate-300">Total Raids</div>
+              <div className="text-slate-300">
+                {selectedGuild ? 'Raids' : 'Total Raids'}
+              </div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-orange-400 mb-2">{activeScenarios}</div>
@@ -246,7 +277,9 @@ export default function Dashboard() {
           <div className="mt-8">
             <Card variant="elevated" className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Raid Teams</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  {selectedGuild ? `${selectedGuild.name} Teams` : 'Raid Teams'}
+                </h2>
                 <Link to="/teams">
                   <Button size="sm" variant="primary">
                     Manage Teams
@@ -257,18 +290,22 @@ export default function Dashboard() {
               {Object.keys(teamsByGuild).length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">🏰</div>
-                  <p className="text-slate-300">No raid teams found</p>
+                  <p className="text-slate-300">
+                    {selectedGuild ? `No teams found in ${selectedGuild.name}` : 'No raid teams found'}
+                  </p>
                   <p className="text-slate-400 text-sm mt-2">Create your first team to get started</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {Object.entries(teamsByGuild).map(([guildName, guildTeams]) => (
                     <div key={guildName} className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4">
-                      <h3 className="font-semibold text-white mb-3">{guildName}</h3>
+                      {!selectedGuild && (
+                        <h3 className="font-semibold text-white mb-3">{guildName}</h3>
+                      )}
                       <div className="space-y-2">
                         {guildTeams.map((team) => {
-                          const teamMembers = members.filter(m => m.team_id === team.id);
-                          const teamRaids = raids.filter(r => r.team_id === team.id);
+                          const teamMembers = filteredMembers.filter(m => m.team_id === team.id);
+                          const teamRaids = filteredRaids.filter(r => r.team_id === team.id);
                           
                           return (
                             <div key={team.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded border border-slate-600/20">

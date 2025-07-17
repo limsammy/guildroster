@@ -70,6 +70,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 - ❌ **Attendance reports** - Date range reports and exports
 
 ### **Advanced Features**
+- ✅ **Guild Switching System** - Multi-guild management for superusers
 - ❌ **User management** - User list, permissions (superuser only)
 - ❌ **Token management** - API token management interface
 - ❌ **Calendar view** - Raid scheduling calendar
@@ -159,13 +160,13 @@ This document outlines the current state of the GuildRoster frontend implementat
    - [ ] Tests for statistics functionality
 
 ### **Phase 3: Advanced Features (Medium Priority)**
-1. **Guild Switching System** - Multi-guild management for superusers
-   - [ ] Settings page with guild switcher (superuser only)
-   - [ ] Guild context provider for app-wide guild state
-   - [ ] Dashboard customization based on selected guild
-   - [ ] Guild selection persistence (localStorage or backend)
-   - [ ] Hide guild-related UI for normal users
-   - [ ] Tests for guild switching functionality
+1. ✅ **Guild Switching System** - Multi-guild management for superusers
+   - ✅ GuildSwitcher component for superusers
+   - ✅ GuildContext provider for app-wide guild state
+   - ✅ Dashboard customization based on selected guild
+   - ✅ Guild selection persistence (localStorage)
+   - ✅ Hide guild-related UI for normal users
+   - ✅ Tests for guild switching functionality
 
 2. **Calendar view** - Visual raid scheduling
    - [ ] Monthly/weekly calendar view
