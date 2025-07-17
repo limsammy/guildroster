@@ -33,6 +33,65 @@ npm test
 npm run test:e2e
 ```
 
+## Development Commands
+
+### Running the Application
+```bash
+# Start development server with hot reload
+npm run dev
+
+# Start development server on specific port
+npm run dev -- --port 3000
+
+# Preview production build locally
+npm run preview
+```
+
+### Testing
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run tests for specific file
+npm test -- test/components/Button.test.tsx
+
+# Run E2E tests with Cypress
+npm run test:e2e
+
+# Open Cypress UI
+npm run cypress:open
+```
+
+### Building
+```bash
+# Build for production
+npm run build
+
+# Build with type checking
+npm run build:check
+
+# Type checking only
+npm run typecheck
+```
+
+### Code Quality
+```bash
+# Lint code
+npm run lint
+
+# Lint and fix automatically
+npm run lint:fix
+
+# Format code with Prettier
+npm run format
+```
+
 ## Authentication Setup
 
 The frontend connects to the FastAPI backend for authentication. Make sure your backend is running and has:
@@ -101,7 +160,7 @@ app/
 │   ├── ui/       # Base UI components (Button, Card, etc.)
 │   ├── layout/   # Layout components (Navigation, Footer)
 │   └── sections/ # Page sections (Hero)
-├── contexts/     # React contexts (AuthContext)
+├── contexts/     # React contexts (AuthContext, GuildContext)
 └── routes/       # Page components
 ```
 
@@ -110,6 +169,10 @@ app/
 The frontend uses a centralized API service layer:
 
 - **AuthService** - Handles login, logout, and token management
+- **GuildService** - Guild management operations
+- **TeamService** - Team management operations
+- **MemberService** - Member management operations
+- **ToonService** - Character management operations
 - **Axios interceptors** - Automatically add auth tokens to requests
 - **Error handling** - Graceful error handling for API failures
 - **Token storage** - Secure localStorage management
@@ -147,6 +210,7 @@ The app uses Tailwind CSS with custom WoW-themed colors:
 ### State Management
 
 - **AuthContext** - Manages authentication state
+- **GuildContext** - Manages guild selection and state
 - **Local Storage** - Persists tokens and user info
 - **React Router** - Handles navigation and routing
 
