@@ -1,6 +1,9 @@
 # Ignore user notes
 # notes/
 
+# Ignore Cypress screenshots
+frontend/cypress/screenshots/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
