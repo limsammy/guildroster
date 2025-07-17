@@ -145,25 +145,33 @@ This document outlines the current state of the GuildRoster frontend implementat
    - [ ] Tests for statistics functionality
 
 ### **Phase 3: Advanced Features (Medium Priority)**
-1 **Calendar view** - Visual raid scheduling
-   - ly/weekly calendar view
-   -Drag-and-drop raid scheduling
+1. **Guild Switching System** - Multi-guild management for superusers
+   - [ ] Settings page with guild switcher (superuser only)
+   - [ ] Guild context provider for app-wide guild state
+   - [ ] Dashboard customization based on selected guild
+   - [ ] Guild selection persistence (localStorage or backend)
+   - [ ] Hide guild-related UI for normal users
+   - [ ] Tests for guild switching functionality
+
+2. **Calendar view** - Visual raid scheduling
+   - [ ] Monthly/weekly calendar view
+   - [ ] Drag-and-drop raid scheduling
    - [ ] Calendar integration with raids
    - [ ] Tests for calendar functionality
 
-2. **Advanced filtering** - Complex search capabilities
+3. **Advanced filtering** - Complex search capabilities
    - [ ] Multi-field search and filter
    - [ ] Date range filtering
    - [ ] Saved filter presets
    - [ ] Tests for filtering functionality
 
-3. **Export functionality** - Data export features
-   - CSV export for all data types
+4. **Export functionality** - Data export features
+   - [ ] CSV export for all data types
    - [ ] PDF reports generation
    - [ ] Attendance report exports
    - [ ] Tests for export functionality
 
-4. **Visual analytics** - Charts and graphs
+5. **Visual analytics** - Charts and graphs
    - [ ] Attendance trend charts
    - [ ] Performance metrics visualization
    - [ ] Interactive dashboards
