@@ -1,6 +1,9 @@
 # Ignore user notes
 # notes/
 
+# Ignore vite
+.vite/
+
 # Ignore Cypress screenshots
 frontend/cypress/screenshots/
 
