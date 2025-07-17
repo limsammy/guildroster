@@ -17,21 +17,13 @@ vi.mock('../app/api/guilds', () => ({
 }));
 
 // Mock AuthContext
-vi.mock('../app/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: {
-      user_id: 1,
-      username: 'testuser',
-      is_superuser: true,
-    },
-    isAuthenticated: true,
-    isLoading: false,
-    login: vi.fn(),
-    logout: vi.fn(),
-    error: null,
-    clearError: vi.fn(),
-  }),
-}));
+vi.mock('../app/contexts/AuthContext', async () => {
+  const actual = await vi.importActual('../app/contexts/AuthContext');
+  return {
+    ...actual,
+    useAuth: vi.fn(),
+  };
+});
 
 // Mock localStorage
 const localStorageMock = {
@@ -63,16 +55,47 @@ const renderWithProviders = (component: React.ReactElement) => {
 };
 
 describe('GuildSwitcher', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue(null);
     localStorageMock.setItem.mockImplementation(() => {});
     localStorageMock.removeItem.mockImplementation(() => {});
+    
+    // Set up default useAuth mock
+    const { useAuth } = await import('../app/contexts/AuthContext');
+    vi.mocked(useAuth).mockReturnValue({
+      user: {
+        user_id: 1,
+        username: 'testuser',
+        is_superuser: true,
+      },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      error: null,
+      clearError: vi.fn(),
+    });
   });
 
   it('renders nothing for non-superusers', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    const { useAuth } = await import('../app/contexts/AuthContext');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue(mockGuilds);
+    vi.mocked(useAuth).mockReturnValue({
+      user: {
+        user_id: 1,
+        username: 'testuser',
+        is_superuser: false,
+      },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      error: null,
+      clearError: vi.fn(),
+    });
     
     renderWithProviders(<GuildSwitcher />);
     
@@ -81,6 +104,7 @@ describe('GuildSwitcher', () => {
 
   it('shows loading state while fetching guilds', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     // Mock a delayed response
     vi.mocked(GuildService.getGuilds).mockImplementation(() => 
       new Promise(resolve => setTimeout(() => resolve(mockGuilds), 100))
@@ -97,6 +121,7 @@ describe('GuildSwitcher', () => {
 
   it('shows "No guilds available" when no guilds exist', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue([]);
     
     renderWithProviders(<GuildSwitcher />);
@@ -108,6 +133,7 @@ describe('GuildSwitcher', () => {
 
   it('renders guild selector with available guilds', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue(mockGuilds);
     
     renderWithProviders(<GuildSwitcher />);
@@ -128,6 +154,7 @@ describe('GuildSwitcher', () => {
 
   it('allows selecting a guild', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue(mockGuilds);
     
     renderWithProviders(<GuildSwitcher />);
@@ -148,6 +175,7 @@ describe('GuildSwitcher', () => {
 
   it('allows clearing guild selection', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue(mockGuilds);
     
     renderWithProviders(<GuildSwitcher />);
@@ -173,6 +201,7 @@ describe('GuildSwitcher', () => {
 
   it('loads previously selected guild from localStorage', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue(mockGuilds);
     localStorageMock.getItem.mockReturnValue('2');
     
@@ -192,6 +221,7 @@ describe('GuildSwitcher', () => {
 
   it('handles API errors gracefully', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockRejectedValue(new Error('API Error'));
     
     renderWithProviders(<GuildSwitcher />);
@@ -203,6 +233,7 @@ describe('GuildSwitcher', () => {
 
   it('selects "All Guilds" by default when no guild is selected', async () => {
     const { GuildService } = await import('../app/api/guilds');
+    
     vi.mocked(GuildService.getGuilds).mockResolvedValue(mockGuilds);
     
     renderWithProviders(<GuildSwitcher />);

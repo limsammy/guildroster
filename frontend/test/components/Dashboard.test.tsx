@@ -50,21 +50,42 @@ vi.mock('../../app/api/scenarios', () => ({
 }));
 
 // Mock AuthContext
-vi.mock('../../app/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: {
-      user_id: 1,
-      username: 'testuser',
-      is_superuser: false,
-    },
-    isAuthenticated: true,
-    isLoading: false,
-    login: vi.fn(),
-    logout: vi.fn(),
-    error: null,
-    clearError: vi.fn(),
-  }),
-}));
+vi.mock('../../app/contexts/AuthContext', async () => {
+  const actual = await vi.importActual('../../app/contexts/AuthContext');
+  return {
+    ...actual,
+    useAuth: () => ({
+      user: {
+        user_id: 1,
+        username: 'testuser',
+        is_superuser: false,
+      },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      error: null,
+      clearError: vi.fn(),
+    }),
+  };
+});
+
+// Mock GuildContext
+vi.mock('../../app/contexts/GuildContext', async () => {
+  const actual = await vi.importActual('../../app/contexts/GuildContext');
+  return {
+    ...actual,
+    useGuild: () => ({
+      selectedGuild: null,
+      availableGuilds: [],
+      isLoading: false,
+      error: null,
+      selectGuild: vi.fn(),
+      refreshGuilds: vi.fn(),
+      clearError: vi.fn(),
+    }),
+  };
+});
 
 const renderDashboard = () => {
   const router = createMemoryRouter([
