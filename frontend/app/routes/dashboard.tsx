@@ -220,18 +220,24 @@ export default function Dashboard() {
                     <div className="text-sm font-medium">Manage Members</div>
                   </Button>
                 </Link>
-                <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                  <div className="text-3xl mb-2">📋</div>
-                  <div className="text-sm font-medium">Import Logs</div>
-                </Button>
-                <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                  <div className="text-3xl mb-2">📊</div>
-                  <div className="text-sm font-medium">Attendance</div>
-                </Button>
-                <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                  <div className="text-3xl mb-2">⚙️</div>
-                  <div className="text-sm font-medium">Settings</div>
-                </Button>
+                <Link to="/toons" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">⚔️</div>
+                    <div className="text-sm font-medium">Manage Toons</div>
+                  </Button>
+                </Link>
+                <Link to="/guilds" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">🏰</div>
+                    <div className="text-sm font-medium">Manage Guilds</div>
+                  </Button>
+                </Link>
+                <Link to="/teams" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">👥</div>
+                    <div className="text-sm font-medium">Manage Teams</div>
+                  </Button>
+                </Link>
               </div>
             </Card>
           </div>

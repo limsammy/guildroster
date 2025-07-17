@@ -105,32 +105,29 @@ export interface MemberUpdate {
 // Toon Types
 export interface Toon {
   id: number;
-  name: string;
-  class_name: string;
+  username: string;
+  class: string;
   role: string;
   is_main: boolean;
   member_id: number;
-  team_id?: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface ToonCreate {
-  name: string;
-  class_name: string;
+  username: string;
+  class: string;
   role: string;
   is_main: boolean;
   member_id: number;
-  team_id?: number;
 }
 
 export interface ToonUpdate {
-  name?: string;
-  class_name?: string;
+  username?: string;
+  class?: string;
   role?: string;
   is_main?: boolean;
   member_id?: number;
-  team_id?: number;
 }
 
 // Scenario Types
