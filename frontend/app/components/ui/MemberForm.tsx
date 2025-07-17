@@ -47,9 +47,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   const nameError = showErrors && !name.trim() ? 'Name is required' : '';
   const guildError = showErrors && !guildId ? 'Guild is required' : '';
 
-  // Debug logging
-  console.log('Form state:', { name, guildId, teamId, nameTrimmed: name.trim(), isNameValid: !!name.trim(), isGuildValid: !!guildId });
-
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
       <form onSubmit={handleSubmit}>
