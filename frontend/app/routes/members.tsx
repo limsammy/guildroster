@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Button, Card, Container } from "../components/ui";
+import { MemberForm } from "../components/ui/MemberForm";
 import { useAuth } from "../contexts/AuthContext";
 import { MemberService } from "../api/members";
 import { GuildService } from "../api/guilds";
@@ -28,6 +29,8 @@ export default function Members() {
   const [selectedTeam, setSelectedTeam] = useState<number | ''>('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,6 +59,66 @@ export default function Members() {
 
     fetchData();
   }, []);
+
+  const handleAddMember = async (values: { name: string; guild_id: number; team_id?: number | null }) => {
+    try {
+      setFormLoading(true);
+      setFormError(null);
+      const memberData = {
+        name: values.name,
+        guild_id: values.guild_id,
+        team_id: values.team_id ? values.team_id : undefined,
+      };
+      const newMember = await MemberService.createMember(memberData);
+      setMembers(prev => [...prev, newMember]);
+      setShowAddForm(false);
+    } catch (err: any) {
+      console.error('Error creating member:', err);
+      const msg = err.message || '';
+      setFormError(msg.toLowerCase().includes('create failed') ? 'Create failed' : msg || 'Failed to create member');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleEditMember = async (values: { name: string; guild_id: number; team_id?: number | null }) => {
+    if (!editingMember) return;
+    try {
+      setFormLoading(true);
+      setFormError(null);
+      const memberData = {
+        name: values.name,
+        guild_id: values.guild_id,
+        team_id: values.team_id ? values.team_id : undefined,
+      };
+      const updatedMember = await MemberService.updateMember(editingMember.id, memberData);
+      setMembers(prev => prev.map(m => m.id === editingMember.id ? updatedMember : m));
+      setEditingMember(null);
+    } catch (err: any) {
+      console.error('Error updating member:', err);
+      setFormError(err.message || 'Failed to update member');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteMember = async (memberId: number) => {
+    if (!confirm('Are you sure you want to delete this member?')) return;
+    
+    try {
+      await MemberService.deleteMember(memberId);
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+    } catch (err: any) {
+      console.error('Error deleting member:', err);
+      alert('Failed to delete member: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleCancelForm = () => {
+    setShowAddForm(false);
+    setEditingMember(null);
+    setFormError(null);
+  };
 
   // Filter members based on search and filters
   const filteredMembers = members.filter(member => {
@@ -312,7 +375,11 @@ export default function Members() {
                             >
                               Edit
                             </Button>
-                            <Button size="sm" variant="danger">
+                            <Button 
+                              size="sm" 
+                              variant="danger"
+                              onClick={() => handleDeleteMember(member.id)}
+                            >
                               Delete
                             </Button>
                           </div>
@@ -326,6 +393,24 @@ export default function Members() {
           </Card>
         </div>
       </Container>
+
+      {/* Member Form Modal */}
+      {(showAddForm || editingMember) && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" data-testid="member-form-modal">
+          <div className="w-full max-w-md">
+            <MemberForm
+              mode={showAddForm ? 'add' : 'edit'}
+              initialValues={editingMember || undefined}
+              guilds={guilds}
+              teams={teams}
+              loading={formLoading}
+              error={formError}
+              onSubmit={showAddForm ? handleAddMember : handleEditMember}
+              onCancel={handleCancelForm}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

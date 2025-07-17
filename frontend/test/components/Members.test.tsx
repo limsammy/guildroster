@@ -4,6 +4,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import Members from '../../app/routes/members';
+import userEvent from '@testing-library/user-event';
+import { GuildService } from '../../app/api/guilds';
+import { TeamService } from '../../app/api/teams';
+import { ToonService } from '../../app/api/toons';
 
 // Mock React Router
 vi.mock('react-router', async () => {
@@ -22,6 +26,8 @@ vi.mock('react-router', async () => {
 vi.mock('../../app/api/members', () => ({
   MemberService: {
     getMembers: vi.fn(),
+    createMember: vi.fn(),
+    updateMember: vi.fn(),
   },
 }));
 
@@ -196,5 +202,151 @@ describe('Members', () => {
       expect(screen.getByText('Characters')).toBeInTheDocument();
       expect(screen.getByText('Actions')).toBeInTheDocument();
     });
+  });
+
+  it('opens and cancels the add member modal', async () => {
+    const { MemberService } = await import('../../app/api/members');
+    vi.mocked(MemberService.getMembers).mockResolvedValue([]);
+    vi.mocked(GuildService.getGuilds).mockResolvedValue([
+      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+    ]);
+    vi.mocked(TeamService.getTeams).mockResolvedValue([]);
+    vi.mocked(ToonService.getToons).mockResolvedValue([]);
+
+    renderMembers();
+    await waitFor(() => expect(screen.getByText('Add Member')).toBeInTheDocument());
+    userEvent.click(screen.getByText('Add Member'));
+    await screen.findByTestId('member-form-modal');
+    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await waitFor(() => expect(screen.queryByTestId('member-form-modal')).not.toBeInTheDocument());
+  });
+
+  it('validates required fields in the add member form', async () => {
+    const { MemberService } = await import('../../app/api/members');
+    const { GuildService } = await import('../../app/api/guilds');
+    const { TeamService } = await import('../../app/api/teams');
+    const { ToonService } = await import('../../app/api/toons');
+    
+    vi.mocked(MemberService.getMembers).mockResolvedValue([]);
+    vi.mocked(GuildService.getGuilds).mockResolvedValue([
+      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+    ]);
+    vi.mocked(TeamService.getTeams).mockResolvedValue([]);
+    vi.mocked(ToonService.getToons).mockResolvedValue([]);
+
+    renderMembers();
+    await waitFor(() => expect(screen.getByText('Add Member')).toBeInTheDocument());
+    userEvent.click(screen.getByText('Add Member'));
+    await waitFor(() => expect(screen.getByTestId('member-form-modal')).toBeInTheDocument());
+
+    // Test that submit button is disabled when fields are empty
+    const submitButton = screen.getByTestId('member-form-submit');
+    expect(submitButton).toBeDisabled();
+
+    // Fill in name but leave guild empty
+    await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'Test Member');
+    
+    // Submit button should still be disabled because guild is empty
+    expect(submitButton).toBeDisabled();
+    
+    // Select guild - now submit button should be enabled
+    userEvent.selectOptions(screen.getByLabelText(/guild/i), ['1']);
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
+    
+    // Clear name field - button should be disabled again
+    userEvent.clear(screen.getByPlaceholderText(/enter member name/i));
+    expect(submitButton).toBeDisabled();
+    
+    // Fill name and clear guild - button should be disabled
+    await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'Test Member');
+    await userEvent.selectOptions(screen.getByLabelText(/guild/i), ['']);
+    await waitFor(() => expect(submitButton).toBeDisabled());
+  });
+
+  it('submits the add member form and calls createMember', async () => {
+    const { MemberService } = await import('../../app/api/members');
+    const { GuildService } = await import('../../app/api/guilds');
+    const { TeamService } = await import('../../app/api/teams');
+    const { ToonService } = await import('../../app/api/toons');
+    
+    vi.mocked(MemberService.getMembers).mockResolvedValue([]);
+    vi.mocked(MemberService.createMember).mockResolvedValue({ id: 2, name: 'New Member', guild_id: 1, created_at: '', updated_at: '' });
+    vi.mocked(GuildService.getGuilds).mockResolvedValue([
+      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+    ]);
+    vi.mocked(TeamService.getTeams).mockResolvedValue([]);
+    vi.mocked(ToonService.getToons).mockResolvedValue([]);
+
+    renderMembers();
+    await waitFor(() => expect(screen.getByText('Add Member')).toBeInTheDocument());
+    userEvent.click(screen.getByText('Add Member'));
+    await screen.findByTestId('member-form-modal');
+    await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'New Member');
+    userEvent.selectOptions(screen.getByLabelText(/guild/i), ['1']);
+    const submitButton = screen.getByTestId('member-form-submit');
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
+    userEvent.click(submitButton);
+    await waitFor(() => expect(MemberService.createMember).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByTestId('member-form-modal')).not.toBeInTheDocument());
+  });
+
+  it('opens and submits the edit member modal', async () => {
+    const { MemberService } = await import('../../app/api/members');
+    const { GuildService } = await import('../../app/api/guilds');
+    const { TeamService } = await import('../../app/api/teams');
+    const { ToonService } = await import('../../app/api/toons');
+    
+    vi.mocked(MemberService.getMembers).mockResolvedValue([
+      { id: 1, name: 'Test Member', guild_id: 1, created_at: '', updated_at: '' }
+    ]);
+    vi.mocked(MemberService.updateMember).mockResolvedValue({ id: 1, name: 'Edited Member', guild_id: 1, created_at: '', updated_at: '' });
+    vi.mocked(GuildService.getGuilds).mockResolvedValue([
+      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+    ]);
+    vi.mocked(TeamService.getTeams).mockResolvedValue([]);
+    vi.mocked(ToonService.getToons).mockResolvedValue([]);
+
+    renderMembers();
+    await waitFor(() => expect(screen.getByText('Edit')).toBeInTheDocument());
+    userEvent.click(screen.getByText('Edit'));
+    await screen.findByTestId('member-form-modal');
+    expect(screen.getByText(/edit member/i)).toBeInTheDocument();
+    userEvent.clear(screen.getByPlaceholderText(/enter member name/i));
+    await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'Edited Member');
+    const submitButton = screen.getByTestId('member-form-submit');
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
+    userEvent.click(submitButton);
+    await waitFor(() => expect(MemberService.updateMember).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByTestId('member-form-modal')).not.toBeInTheDocument());
+  });
+
+  it('shows error in the form if createMember fails', async () => {
+    const { MemberService } = await import('../../app/api/members');
+    const { GuildService } = await import('../../app/api/guilds');
+    const { TeamService } = await import('../../app/api/teams');
+    const { ToonService } = await import('../../app/api/toons');
+    
+    vi.mocked(MemberService.getMembers).mockResolvedValue([]);
+    vi.mocked(MemberService.createMember).mockRejectedValue(new Error('Create failed'));
+    vi.mocked(GuildService.getGuilds).mockResolvedValue([
+      { id: 1, name: 'Test Guild', realm: 'Test Realm', faction: 'Alliance', created_at: '', updated_at: '' }
+    ]);
+    vi.mocked(TeamService.getTeams).mockResolvedValue([]);
+    vi.mocked(ToonService.getToons).mockResolvedValue([]);
+
+    renderMembers();
+    await waitFor(() => expect(screen.getByText('Add Member')).toBeInTheDocument());
+    userEvent.click(screen.getByText('Add Member'));
+    await screen.findByTestId('member-form-modal');
+    await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'Fail Member');
+    userEvent.selectOptions(screen.getByLabelText(/guild/i), ['1']);
+    const submitButton = screen.getByTestId('member-form-submit');
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
+    userEvent.click(submitButton);
+    await waitFor(() =>
+      expect(
+        screen.getByText((content) => content.toLowerCase().includes('create failed'))
+      ).toBeInTheDocument()
+    );
   });
 }); 
