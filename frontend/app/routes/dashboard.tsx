@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Button, Card, Container, GuildSwitcher } from "../components/ui";
+import { Button, Card, Container } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useGuild } from "../contexts/GuildContext";
 import { GuildService } from "../api/guilds";
@@ -143,16 +143,13 @@ export default function Dashboard() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-4">
-                <GuildSwitcher />
-                <div className="flex gap-3">
-                  <Link to="/">
-                    <Button variant="primary">Home</Button>
-                  </Link>
-                  <Link to="/login">
-                    <Button variant="danger">Logout</Button>
-                  </Link>
-                </div>
+              <div className="flex gap-3">
+                <Link to="/">
+                  <Button variant="primary">Home</Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="danger">Logout</Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -250,22 +247,18 @@ export default function Dashboard() {
                     <div className="text-sm font-medium">Manage Toons</div>
                   </Button>
                 </Link>
-                <Link to="/guilds" className="block">
-                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                    <div className="text-3xl mb-2">🏰</div>
-                    <div className="text-sm font-medium">Manage Guilds</div>
-                  </Button>
-                </Link>
+                {user?.is_superuser && (
+                  <Link to="/settings" className="block">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center" variant="secondary">
+                      <div className="text-3xl mb-2">⚙️</div>
+                      <div className="text-sm font-medium">Settings</div>
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/teams" className="block">
                   <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
                     <div className="text-3xl mb-2">👥</div>
                     <div className="text-sm font-medium">Manage Teams</div>
-                  </Button>
-                </Link>
-                <Link to="/scenarios" className="block">
-                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                    <div className="text-3xl mb-2">🎮</div>
-                    <div className="text-sm font-medium">Manage Scenarios</div>
                   </Button>
                 </Link>
               </div>

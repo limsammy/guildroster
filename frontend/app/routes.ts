@@ -8,6 +8,7 @@ export default [
   route("members/:id", "routes/member.tsx"),
   route("guilds", "routes/guilds.tsx"),
   route("scenarios", "routes/scenarios.tsx"),
+  route("settings", "routes/settings.tsx"),
   route("teams", "routes/teams.tsx"),
   route("toons", "routes/toons.tsx")
 ] satisfies RouteConfig;

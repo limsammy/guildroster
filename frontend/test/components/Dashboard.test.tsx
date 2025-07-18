@@ -58,7 +58,7 @@ vi.mock('../../app/contexts/AuthContext', async () => {
       user: {
         user_id: 1,
         username: 'testuser',
-        is_superuser: false,
+        is_superuser: true,
       },
       isAuthenticated: true,
       isLoading: false,
@@ -248,7 +248,7 @@ describe('Dashboard', () => {
       expect(screen.getByText('Quick Actions')).toBeInTheDocument();
       expect(screen.getByText('Manage Members')).toBeInTheDocument();
       expect(screen.getByText('Manage Toons')).toBeInTheDocument();
-      expect(screen.getByText('Manage Guilds')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
       const manageTeamsElements = screen.getAllByText('Manage Teams');
       expect(manageTeamsElements.length).toBeGreaterThan(0);
     });
