@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -12,6 +12,7 @@ from app.schemas.scenario import (
 from app.models.token import Token
 from app.utils.auth import require_any_token, require_superuser
 from app.models.user import User
+from app.utils.request_logger import log_request_context
 
 router = APIRouter(prefix="/scenarios", tags=["Scenarios"])
 
@@ -55,6 +56,7 @@ def create_scenario(
     dependencies=[Depends(require_any_token)],
 )
 def list_scenarios(
+    request: Request,
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db),
     current_token: Token = Depends(require_any_token),
@@ -62,6 +64,10 @@ def list_scenarios(
     """
     List scenarios. Can filter by is_active. Any valid token required.
     """
+    log_request_context(
+        request, f"Listing scenarios (active filter: {is_active})"
+    )
+
     query = db.query(Scenario)
     if is_active is not None:
         query = query.filter(Scenario.is_active == is_active)

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.utils.logger import get_logger
+from app.utils.request_logger import RequestLoggingMiddleware
 from app.database import Base, engine
 from contextlib import asynccontextmanager
 import logging
@@ -51,6 +52,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Add request logging middleware
+    app.add_middleware(RequestLoggingMiddleware)
 
     # Include routers
     from app.routers import (

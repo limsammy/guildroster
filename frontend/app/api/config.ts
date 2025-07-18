@@ -27,6 +27,19 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add context headers for better backend logging
+    if (typeof window !== 'undefined') {
+      // Add User-Agent to identify frontend requests
+      config.headers['User-Agent'] = 'GuildRoster-Frontend';
+      
+      // Add Referer to show which page made the request
+      config.headers['Referer'] = window.location.href;
+      
+      // Add custom header for additional context
+      config.headers['X-Frontend-Route'] = window.location.pathname;
+    }
+    
     return config;
   },
   (error) => {
