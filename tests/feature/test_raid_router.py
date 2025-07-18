@@ -98,6 +98,7 @@ class TestRaidAPI:
             "scheduled_at": scheduled_at.isoformat(),
             "scenario_id": scenario_id,
             "team_id": team_id,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test-api",
         }
         response = client.post("/raids/", json=data, headers=headers)
         assert response.status_code == 201
@@ -105,6 +106,7 @@ class TestRaidAPI:
         assert resp["scheduled_at"] == scheduled_at.isoformat()
         assert resp["scenario_id"] == scenario_id
         assert resp["team_id"] == team_id
+        assert resp["warcraftlogs_url"] == data["warcraftlogs_url"]
         assert "id" in resp
         assert "created_at" in resp
         assert "updated_at" in resp
@@ -179,11 +181,13 @@ class TestRaidAPI:
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add_all([raid1, raid2])
         db_session.commit()
@@ -211,16 +215,19 @@ class TestRaidAPI:
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
             team_id=team1_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
             team_id=team1_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid3 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
             team_id=team2_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add_all([raid1, raid2, raid3])
         db_session.commit()
@@ -249,16 +256,19 @@ class TestRaidAPI:
             scheduled_at=scheduled_at1,
             scenario_id=scenario1_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario1_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid3 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario2_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add_all([raid1, raid2, raid3])
         db_session.commit()
@@ -284,6 +294,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()
@@ -295,6 +306,7 @@ class TestRaidAPI:
         assert resp["scheduled_at"] == scheduled_at.isoformat()
         assert resp["scenario_id"] == scenario_id
         assert resp["team_id"] == team_id
+        assert resp["warcraftlogs_url"] == raid.warcraftlogs_url
 
     def test_get_raid_not_found(self, client: TestClient, db_session: Session):
         """Test getting a non-existent raid."""
@@ -319,11 +331,13 @@ class TestRaidAPI:
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add_all([raid1, raid2])
         db_session.commit()
@@ -362,11 +376,13 @@ class TestRaidAPI:
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add_all([raid1, raid2])
         db_session.commit()
@@ -403,6 +419,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()
@@ -418,6 +435,7 @@ class TestRaidAPI:
         assert resp["scheduled_at"] == new_scheduled_at.isoformat()
         assert resp["scenario_id"] == scenario_id
         assert resp["team_id"] == team_id
+        assert resp["warcraftlogs_url"] == raid.warcraftlogs_url
 
     def test_update_raid_regular_user_forbidden(
         self, client: TestClient, db_session: Session
@@ -434,6 +452,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()
@@ -473,6 +492,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()
@@ -497,6 +517,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()
@@ -521,6 +542,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()
@@ -548,6 +570,7 @@ class TestRaidAPI:
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
             team_id=team_id,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         db_session.add(raid)
         db_session.commit()

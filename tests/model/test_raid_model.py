@@ -25,6 +25,7 @@ class TestRaidModel:
             scheduled_at=datetime.now() + timedelta(days=1),
             scenario_id=scenario.id,
             team_id=1,
+            warcraftlogs_url="https://www.warcraftlogs.com/reports/test",
         )
         db_session.add(raid)
         # This will fail unless team_id exists, but structure is correct

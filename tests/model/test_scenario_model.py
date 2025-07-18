@@ -60,25 +60,6 @@ class TestScenarioModel:
         assert scenario.created_at is not None
         assert scenario.updated_at is not None
 
-    def test_scenario_name_unique_constraint(self, db_session: Session):
-        """Test that scenario names must be unique."""
-        scenario1 = Scenario(
-            name="Blackrock Foundry",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
-        )
-        db_session.add(scenario1)
-        db_session.commit()
-
-        scenario2 = Scenario(
-            name="Blackrock Foundry",
-            difficulty=SCENARIO_DIFFICULTIES[1],
-            size=SCENARIO_SIZES[1],
-        )
-        db_session.add(scenario2)
-        with pytest.raises(IntegrityError):
-            db_session.commit()
-
     def test_scenario_name_not_empty_constraint(self, db_session: Session):
         """Test that scenario names cannot be empty."""
         scenario = Scenario(

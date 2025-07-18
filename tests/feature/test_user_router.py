@@ -316,9 +316,9 @@ class TestUserRouter:
     def test_health_check_unauthorized(
         self, client: TestClient, db_session: Session
     ):
-        """Test that health check without authentication returns 401."""
+        """Test that health check without authentication returns 200 (public endpoint)."""
         response = client.get("/")
-        assert response.status_code == 401
+        assert response.status_code == 200
 
     def test_health_check_authorized(
         self, client: TestClient, db_session: Session
