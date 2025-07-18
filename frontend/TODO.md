@@ -43,6 +43,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 - ✅ React Router for navigation
 - ✅ Authentication context and protected routes
 - ✅ API service layer with all endpoints
+- ✅ **Robust test patterns for API mocking with Vitest**
 
 ### **Pages & Components**
 - ✅ **Login page** - Authentication with token management
@@ -52,6 +53,7 @@ This document outlines the current state of the GuildRoster frontend implementat
 - ✅ **Guilds page** - Full CRUD with search and statistics
 - ✅ **GuildForm component** - Add/edit guild functionality
 - ✅ **UI Components** - Button, Card, Container, etc.
+- ✅ **Diagnostic test for GuildProvider fetch on login page**
 
 ---
 
@@ -227,32 +229,14 @@ This document outlines the current state of the GuildRoster frontend implementat
 
 ---
 
-## 🎯 **NEXT STEPS**
+## 🧪 **TESTING & DIAGNOSTICS**
 
-### **Immediate Priority**
-1. ✅ **Implement Guilds page** - Foundation for guild management
-2. ✅ **GuildForm component** - Reusable form for guild operations
-3. ✅ **Create guild tests** - Ensure functionality works correctly
-4. ✅ **Update navigation** - Add guilds to main navigation
-5. ✅ **Implement Teams page** - Build on guilds foundation
-6. ✅ **TeamForm component** - Reusable form for team operations
-
-### **Short Term**
-1. ✅ **Teams page** - Build on guilds foundation
-2. ✅ **Toons page** - Character management (with test fixes)
-3. ✅ **Member Detail Pages** - Enhanced member management and toon creation flow
-4. **Raids page** - Raid scheduling and management
-5. **Basic attendance page** - Core attendance tracking
-
-### **Medium Term**
-1. **Raids page** - Raid scheduling
-2. **Scenarios page** - Raid instance management
-3. **Bulk attendance interface** - Efficient operations
-
-### **Long Term**
-1. **Advanced analytics** - Charts and reporting
-2. **Calendar view** - Visual scheduling
-3. **Admin features** - User and token management
+- ✅ **Diagnostic test for GuildProvider fetch on login page**
+  - Ensures `/guilds/` is not fetched when user is not authenticated
+  - Uses robust Vitest mocking pattern (see `Guilds.test.tsx` for reference)
+- ✅ **Vitest API mocking pattern**
+  - Use `vi.mock('...')` and `vi.mocked(Service.method)` for reliable, hoist-safe mocks
+  - Avoid top-level variables in `vi.mock` factories to prevent hoisting errors
 
 ---
 
@@ -264,6 +248,8 @@ This document outlines the current state of the GuildRoster frontend implementat
 - Test infrastructure is in place for new features
 - Focus on building features incrementally with proper testing
 - Guild model simplified to match backend API (name field only)
+- **Testing patterns updated:** Use direct `vi.mock` and `vi.mocked` for all API service mocks
+- **Diagnostic tests:** Add targeted tests for regressions and edge cases as needed
 
 ---
 
@@ -278,3 +264,4 @@ This document outlines the current state of the GuildRoster frontend implementat
 - **2024-01-XX**: ✅ **COMPLETED** - Toons page with full CRUD functionality
 - **2024-01-XX**: ✅ **COMPLETED** - Fixed test issues for multiple element matches and form submission
 - **2024-01-XX**: ✅ **COMPLETED** - Member Detail Pages with enhanced toon creation flow 
+- **2024-07-XX**: ✅ **COMPLETED** - Diagnostic test for GuildProvider fetch on login page and improved Vitest mocking patterns 
