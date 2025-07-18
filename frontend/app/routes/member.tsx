@@ -62,20 +62,25 @@ export function meta({ loaderData }: MetaArgs) {
 }
 
 export default function MemberDetail({ loaderData }: ComponentProps) {
-  const { member, toons, guild, team, teams } = loaderData;
+  const { member, toons: initialToons, guild, team, teams } = loaderData;
   
-  const [showToonForm, setShowToonForm] = useState(false);
-  const [editingToon, setEditingToon] = useState<Toon | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [toons, setToons] = React.useState<Toon[]>(initialToons);
+  const [showToonForm, setShowToonForm] = React.useState(false);
+  const [editingToon, setEditingToon] = React.useState<Toon | null>(null);
+  const [formLoading, setFormLoading] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
+
+  const reloadToons = async () => {
+    const updatedToons = await ToonService.getToonsByMember(member.id);
+    setToons(updatedToons);
+  };
 
   const handleCreateToon = async (values: { username: string; class: string; role: string; is_main: boolean; member_id: number; team_ids?: number[] }) => {
     try {
       setFormLoading(true);
       setFormError(null);
       await ToonService.createToon(values);
-      // Note: In a real app, you'd want to revalidate the route data here
-      // For now, we'll just close the form and let the user refresh
+      await reloadToons();
       setShowToonForm(false);
     } catch (err: any) {
       setFormError(err.response?.data?.detail || 'Failed to create toon');
@@ -90,7 +95,7 @@ export default function MemberDetail({ loaderData }: ComponentProps) {
       setFormLoading(true);
       setFormError(null);
       await ToonService.updateToon(editingToon.id, values);
-      // Note: In a real app, you'd want to revalidate the route data here
+      await reloadToons();
       setEditingToon(null);
     } catch (err: any) {
       setFormError(err.response?.data?.detail || 'Failed to update toon');
@@ -103,7 +108,7 @@ export default function MemberDetail({ loaderData }: ComponentProps) {
     if (!confirm('Are you sure you want to delete this toon?')) return;
     try {
       await ToonService.deleteToon(toonId);
-      // Note: In a real app, you'd want to revalidate the route data here
+      await reloadToons();
     } catch (err: any) {
       console.error('Failed to delete toon:', err);
       // You might want to show a toast notification here
