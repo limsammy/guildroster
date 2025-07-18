@@ -19,7 +19,7 @@ class Scenario(Base):
     __tablename__ = "scenarios"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    name = Column(String(100), nullable=False, unique=True, index=True)
+    name = Column(String(100), nullable=False, index=True)
     difficulty = Column(String(16), nullable=False)
     size = Column(String(4), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
