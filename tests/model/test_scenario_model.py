@@ -3,7 +3,7 @@ import pytest
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.models.scenario import Scenario
+from app.models.scenario import Scenario, SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 from app.models.user import User
 from app.models.guild import Guild
 from app.models.team import Team
@@ -44,30 +44,48 @@ class TestScenarioModel:
 
     def test_create_scenario(self, db_session: Session):
         """Test creating a scenario with valid data."""
-        scenario = Scenario(name="Blackrock Foundry")
+        scenario = Scenario(
+            name="Blackrock Foundry",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         db_session.commit()
 
         assert scenario.id is not None
         assert scenario.name == "Blackrock Foundry"
+        assert scenario.difficulty == SCENARIO_DIFFICULTIES[0]
+        assert scenario.size == SCENARIO_SIZES[0]
         assert scenario.is_active is True
         assert scenario.created_at is not None
         assert scenario.updated_at is not None
 
     def test_scenario_name_unique_constraint(self, db_session: Session):
         """Test that scenario names must be unique."""
-        scenario1 = Scenario(name="Blackrock Foundry")
+        scenario1 = Scenario(
+            name="Blackrock Foundry",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario1)
         db_session.commit()
 
-        scenario2 = Scenario(name="Blackrock Foundry")
+        scenario2 = Scenario(
+            name="Blackrock Foundry",
+            difficulty=SCENARIO_DIFFICULTIES[1],
+            size=SCENARIO_SIZES[1],
+        )
         db_session.add(scenario2)
         with pytest.raises(IntegrityError):
             db_session.commit()
 
     def test_scenario_name_not_empty_constraint(self, db_session: Session):
         """Test that scenario names cannot be empty."""
-        scenario = Scenario(name="")
+        scenario = Scenario(
+            name="",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         with pytest.raises(IntegrityError):
             db_session.commit()
@@ -76,14 +94,22 @@ class TestScenarioModel:
         self, db_session: Session
     ):
         """Test that scenario names cannot be whitespace only."""
-        scenario = Scenario(name="   ")
+        scenario = Scenario(
+            name="   ",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         with pytest.raises(IntegrityError):
             db_session.commit()
 
     def test_scenario_is_active_default(self, db_session: Session):
         """Test that is_active defaults to True."""
-        scenario = Scenario(name="Test Scenario")
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         db_session.commit()
 
@@ -91,7 +117,12 @@ class TestScenarioModel:
 
     def test_scenario_is_active_can_be_false(self, db_session: Session):
         """Test that is_active can be set to False."""
-        scenario = Scenario(name="Test Scenario", is_active=False)
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+            is_active=False,
+        )
         db_session.add(scenario)
         db_session.commit()
 
@@ -106,7 +137,11 @@ class TestScenarioModel:
         team = self.setup_team(db_session, guild_id, user_id)
         team_id = team.id  # Store ID before making API request
 
-        scenario = Scenario(name="Test Scenario")
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         db_session.commit()
         scenario_id = scenario.id  # Store ID before making API request
@@ -116,8 +151,6 @@ class TestScenarioModel:
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
             scenario_id=scenario_id,
         )
@@ -136,7 +169,11 @@ class TestScenarioModel:
         team = self.setup_team(db_session, guild_id, user_id)
         team_id = team.id  # Store ID before making API request
 
-        scenario = Scenario(name="Test Scenario")
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         db_session.commit()
         scenario_id = scenario.id  # Store ID before making API request
@@ -146,8 +183,6 @@ class TestScenarioModel:
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
             scenario_id=scenario_id,
         )
@@ -163,7 +198,11 @@ class TestScenarioModel:
 
     def test_scenario_timestamps(self, db_session: Session):
         """Test that created_at and updated_at are set correctly."""
-        scenario = Scenario(name="Test Scenario")
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+        )
         db_session.add(scenario)
         db_session.commit()
 

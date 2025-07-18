@@ -75,6 +75,8 @@ class TestRaidAPI:
 
         scenario = Scenario(
             name=f"Test Scenario {uuid.uuid4().hex[:8]}",
+            difficulty="Normal",
+            size="10",
             is_active=True,
         )
         db_session.add(scenario)
@@ -95,8 +97,6 @@ class TestRaidAPI:
         data = {
             "scheduled_at": scheduled_at.isoformat(),
             "scenario_id": scenario_id,
-            "difficulty": "Normal",
-            "size": "10",
             "team_id": team_id,
         }
         response = client.post("/raids/", json=data, headers=headers)
@@ -104,8 +104,6 @@ class TestRaidAPI:
         resp = response.json()
         assert resp["scheduled_at"] == scheduled_at.isoformat()
         assert resp["scenario_id"] == scenario_id
-        assert resp["difficulty"] == "Normal"
-        assert resp["size"] == "10"
         assert resp["team_id"] == team_id
         assert "id" in resp
         assert "created_at" in resp
@@ -125,56 +123,10 @@ class TestRaidAPI:
         data = {
             "scheduled_at": scheduled_at.isoformat(),
             "scenario_id": scenario_id,
-            "difficulty": "Normal",
-            "size": "10",
             "team_id": team_id,
         }
         response = client.post("/raids/", json=data, headers=headers)
         assert response.status_code == 403
-
-    def test_create_raid_invalid_difficulty(
-        self, client: TestClient, db_session: Session
-    ):
-        """Test creating raid with invalid difficulty."""
-        user_id, token_key = self._create_superuser(db_session)
-        guild_id = self._create_guild(db_session, user_id)
-        team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
-
-        headers = {"Authorization": f"Bearer {token_key}"}
-        scheduled_at = datetime.now() + timedelta(days=1)
-        data = {
-            "scheduled_at": scheduled_at.isoformat(),
-            "scenario_id": scenario_id,
-            "difficulty": "Invalid",
-            "size": "10",
-            "team_id": team_id,
-        }
-        response = client.post("/raids/", json=data, headers=headers)
-        assert response.status_code == 422
-        assert "Invalid difficulty" in response.text
-
-    def test_create_raid_invalid_size(
-        self, client: TestClient, db_session: Session
-    ):
-        """Test creating raid with invalid size."""
-        user_id, token_key = self._create_superuser(db_session)
-        guild_id = self._create_guild(db_session, user_id)
-        team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
-
-        headers = {"Authorization": f"Bearer {token_key}"}
-        scheduled_at = datetime.now() + timedelta(days=1)
-        data = {
-            "scheduled_at": scheduled_at.isoformat(),
-            "scenario_id": scenario_id,
-            "difficulty": "Normal",
-            "size": "15",
-            "team_id": team_id,
-        }
-        response = client.post("/raids/", json=data, headers=headers)
-        assert response.status_code == 422
-        assert "Invalid size" in response.text
 
     def test_create_raid_team_not_found(
         self, client: TestClient, db_session: Session
@@ -188,8 +140,6 @@ class TestRaidAPI:
         data = {
             "scheduled_at": scheduled_at.isoformat(),
             "scenario_id": scenario_id,
-            "difficulty": "Normal",
-            "size": "10",
             "team_id": 999,  # Non-existent team
         }
         response = client.post("/raids/", json=data, headers=headers)
@@ -209,8 +159,6 @@ class TestRaidAPI:
         data = {
             "scheduled_at": scheduled_at.isoformat(),
             "scenario_id": 999,  # Non-existent scenario
-            "difficulty": "Normal",
-            "size": "10",
             "team_id": team_id,
         }
         response = client.post("/raids/", json=data, headers=headers)
@@ -230,15 +178,11 @@ class TestRaidAPI:
         raid1 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
-            difficulty="Heroic",
-            size="25",
             team_id=team_id,
         )
         db_session.add_all([raid1, raid2])
@@ -266,22 +210,16 @@ class TestRaidAPI:
         raid1 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team1_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
-            difficulty="Heroic",
-            size="25",
             team_id=team1_id,
         )
         raid3 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team2_id,
         )
         db_session.add_all([raid1, raid2, raid3])
@@ -310,22 +248,16 @@ class TestRaidAPI:
         raid1 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario1_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario1_id,
-            difficulty="Heroic",
-            size="25",
             team_id=team_id,
         )
         raid3 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario2_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add_all([raid1, raid2, raid3])
@@ -351,8 +283,6 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)
@@ -364,8 +294,6 @@ class TestRaidAPI:
         resp = response.json()
         assert resp["scheduled_at"] == scheduled_at.isoformat()
         assert resp["scenario_id"] == scenario_id
-        assert resp["difficulty"] == "Normal"
-        assert resp["size"] == "10"
         assert resp["team_id"] == team_id
 
     def test_get_raid_not_found(self, client: TestClient, db_session: Session):
@@ -390,15 +318,11 @@ class TestRaidAPI:
         raid1 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
-            difficulty="Heroic",
-            size="25",
             team_id=team_id,
         )
         db_session.add_all([raid1, raid2])
@@ -437,15 +361,11 @@ class TestRaidAPI:
         raid1 = Raid(
             scheduled_at=scheduled_at1,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
             scenario_id=scenario_id,
-            difficulty="Heroic",
-            size="25",
             team_id=team_id,
         )
         db_session.add_all([raid1, raid2])
@@ -482,8 +402,6 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)
@@ -493,15 +411,11 @@ class TestRaidAPI:
         new_scheduled_at = datetime.now() + timedelta(days=2)
         data = {
             "scheduled_at": new_scheduled_at.isoformat(),
-            "difficulty": "Heroic",
-            "size": "25",
         }
         response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 200
         resp = response.json()
         assert resp["scheduled_at"] == new_scheduled_at.isoformat()
-        assert resp["difficulty"] == "Heroic"
-        assert resp["size"] == "25"
         assert resp["scenario_id"] == scenario_id
         assert resp["team_id"] == team_id
 
@@ -519,15 +433,15 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)
         db_session.commit()
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"difficulty": "Heroic"}
+        data = {
+            "scheduled_at": (datetime.now() + timedelta(days=2)).isoformat()
+        }
         response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
         assert response.status_code == 403
 
@@ -538,62 +452,12 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"difficulty": "Heroic"}
+        data = {
+            "scheduled_at": (datetime.now() + timedelta(days=2)).isoformat()
+        }
         response = client.put("/raids/999", json=data, headers=headers)
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
-
-    def test_update_raid_invalid_difficulty(
-        self, client: TestClient, db_session: Session
-    ):
-        """Test updating raid with invalid difficulty."""
-        user_id, token_key = self._create_superuser(db_session)
-        guild_id = self._create_guild(db_session, user_id)
-        team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
-
-        scheduled_at = datetime.now() + timedelta(days=1)
-        raid = Raid(
-            scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
-            team_id=team_id,
-        )
-        db_session.add(raid)
-        db_session.commit()
-
-        headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"difficulty": "Invalid"}
-        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
-        assert response.status_code == 422
-        assert "Invalid difficulty" in response.text
-
-    def test_update_raid_invalid_size(
-        self, client: TestClient, db_session: Session
-    ):
-        """Test updating raid with invalid size."""
-        user_id, token_key = self._create_superuser(db_session)
-        guild_id = self._create_guild(db_session, user_id)
-        team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
-
-        scheduled_at = datetime.now() + timedelta(days=1)
-        raid = Raid(
-            scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
-            team_id=team_id,
-        )
-        db_session.add(raid)
-        db_session.commit()
-
-        headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"size": "15"}
-        response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
-        assert response.status_code == 422
-        assert "Invalid size" in response.text
 
     def test_update_raid_new_team_not_found(
         self, client: TestClient, db_session: Session
@@ -608,8 +472,6 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)
@@ -634,8 +496,6 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)
@@ -660,8 +520,6 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)
@@ -689,8 +547,6 @@ class TestRaidAPI:
         raid = Raid(
             scheduled_at=scheduled_at,
             scenario_id=scenario_id,
-            difficulty="Normal",
-            size="10",
             team_id=team_id,
         )
         db_session.add(raid)

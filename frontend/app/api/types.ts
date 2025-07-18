@@ -138,6 +138,8 @@ export interface ToonUpdate {
 export interface Scenario {
   id: number;
   name: string;
+  difficulty: string;
+  size: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -145,11 +147,15 @@ export interface Scenario {
 
 export interface ScenarioCreate {
   name: string;
+  difficulty: string;
+  size: string;
   is_active?: boolean;
 }
 
 export interface ScenarioUpdate {
   name?: string;
+  difficulty?: string;
+  size?: string;
   is_active?: boolean;
 }
 
@@ -157,8 +163,6 @@ export interface ScenarioUpdate {
 export interface Raid {
   id: number;
   scheduled_at: string;
-  difficulty: string;
-  size: number;
   team_id: number;
   scenario_id: number;
   created_at: string;
@@ -167,16 +171,12 @@ export interface Raid {
 
 export interface RaidCreate {
   scheduled_at: string;
-  difficulty: string;
-  size: number;
   team_id: number;
   scenario_id: number;
 }
 
 export interface RaidUpdate {
   scheduled_at?: string;
-  difficulty?: string;
-  size?: number;
   team_id?: number;
   scenario_id?: number;
 }

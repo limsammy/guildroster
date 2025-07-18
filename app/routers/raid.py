@@ -58,8 +58,6 @@ def create_raid(
     raid = Raid(
         scheduled_at=raid_in.scheduled_at,
         scenario_id=raid_in.scenario_id,
-        difficulty=raid_in.difficulty,
-        size=raid_in.size,
         team_id=raid_in.team_id,
     )
     db.add(raid)
@@ -167,12 +165,6 @@ def update_raid(
         # Verify new scenario exists
         scenario = get_scenario_or_404(db, raid_in.scenario_id)
         raid.scenario_id = raid_in.scenario_id  # type: ignore[assignment]
-
-    if raid_in.difficulty is not None:
-        raid.difficulty = raid_in.difficulty  # type: ignore[assignment]
-
-    if raid_in.size is not None:
-        raid.size = raid_in.size  # type: ignore[assignment]
 
     if raid_in.team_id is not None:
         # Verify new team exists

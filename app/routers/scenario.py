@@ -39,6 +39,8 @@ def create_scenario(
     """
     scenario = Scenario(
         name=scenario_in.name,
+        difficulty=scenario_in.difficulty,
+        size=scenario_in.size,
         is_active=scenario_in.is_active,
     )
     db.add(scenario)
@@ -118,6 +120,12 @@ def update_scenario(
 
     if scenario_in.name is not None:
         scenario.name = scenario_in.name  # type: ignore[assignment]
+
+    if scenario_in.difficulty is not None:
+        scenario.difficulty = scenario_in.difficulty  # type: ignore[assignment]
+
+    if scenario_in.size is not None:
+        scenario.size = scenario_in.size  # type: ignore[assignment]
 
     if scenario_in.is_active is not None:
         scenario.is_active = scenario_in.is_active  # type: ignore[assignment]
