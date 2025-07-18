@@ -60,6 +60,12 @@ export default function Members() {
     fetchData();
   }, []);
 
+  // Add this function to reload members from the API
+  const reloadMembers = async () => {
+    const updatedMembers = await MemberService.getMembers();
+    setMembers(updatedMembers);
+  };
+
   const handleAddMember = async (values: { display_name: string; guild_id: number; team_id?: number | null }) => {
     try {
       setFormLoading(true);
@@ -69,8 +75,8 @@ export default function Members() {
         guild_id: values.guild_id,
         team_id: values.team_id ? values.team_id : undefined,
       };
-      const newMember = await MemberService.createMember(memberData);
-      setMembers(prev => [...prev, newMember]);
+      await MemberService.createMember(memberData);
+      await reloadMembers();
       setShowAddForm(false);
     } catch (err: any) {
       console.error('Error creating member:', err);
@@ -91,8 +97,8 @@ export default function Members() {
         guild_id: values.guild_id,
         team_id: values.team_id ? values.team_id : undefined,
       };
-      const updatedMember = await MemberService.updateMember(editingMember.id, memberData);
-      setMembers(prev => prev.map(m => m.id === editingMember.id ? updatedMember : m));
+      await MemberService.updateMember(editingMember.id, memberData);
+      await reloadMembers();
       setEditingMember(null);
     } catch (err: any) {
       console.error('Error updating member:', err);
@@ -107,7 +113,7 @@ export default function Members() {
     
     try {
       await MemberService.deleteMember(memberId);
-      setMembers(prev => prev.filter(m => m.id !== memberId));
+      await reloadMembers();
     } catch (err: any) {
       console.error('Error deleting member:', err);
       alert('Failed to delete member: ' + (err.message || 'Unknown error'));

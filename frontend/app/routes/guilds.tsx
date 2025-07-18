@@ -39,6 +39,12 @@ export default function Guilds() {
     fetchGuilds();
   }, []);
 
+  // Add this function to reload guilds from the API
+  const reloadGuilds = async () => {
+    const updatedGuilds = await GuildService.getGuilds();
+    setGuilds(updatedGuilds);
+  };
+
   const handleAddGuild = async (values: { name: string }) => {
     if (!user) {
       setFormError('User not authenticated');
@@ -48,11 +54,11 @@ export default function Guilds() {
     try {
       setFormLoading(true);
       setFormError(null);
-      const newGuild = await GuildService.createGuild({
+      await GuildService.createGuild({
         ...values,
         created_by: user.user_id,
       });
-      setGuilds(prev => [...prev, newGuild]);
+      await reloadGuilds();
       setShowAddForm(false);
     } catch (err: any) {
       console.error('Error creating guild:', err);
@@ -67,8 +73,8 @@ export default function Guilds() {
     try {
       setFormLoading(true);
       setFormError(null);
-      const updatedGuild = await GuildService.updateGuild(editingGuild.id, values);
-      setGuilds(prev => prev.map(g => g.id === editingGuild.id ? updatedGuild : g));
+      await GuildService.updateGuild(editingGuild.id, values);
+      await reloadGuilds();
       setEditingGuild(null);
     } catch (err: any) {
       console.error('Error updating guild:', err);
@@ -83,7 +89,7 @@ export default function Guilds() {
     
     try {
       await GuildService.deleteGuild(guildId);
-      setGuilds(prev => prev.filter(g => g.id !== guildId));
+      await reloadGuilds();
     } catch (err: any) {
       console.error('Error deleting guild:', err);
       alert('Failed to delete guild: ' + (err.message || 'Unknown error'));

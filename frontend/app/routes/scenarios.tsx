@@ -39,12 +39,18 @@ export default function Scenarios() {
     fetchScenarios();
   }, []);
 
+  // Add this function to reload scenarios from the API
+  const reloadScenarios = async () => {
+    const updatedScenarios = await ScenarioService.getScenarios();
+    setScenarios(updatedScenarios);
+  };
+
   const handleAddScenario = async (values: { name: string; difficulty: string; size: string; is_active: boolean }) => {
     try {
       setFormLoading(true);
       setFormError(null);
-      const newScenario = await ScenarioService.createScenario(values);
-      setScenarios(prev => [...prev, newScenario]);
+      await ScenarioService.createScenario(values);
+      await reloadScenarios();
       setShowAddForm(false);
     } catch (err: any) {
       console.error('Error creating scenario:', err);
@@ -59,8 +65,8 @@ export default function Scenarios() {
     try {
       setFormLoading(true);
       setFormError(null);
-      const updatedScenario = await ScenarioService.updateScenario(editingScenario.id, values);
-      setScenarios(prev => prev.map(s => s.id === editingScenario.id ? updatedScenario : s));
+      await ScenarioService.updateScenario(editingScenario.id, values);
+      await reloadScenarios();
       setEditingScenario(null);
     } catch (err: any) {
       console.error('Error updating scenario:', err);
@@ -75,7 +81,7 @@ export default function Scenarios() {
     
     try {
       await ScenarioService.deleteScenario(scenarioId);
-      setScenarios(prev => prev.filter(s => s.id !== scenarioId));
+      await reloadScenarios();
     } catch (err: any) {
       console.error('Error deleting scenario:', err);
       alert('Failed to delete scenario: ' + (err.message || 'Unknown error'));

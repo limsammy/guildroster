@@ -46,6 +46,12 @@ export default function Teams() {
     fetchData();
   }, []);
 
+  // Add this function to reload teams from the API
+  const reloadTeams = async () => {
+    const updatedTeams = await TeamService.getTeams();
+    setTeams(updatedTeams);
+  };
+
   const handleAddTeam = async (values: { name: string; guild_id: number }) => {
     if (!user) {
       setFormError('User not authenticated');
@@ -55,11 +61,11 @@ export default function Teams() {
     try {
       setFormLoading(true);
       setFormError(null);
-      const newTeam = await TeamService.createTeam({
+      await TeamService.createTeam({
         ...values,
         created_by: user.user_id,
       });
-      setTeams(prev => [...prev, newTeam]);
+      await reloadTeams();
       setShowAddForm(false);
     } catch (err: any) {
       console.error('Error creating team:', err);
@@ -74,8 +80,8 @@ export default function Teams() {
     try {
       setFormLoading(true);
       setFormError(null);
-      const updatedTeam = await TeamService.updateTeam(editingTeam.id, values);
-      setTeams(prev => prev.map(t => t.id === editingTeam.id ? updatedTeam : t));
+      await TeamService.updateTeam(editingTeam.id, values);
+      await reloadTeams();
       setEditingTeam(null);
     } catch (err: any) {
       console.error('Error updating team:', err);
@@ -86,14 +92,13 @@ export default function Teams() {
   };
 
   const handleDeleteTeam = async (teamId: number) => {
-    if (!confirm('Are you sure you want to delete this team? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this team?')) return;
     
     try {
       await TeamService.deleteTeam(teamId);
-      setTeams(prev => prev.filter(t => t.id !== teamId));
+      await reloadTeams();
     } catch (err: any) {
-      console.error('Error deleting team:', err);
-      alert('Failed to delete team: ' + (err.message || 'Unknown error'));
+      setError(err.message || 'Failed to delete team');
     }
   };
 

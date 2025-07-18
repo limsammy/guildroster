@@ -59,12 +59,18 @@ export default function Toons() {
     }
   };
 
+  // Add this function to reload toons from the API
+  const reloadToons = async () => {
+    const updatedToons = await ToonService.getToons();
+    setToons(updatedToons);
+  };
+
   const handleCreateToon = async (values: ToonCreate) => {
     try {
       setFormLoading(true);
       setFormError(null);
       await ToonService.createToon(values);
-      await loadToons();
+      await reloadToons();
       setShowForm(false);
       setSelectedMember(null);
     } catch (err: any) {
@@ -80,7 +86,7 @@ export default function Toons() {
       setFormLoading(true);
       setFormError(null);
       await ToonService.updateToon(editingToon.id, values);
-      await loadToons();
+      await reloadToons();
       setEditingToon(null);
     } catch (err: any) {
       setFormError(err.response?.data?.detail || 'Failed to update toon');
@@ -93,7 +99,7 @@ export default function Toons() {
     if (!confirm('Are you sure you want to delete this toon?')) return;
     try {
       await ToonService.deleteToon(toonId);
-      await loadToons();
+      await reloadToons();
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to delete toon');
     }
