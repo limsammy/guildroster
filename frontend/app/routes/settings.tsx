@@ -99,13 +99,15 @@ export default function Settings() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Scenarios */}
-              <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4">
-                <div className="text-3xl mb-3">🎮</div>
-                <h3 className="font-semibold text-white mb-2">Scenarios</h3>
-                <p className="text-slate-300 text-sm mb-4">
-                  Manage game scenarios and their availability for raids.
-                </p>
-                <Link to="/scenarios">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4 flex flex-col justify-between">
+                <div>
+                  <div className="text-3xl mb-3">🎮</div>
+                  <h3 className="font-semibold text-white mb-2">Scenarios</h3>
+                  <p className="text-slate-300 text-sm">
+                    Manage game scenarios and their availability for raids.
+                  </p>
+                </div>
+                <Link to="/scenarios" className="mt-4">
                   <Button variant="primary" className="w-full">
                     Manage Scenarios
                   </Button>
@@ -113,13 +115,15 @@ export default function Settings() {
               </div>
 
               {/* Teams */}
-              <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4">
-                <div className="text-3xl mb-3">👥</div>
-                <h3 className="font-semibold text-white mb-2">Teams</h3>
-                <p className="text-slate-300 text-sm mb-4">
-                  Manage raid teams and their compositions.
-                </p>
-                <Link to="/teams">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4 flex flex-col justify-between">
+                <div>
+                  <div className="text-3xl mb-3">👥</div>
+                  <h3 className="font-semibold text-white mb-2">Teams</h3>
+                  <p className="text-slate-300 text-sm">
+                    Manage raid teams and their compositions.
+                  </p>
+                </div>
+                <Link to="/teams" className="mt-4">
                   <Button variant="primary" className="w-full">
                     Manage Teams
                   </Button>
@@ -127,13 +131,15 @@ export default function Settings() {
               </div>
 
               {/* Members */}
-              <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4">
-                <div className="text-3xl mb-3">👤</div>
-                <h3 className="font-semibold text-white mb-2">Members</h3>
-                <p className="text-slate-300 text-sm mb-4">
-                  Manage guild members and their information.
-                </p>
-                <Link to="/members">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4 flex flex-col justify-between">
+                <div>
+                  <div className="text-3xl mb-3">👤</div>
+                  <h3 className="font-semibold text-white mb-2">Members</h3>
+                  <p className="text-slate-300 text-sm">
+                    Manage guild members and their information.
+                  </p>
+                </div>
+                <Link to="/members" className="mt-4">
                   <Button variant="primary" className="w-full">
                     Manage Members
                   </Button>
