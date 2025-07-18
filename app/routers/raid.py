@@ -48,12 +48,20 @@ def create_raid(
 ):
     """
     Create a new raid. Superuser only.
+    Accepts a WarcraftLogs URL and processes it (placeholder).
     """
     # Verify team exists
     team = get_team_or_404(db, raid_in.team_id)
 
     # Verify scenario exists
     scenario = get_scenario_or_404(db, raid_in.scenario_id)
+
+    # Placeholder: process warcraftlogs_url if provided
+    if raid_in.warcraftlogs_url:
+        # TODO: Implement WarcraftLogs parsing logic here
+        # For now, just log or print the URL
+        print(f"Received WarcraftLogs URL: {raid_in.warcraftlogs_url}")
+        # In the future, set scheduled_at and other fields based on log
 
     raid = Raid(
         scheduled_at=raid_in.scheduled_at,

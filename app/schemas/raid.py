@@ -10,7 +10,9 @@ class RaidBase(BaseModel):
 
 
 class RaidCreate(RaidBase):
-    pass
+    warcraftlogs_url: Optional[str] = Field(
+        None, description="Optional WarcraftLogs report URL for this raid"
+    )
 
 
 class RaidUpdate(BaseModel):
