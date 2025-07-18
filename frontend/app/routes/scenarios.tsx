@@ -39,7 +39,7 @@ export default function Scenarios() {
     fetchScenarios();
   }, []);
 
-  const handleAddScenario = async (values: { name: string; is_active: boolean }) => {
+  const handleAddScenario = async (values: { name: string; difficulty: string; size: string; is_active: boolean }) => {
     try {
       setFormLoading(true);
       setFormError(null);
@@ -54,7 +54,7 @@ export default function Scenarios() {
     }
   };
 
-  const handleEditScenario = async (values: { name: string; is_active: boolean }) => {
+  const handleEditScenario = async (values: { name: string; difficulty: string; size: string; is_active: boolean }) => {
     if (!editingScenario) return;
     try {
       setFormLoading(true);
@@ -237,8 +237,12 @@ export default function Scenarios() {
                         <div className={`w-3 h-3 rounded-full ${scenario.is_active ? 'bg-green-400' : 'bg-slate-500'}`}></div>
                         <span className="text-white font-medium">{scenario.name}</span>
                       </div>
-                      <div className="text-sm text-slate-400">
-                        {scenario.is_active ? 'Active' : 'Inactive'}
+                      <div className="flex items-center space-x-4 text-sm text-slate-400">
+                        <span>{scenario.difficulty}</span>
+                        <span>•</span>
+                        <span>{scenario.size}</span>
+                        <span>•</span>
+                        <span>{scenario.is_active ? 'Active' : 'Inactive'}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">

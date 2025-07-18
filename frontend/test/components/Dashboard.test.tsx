@@ -130,7 +130,15 @@ describe('Dashboard', () => {
     ]);
     vi.mocked(RaidService.getRaids).mockResolvedValue([]);
     vi.mocked(ScenarioService.getScenarios).mockResolvedValue([
-      { id: 1, name: 'Test Scenario', is_active: true, created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { 
+        id: 1, 
+        name: 'Test Scenario', 
+        difficulty: 'Normal',
+        size: '10-man',
+        is_active: true, 
+        created_at: '2024-01-01', 
+        updated_at: '2024-01-01' 
+      }
     ]);
 
     renderDashboard();
@@ -188,8 +196,6 @@ describe('Dashboard', () => {
       {
         id: 1,
         scheduled_at: pastDate.toISOString(),
-        difficulty: 'Normal',
-        size: 10,
         team_id: 1,
         scenario_id: 1,
         created_at: '2024-01-01',
@@ -197,7 +203,15 @@ describe('Dashboard', () => {
       }
     ]);
     vi.mocked(ScenarioService.getScenarios).mockResolvedValue([
-      { id: 1, name: 'Test Scenario', is_active: true, created_at: '2024-01-01', updated_at: '2024-01-01' }
+      { 
+        id: 1, 
+        name: 'Test Scenario', 
+        difficulty: 'Normal',
+        size: '10-man',
+        is_active: true, 
+        created_at: '2024-01-01', 
+        updated_at: '2024-01-01' 
+      }
     ]);
 
     renderDashboard();

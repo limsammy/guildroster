@@ -213,7 +213,7 @@ export default function Dashboard() {
                             {scenario?.name || 'Unknown Scenario'}
                           </div>
                           <div className="text-sm text-slate-300">
-                            {team?.name || 'Unknown Team'} • {raid.difficulty} • {raid.size} players
+                            {team?.name || 'Unknown Team'} • {scenario?.difficulty || 'Unknown'} • {scenario?.size || 'Unknown'}
                           </div>
                         </div>
                         <div className="text-right">

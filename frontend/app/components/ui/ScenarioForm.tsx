@@ -7,9 +7,13 @@ interface ScenarioFormProps {
   initialValues?: Partial<Scenario>;
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { name: string; is_active: boolean }) => void;
+  onSubmit: (values: { name: string; difficulty: string; size: string; is_active: boolean }) => void;
   onCancel: () => void;
 }
+
+// Difficulty and size options - must match backend SCENARIO_DIFFICULTIES and SCENARIO_SIZES
+const DIFFICULTY_OPTIONS = ['Normal', 'Heroic', 'Celestial', 'Challenge'];
+const SIZE_OPTIONS = ['10', '25'];
 
 export const ScenarioForm: React.FC<ScenarioFormProps> = ({
   mode,
@@ -20,20 +24,26 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
   onCancel,
 }) => {
   const [name, setName] = useState(initialValues.name || '');
+  const [difficulty, setDifficulty] = useState(initialValues.difficulty || '');
+  const [size, setSize] = useState(initialValues.size || '');
   const [isActive, setIsActive] = useState(initialValues.is_active ?? true);
   const [showErrors, setShowErrors] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!name.trim()) return;
+    if (!name.trim() || !difficulty || !size) return;
     onSubmit({
       name: name.trim(),
+      difficulty,
+      size,
       is_active: isActive,
     });
   };
 
   const nameError = showErrors && !name.trim() ? 'Name is required' : '';
+  const difficultyError = showErrors && !difficulty ? 'Difficulty is required' : '';
+  const sizeError = showErrors && !size ? 'Size is required' : '';
 
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
@@ -46,7 +56,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
-        <div className="mb-6">
+        <div className="mb-4">
           <label htmlFor="scenario-name" className="block text-sm font-medium text-slate-300 mb-2">
             Scenario Name
           </label>
@@ -60,6 +70,42 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             disabled={loading}
           />
           {nameError && <div className="text-red-400 text-xs mt-1">{nameError}</div>}
+        </div>
+        <div className="mb-4">
+          <label htmlFor="scenario-difficulty" className="block text-sm font-medium text-slate-300 mb-2">
+            Difficulty
+          </label>
+          <select
+            id="scenario-difficulty"
+            value={difficulty}
+            onChange={e => setDifficulty(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={loading}
+          >
+            <option value="">Select difficulty</option>
+            {DIFFICULTY_OPTIONS.map(option => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          {difficultyError && <div className="text-red-400 text-xs mt-1">{difficultyError}</div>}
+        </div>
+        <div className="mb-4">
+          <label htmlFor="scenario-size" className="block text-sm font-medium text-slate-300 mb-2">
+            Size
+          </label>
+          <select
+            id="scenario-size"
+            value={size}
+            onChange={e => setSize(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={loading}
+          >
+            <option value="">Select size</option>
+            {SIZE_OPTIONS.map(option => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          {sizeError && <div className="text-red-400 text-xs mt-1">{sizeError}</div>}
         </div>
         <div className="mb-6">
           <label className="flex items-center">
@@ -83,7 +129,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
           <Button 
             type="submit" 
             variant="primary" 
-            disabled={loading || !name.trim()} 
+            disabled={loading || !name.trim() || !difficulty || !size} 
             data-testid="scenario-form-submit"
           >
             {loading ? (mode === 'add' ? 'Adding...' : 'Saving...') : (mode === 'add' ? 'Add Scenario' : 'Save Changes')}

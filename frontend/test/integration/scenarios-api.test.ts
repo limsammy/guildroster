@@ -1,16 +1,66 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import axios from 'axios';
 import { ScenarioService } from '../../app/api/scenarios';
 import type { Scenario, ScenarioCreate, ScenarioUpdate } from '../../app/api/types';
+
+// Test authentication token
+const TEST_TOKEN = 'IcRZUmCL0thQtbJkcqIfal52Ujw9xdcR9mPCy69Wv0M';
+
+// Create a test-specific API client
+const testApiClient = axios.create({
+  baseURL: 'http://localhost:8000',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${TEST_TOKEN}`,
+  },
+});
 
 // Test data
 const testScenario: ScenarioCreate = {
   name: 'Test Scenario',
+  difficulty: 'Normal',
+  size: '10',
   is_active: true,
 };
 
 const updatedScenario: ScenarioUpdate = {
   name: 'Updated Test Scenario',
+  difficulty: 'Heroic',
+  size: '25',
   is_active: false,
+};
+
+// Create test-specific service functions
+const TestScenarioService = {
+  async getScenarios(): Promise<Scenario[]> {
+    const response = await testApiClient.get<Scenario[]>('/scenarios/');
+    return response.data;
+  },
+
+  async getActiveScenarios(): Promise<Scenario[]> {
+    const response = await testApiClient.get<Scenario[]>('/scenarios/active');
+    return response.data;
+  },
+
+  async getScenario(id: number): Promise<Scenario> {
+    const response = await testApiClient.get<Scenario>(`/scenarios/${id}`);
+    return response.data;
+  },
+
+  async createScenario(scenarioData: ScenarioCreate): Promise<Scenario> {
+    const response = await testApiClient.post<Scenario>('/scenarios/', scenarioData);
+    return response.data;
+  },
+
+  async updateScenario(id: number, scenarioData: ScenarioUpdate): Promise<Scenario> {
+    const response = await testApiClient.put<Scenario>(`/scenarios/${id}`, scenarioData);
+    return response.data;
+  },
+
+  async deleteScenario(id: number): Promise<void> {
+    await testApiClient.delete(`/scenarios/${id}`);
+  },
 };
 
 describe('Scenarios API Integration Tests', () => {
@@ -19,12 +69,12 @@ describe('Scenarios API Integration Tests', () => {
   beforeAll(async () => {
     // Ensure we have a clean state by deleting any test scenarios
     try {
-      const scenarios = await ScenarioService.getScenarios();
+      const scenarios = await TestScenarioService.getScenarios();
       const testScenarios = scenarios.filter(s => 
         s.name.includes('Test Scenario') || s.name.includes('Updated Test Scenario')
       );
       for (const scenario of testScenarios) {
-        await ScenarioService.deleteScenario(scenario.id);
+        await TestScenarioService.deleteScenario(scenario.id);
       }
     } catch (error) {
       // Ignore errors during cleanup
@@ -35,7 +85,7 @@ describe('Scenarios API Integration Tests', () => {
     // Clean up test data
     try {
       if (createdScenario) {
-        await ScenarioService.deleteScenario(createdScenario.id);
+        await TestScenarioService.deleteScenario(createdScenario.id);
       }
     } catch (error) {
       // Ignore cleanup errors
@@ -44,7 +94,7 @@ describe('Scenarios API Integration Tests', () => {
 
   describe('GET /scenarios/', () => {
     it('should fetch all scenarios', async () => {
-      const scenarios = await ScenarioService.getScenarios();
+      const scenarios = await TestScenarioService.getScenarios();
       
       expect(Array.isArray(scenarios)).toBe(true);
       scenarios.forEach(scenario => {
@@ -64,7 +114,7 @@ describe('Scenarios API Integration Tests', () => {
 
   describe('GET /scenarios/active', () => {
     it('should fetch only active scenarios', async () => {
-      const activeScenarios = await ScenarioService.getActiveScenarios();
+      const activeScenarios = await TestScenarioService.getActiveScenarios();
       
       expect(Array.isArray(activeScenarios)).toBe(true);
       activeScenarios.forEach(scenario => {
@@ -75,7 +125,7 @@ describe('Scenarios API Integration Tests', () => {
 
   describe('POST /scenarios/', () => {
     it('should create a new scenario', async () => {
-      createdScenario = await ScenarioService.createScenario(testScenario);
+      createdScenario = await TestScenarioService.createScenario(testScenario);
       
       expect(createdScenario).toHaveProperty('id');
       expect(createdScenario).toHaveProperty('name', testScenario.name);
@@ -89,28 +139,32 @@ describe('Scenarios API Integration Tests', () => {
     it('should create a scenario with default is_active value', async () => {
       const scenarioData: ScenarioCreate = {
         name: 'Test Scenario Default Active',
+        difficulty: 'Normal',
+        size: '10',
       };
       
-      const scenario = await ScenarioService.createScenario(scenarioData);
+      const scenario = await TestScenarioService.createScenario(scenarioData);
       
       expect(scenario.is_active).toBe(true);
       
       // Clean up
-      await ScenarioService.deleteScenario(scenario.id);
+      await TestScenarioService.deleteScenario(scenario.id);
     });
 
     it('should create an inactive scenario', async () => {
       const scenarioData: ScenarioCreate = {
         name: 'Test Scenario Inactive',
+        difficulty: 'Challenge',
+        size: '25',
         is_active: false,
       };
       
-      const scenario = await ScenarioService.createScenario(scenarioData);
+      const scenario = await TestScenarioService.createScenario(scenarioData);
       
       expect(scenario.is_active).toBe(false);
       
       // Clean up
-      await ScenarioService.deleteScenario(scenario.id);
+      await TestScenarioService.deleteScenario(scenario.id);
     });
   });
 
@@ -120,7 +174,7 @@ describe('Scenarios API Integration Tests', () => {
         throw new Error('No scenario created for testing');
       }
 
-      const scenario = await ScenarioService.getScenario(createdScenario.id);
+      const scenario = await TestScenarioService.getScenario(createdScenario.id);
       
       expect(scenario).toEqual(createdScenario);
     });
@@ -128,7 +182,7 @@ describe('Scenarios API Integration Tests', () => {
     it('should throw error for non-existent scenario', async () => {
       const nonExistentId = 99999;
       
-      await expect(ScenarioService.getScenario(nonExistentId)).rejects.toThrow();
+      await expect(TestScenarioService.getScenario(nonExistentId)).rejects.toThrow();
     });
   });
 
@@ -138,7 +192,7 @@ describe('Scenarios API Integration Tests', () => {
         throw new Error('No scenario created for testing');
       }
 
-      const updatedScenarioData = await ScenarioService.updateScenario(
+      const updatedScenarioData = await TestScenarioService.updateScenario(
         createdScenario.id, 
         updatedScenario
       );
@@ -163,7 +217,7 @@ describe('Scenarios API Integration Tests', () => {
         name: 'Partial Update Test',
       };
 
-      const updatedScenarioData = await ScenarioService.updateScenario(
+      const updatedScenarioData = await TestScenarioService.updateScenario(
         createdScenario.id, 
         updateData
       );
@@ -185,7 +239,7 @@ describe('Scenarios API Integration Tests', () => {
         is_active: true,
       };
 
-      const updatedScenarioData = await ScenarioService.updateScenario(
+      const updatedScenarioData = await TestScenarioService.updateScenario(
         createdScenario.id, 
         updateData
       );
@@ -201,7 +255,7 @@ describe('Scenarios API Integration Tests', () => {
       const nonExistentId = 99999;
       
       await expect(
-        ScenarioService.updateScenario(nonExistentId, updatedScenario)
+        TestScenarioService.updateScenario(nonExistentId, updatedScenario)
       ).rejects.toThrow();
     });
   });
@@ -213,12 +267,12 @@ describe('Scenarios API Integration Tests', () => {
       }
 
       await expect(
-        ScenarioService.deleteScenario(createdScenario.id)
+        TestScenarioService.deleteScenario(createdScenario.id)
       ).resolves.not.toThrow();
 
       // Verify the scenario is deleted
       await expect(
-        ScenarioService.getScenario(createdScenario.id)
+        TestScenarioService.getScenario(createdScenario.id)
       ).rejects.toThrow();
 
       // Clear the reference since it's deleted
@@ -229,7 +283,7 @@ describe('Scenarios API Integration Tests', () => {
       const nonExistentId = 99999;
       
       await expect(
-        ScenarioService.deleteScenario(nonExistentId)
+        TestScenarioService.deleteScenario(nonExistentId)
       ).rejects.toThrow();
     });
   });
@@ -238,33 +292,39 @@ describe('Scenarios API Integration Tests', () => {
     it('should reject scenario with empty name', async () => {
       const invalidScenario: ScenarioCreate = {
         name: '',
+        difficulty: 'Normal',
+        size: '10',
         is_active: true,
       };
 
       await expect(
-        ScenarioService.createScenario(invalidScenario)
+        TestScenarioService.createScenario(invalidScenario)
       ).rejects.toThrow();
     });
 
     it('should reject scenario with whitespace-only name', async () => {
       const invalidScenario: ScenarioCreate = {
         name: '   ',
+        difficulty: 'Normal',
+        size: '10',
         is_active: true,
       };
 
       await expect(
-        ScenarioService.createScenario(invalidScenario)
+        TestScenarioService.createScenario(invalidScenario)
       ).rejects.toThrow();
     });
 
     it('should reject scenario with name longer than 100 characters', async () => {
       const invalidScenario: ScenarioCreate = {
         name: 'a'.repeat(101),
+        difficulty: 'Normal',
+        size: '10',
         is_active: true,
       };
 
       await expect(
-        ScenarioService.createScenario(invalidScenario)
+        TestScenarioService.createScenario(invalidScenario)
       ).rejects.toThrow();
     });
   });
@@ -273,19 +333,21 @@ describe('Scenarios API Integration Tests', () => {
     it('should reject duplicate scenario names', async () => {
       const scenarioData: ScenarioCreate = {
         name: 'Unique Test Scenario',
+        difficulty: 'Normal',
+        size: '10',
         is_active: true,
       };
 
       // Create first scenario
-      const firstScenario = await ScenarioService.createScenario(scenarioData);
+      const firstScenario = await TestScenarioService.createScenario(scenarioData);
       
       // Try to create second scenario with same name
       await expect(
-        ScenarioService.createScenario(scenarioData)
+        TestScenarioService.createScenario(scenarioData)
       ).rejects.toThrow();
 
       // Clean up
-      await ScenarioService.deleteScenario(firstScenario.id);
+      await TestScenarioService.deleteScenario(firstScenario.id);
     });
   });
 }); 
