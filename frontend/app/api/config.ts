@@ -19,7 +19,11 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('auth_token') || ENV_TOKEN;
+    // Check if we're in a browser environment before accessing localStorage
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('auth_token') || ENV_TOKEN
+      : ENV_TOKEN;
+    
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -38,9 +42,12 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle authentication errors
     if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      // Redirect to login page
-      window.location.href = '/login';
+      // Only access localStorage and window in browser environment
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        // Redirect to login page
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
