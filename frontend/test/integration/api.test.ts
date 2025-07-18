@@ -1,5 +1,19 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { AuthService, GuildService, TeamService } from '../../app/api'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { GuildService } from '../../app/api/guilds'
+import { TeamService } from '../../app/api/teams'
+
+// Create a test-specific AuthService that doesn't check environment variables
+class TestAuthService {
+  static isAuthenticated(): boolean {
+    return !!localStorage.getItem('auth_token');
+  }
+
+  static async login(credentials: any): Promise<any> {
+    throw new Error('Not implemented in test');
+  }
+}
+
+const AuthService = TestAuthService;
 
 // Check if API is running
 const API_BASE_URL = 'http://localhost:8000'

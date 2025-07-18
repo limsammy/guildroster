@@ -5,5 +5,6 @@ export { GuildForm } from './GuildForm';
 export { GuildSwitcher } from './GuildSwitcher';
 export { MemberForm } from './MemberForm';
 export { MemberSelector } from './MemberSelector';
+export { ScenarioForm } from './ScenarioForm';
 export { TeamForm } from './TeamForm';
 export { ToonForm } from './ToonForm'; 

@@ -1,18 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemberService, ToonService, GuildService, TeamService } from '../app/api';
-import type { Member, Toon, Guild, Team } from '../app/api/types';
+import { MemberService } from '../../app/api/members';
+import { ToonService } from '../../app/api/toons';
+import { GuildService } from '../../app/api/guilds';
+import { TeamService } from '../../app/api/teams';
+import type { Member, Toon, Guild, Team } from '../../app/api/types';
 
 // Mock the API services
-vi.mock('../app/api', () => ({
+vi.mock('../../app/api/members', () => ({
   MemberService: {
     getMember: vi.fn(),
   },
+}));
+
+vi.mock('../../app/api/toons', () => ({
   ToonService: {
     getToonsByMember: vi.fn(),
   },
+}));
+
+vi.mock('../../app/api/guilds', () => ({
   GuildService: {
     getGuild: vi.fn(),
   },
+}));
+
+vi.mock('../../app/api/teams', () => ({
   TeamService: {
     getTeams: vi.fn(),
     getTeam: vi.fn(),
