@@ -79,8 +79,8 @@ def create_app() -> FastAPI:
     app.include_router(scenario.router)
     app.include_router(attendance.router)
 
-    @app.get("/", dependencies=[Depends(security)])
-    def read_root(current_token: Token = Depends(require_any_token)):
+    @app.get("/")
+    def read_root():
         """Health check endpoint."""
         return {"status": "ok", "message": "GuildRoster API is running"}
 
