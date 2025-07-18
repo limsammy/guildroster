@@ -235,9 +235,27 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
               <div className="grid grid-cols-2 gap-4">
-                <Link to="/members" className="block">
+                <Link to="/raids" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">➕</div>
+                    <div className="text-sm font-medium">Add Raid</div>
+                  </Button>
+                </Link>
+                <Link to="/raids" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">🗡️</div>
+                    <div className="text-sm font-medium">Manage Raids</div>
+                  </Button>
+                </Link>
+                <Link to="/teams" className="block">
                   <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
                     <div className="text-3xl mb-2">👥</div>
+                    <div className="text-sm font-medium">Manage Teams</div>
+                  </Button>
+                </Link>
+                <Link to="/members" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">🧑‍🤝‍🧑</div>
                     <div className="text-sm font-medium">Manage Members</div>
                   </Button>
                 </Link>
@@ -249,18 +267,12 @@ export default function Dashboard() {
                 </Link>
                 {user?.is_superuser && (
                   <Link to="/settings" className="block">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center" variant="secondary">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
                       <div className="text-3xl mb-2">⚙️</div>
                       <div className="text-sm font-medium">Settings</div>
                     </Button>
                   </Link>
                 )}
-                <Link to="/teams" className="block">
-                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                    <div className="text-3xl mb-2">👥</div>
-                    <div className="text-sm font-medium">Manage Teams</div>
-                  </Button>
-                </Link>
               </div>
             </Card>
           </div>
