@@ -67,6 +67,7 @@ def create_raid(
         scheduled_at=raid_in.scheduled_at,
         scenario_id=raid_in.scenario_id,
         team_id=raid_in.team_id,
+        warcraftlogs_url=raid_in.warcraftlogs_url,
     )
     db.add(raid)
     db.commit()
@@ -178,6 +179,9 @@ def update_raid(
         # Verify new team exists
         team = get_team_or_404(db, raid_in.team_id)
         raid.team_id = raid_in.team_id  # type: ignore[assignment]
+
+    if raid_in.warcraftlogs_url is not None:
+        raid.warcraftlogs_url = raid_in.warcraftlogs_url
 
     db.commit()
     db.refresh(raid)

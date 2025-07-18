@@ -7,6 +7,9 @@ class RaidBase(BaseModel):
     scheduled_at: datetime
     scenario_id: int = Field(..., description="Scenario ID this raid is for")
     team_id: int = Field(..., description="Team ID this raid belongs to")
+    warcraftlogs_url: Optional[str] = Field(
+        None, description="Optional WarcraftLogs report URL for this raid"
+    )
 
 
 class RaidCreate(RaidBase):
@@ -22,6 +25,9 @@ class RaidUpdate(BaseModel):
     )
     team_id: Optional[int] = Field(
         None, description="Team ID this raid belongs to"
+    )
+    warcraftlogs_url: Optional[str] = Field(
+        None, description="Optional WarcraftLogs report URL for this raid"
     )
 
 

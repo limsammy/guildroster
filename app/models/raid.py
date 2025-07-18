@@ -20,6 +20,7 @@ class Raid(Base):
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    warcraftlogs_url = Column(String(255), nullable=True)
 
     # Relationships
     team = relationship("Team", back_populates="raids")
