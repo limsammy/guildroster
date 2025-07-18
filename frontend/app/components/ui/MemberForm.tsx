@@ -24,7 +24,9 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   onCancel,
 }) => {
   const [displayName, setDisplayName] = useState(initialValues.display_name || '');
-  const [guildId, setGuildId] = useState<number | ''>(initialValues.guild_id ?? '');
+  // Auto-select first guild if adding and none is set
+  const initialGuildId = initialValues.guild_id ?? (mode === 'add' && guilds.length > 0 ? guilds[0].id : '');
+  const [guildId, setGuildId] = useState<number | ''>(initialGuildId);
   const [teamId, setTeamId] = useState<number | ''>(initialValues.team_id ?? '');
   const [showErrors, setShowErrors] = useState(false);
 
@@ -47,6 +49,9 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   const displayNameError = showErrors && !displayName.trim() ? 'Name is required' : '';
   const guildError = showErrors && !guildId ? 'Guild is required' : '';
 
+  // If no guilds exist, disable the form and show a message
+  const noGuilds = guilds.length === 0;
+
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
       <form onSubmit={handleSubmit}>
@@ -58,6 +63,11 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
+        {noGuilds && (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+            <p className="text-yellow-400 text-sm">You must create a guild before adding members.</p>
+          </div>
+        )}
         <div className="mb-4">
           <label htmlFor="member-name" className="block text-sm font-medium text-slate-300 mb-2">Name</label>
           <input
@@ -67,7 +77,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             onChange={e => setDisplayName(e.target.value)}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             placeholder="Enter member name"
-            disabled={loading}
+            disabled={loading || noGuilds}
           />
           {displayNameError && <div className="text-red-400 text-xs mt-1">{displayNameError}</div>}
         </div>
@@ -78,7 +88,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             value={guildId}
             onChange={e => { setGuildId(e.target.value ? Number(e.target.value) : ''); setTeamId(''); }}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            disabled={loading}
+            disabled={loading || noGuilds}
           >
             <option value="">Select a guild</option>
             {guilds.map(guild => (
@@ -94,7 +104,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             value={teamId}
             onChange={e => setTeamId(e.target.value ? Number(e.target.value) : '')}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            disabled={loading || !guildId}
+            disabled={loading || !guildId || noGuilds}
           >
             <option value="">No Team</option>
             {filteredTeams.map(team => (
@@ -106,7 +116,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={loading || !displayName.trim() || guildId === ''} data-testid="member-form-submit">
+          <Button type="submit" variant="primary" disabled={loading || !displayName.trim() || guildId === '' || noGuilds} data-testid="member-form-submit">
             {loading ? (mode === 'add' ? 'Adding...' : 'Saving...') : (mode === 'add' ? 'Add Member' : 'Save Changes')}
           </Button>
         </div>
