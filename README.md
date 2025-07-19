@@ -88,6 +88,7 @@ pytest
 - **Raid management** - Raid scheduling and tracking with difficulty, size, and team assignments
 - **Scenario management** - Raid instance definitions with active/inactive status control
 - **Attendance tracking** - Comprehensive raid attendance system with individual and bulk operations, filtering, statistics, and streak tracking
+- **WarcraftLogs Integration** - Automatic participant extraction from WarcraftLogs reports with character name, class, spec, and role detection
 
 ## Tech Stack
 
@@ -493,7 +494,41 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=guildroster
 SECRET_KEY=your-secret-key
+
+# WarcraftLogs API Configuration
+WARCRAFTLOGS_CLIENT_ID=your_client_id_here
+WARCRAFTLOGS_CLIENT_SECRET=your_client_secret_here
 ```
+
+#### WarcraftLogs API Setup
+
+GuildRoster integrates with the [WarcraftLogs API](https://www.warcraftlogs.com/api/docs) to automatically fetch raid participant data from WarcraftLogs reports.
+
+**To set up WarcraftLogs API access:**
+
+1. **Create a WarcraftLogs API Application:**
+   - Go to the [WarcraftLogs Client Management Page](https://www.warcraftlogs.com/api/clients/)
+   - Click "Create Client"
+   - Enter a client name (e.g., "GuildRoster")
+   - **Leave redirect URIs blank** (not needed for client credentials flow)
+   - Click "Create"
+
+2. **Get Your Credentials:**
+   - Copy your `Client ID` and `Client Secret`
+   - Add them to your `.env` file as shown above
+
+3. **Test the Integration:**
+   ```bash
+   python test_warcraftlogs.py
+   ```
+
+**What this enables:**
+- ✅ Automatic participant extraction from WarcraftLogs reports
+- ✅ Character name, class, spec, and role detection
+- ✅ Integration with your existing toon/member system
+- ✅ Public report access (no user authorization required)
+
+**Note:** This uses the Client Credentials Flow, which provides access to all public WarcraftLogs data. No redirect URLs or user authorization are required.
 
 ### Testing
 ```bash
