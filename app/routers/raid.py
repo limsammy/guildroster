@@ -10,7 +10,11 @@ from app.schemas.raid import RaidCreate, RaidUpdate, RaidResponse
 from app.models.token import Token
 from app.utils.auth import require_any_token, require_superuser
 from app.models.user import User
-from app.utils.warcraftlogs import extract_report_code, fetch_report_metadata
+from app.utils.warcraftlogs import (
+    extract_report_code,
+    fetch_report_metadata,
+    fetch_report_participants,
+)
 
 router = APIRouter(prefix="/raids", tags=["Raids"])
 
@@ -49,7 +53,7 @@ def create_raid(
 ):
     """
     Create a new raid. Superuser only.
-    Accepts a WarcraftLogs URL and processes it (placeholder).
+    Accepts a WarcraftLogs URL and processes it to extract participant data.
     """
     # Verify team exists
     team = get_team_or_404(db, raid_in.team_id)
@@ -57,14 +61,32 @@ def create_raid(
     # Verify scenario exists
     scenario = get_scenario_or_404(db, raid_in.scenario_id)
 
-    # Placeholder: process warcraftlogs_url if provided
+    # Process warcraftlogs_url if provided
+    participants = []
     if raid_in.warcraftlogs_url:
         report_code = extract_report_code(raid_in.warcraftlogs_url)
         if report_code:
-            # TODO: Obtain a valid OAuth2 access token for WarcraftLogs
-            access_token = "your_access_token"  # Replace with real token logic
-            report_data = fetch_report_metadata(report_code, access_token)
-            print(f"Fetched WarcraftLogs report data: {report_data}")
+            # Fetch report metadata
+            report_data = fetch_report_metadata(report_code)
+            if report_data:
+                print(
+                    f"Fetched WarcraftLogs report: {report_data.get('title', 'Unknown')}"
+                )
+
+                # Fetch participant data
+                participants = fetch_report_participants(report_code)
+                if participants:
+                    print(f"Found {len(participants)} participants in the raid")
+                    for participant in participants:
+                        print(
+                            f"  - {participant.get('name', 'Unknown')} ({participant.get('class', 'Unknown')} {participant.get('spec', 'Unknown')})"
+                        )
+                else:
+                    print("No participants found in the report")
+            else:
+                print(
+                    f"Failed to fetch WarcraftLogs report data for code: {report_code}"
+                )
         else:
             print(f"Invalid WarcraftLogs URL: {raid_in.warcraftlogs_url}")
 
