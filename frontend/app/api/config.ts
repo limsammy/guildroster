@@ -4,8 +4,11 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'a
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Environment token for development/testing
+// Environment token for development/testing (only for API calls, not user sessions)
 const ENV_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
+
+// Check if we're in development mode
+const isDevelopment = import.meta.env.DEV;
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -14,30 +17,39 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: !isDevelopment, // Only use cookies in production
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token for API calls (not user sessions)
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Check if we're in a browser environment before accessing localStorage
-    const token = typeof window !== 'undefined' 
-      ? localStorage.getItem('auth_token') || ENV_TOKEN
-      : ENV_TOKEN;
+    // In development, add session token from localStorage for user endpoints
+    if (isDevelopment && config.url && config.url.includes('/users/')) {
+      const sessionToken = localStorage.getItem('session_token');
+      if (sessionToken && config.headers) {
+        config.headers.Authorization = `Bearer ${sessionToken}`;
+      }
+    }
     
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Add API token for non-user endpoints
+    if (ENV_TOKEN && config.url && !config.url.includes('/users/')) {
+      if (config.headers) {
+        config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
+      }
     }
 
     // Add context headers for better backend logging
     if (typeof window !== 'undefined') {
       // Add User-Agent to identify frontend requests
-      config.headers['User-Agent'] = 'GuildRoster-Frontend';
-      
-      // Add Referer to show which page made the request
-      config.headers['Referer'] = window.location.href;
-      
-      // Add custom header for additional context
-      config.headers['X-Frontend-Route'] = window.location.pathname;
+      if (config.headers) {
+        config.headers['User-Agent'] = 'GuildRoster-Frontend';
+        
+        // Add Referer to show which page made the request
+        config.headers['Referer'] = window.location.href;
+        
+        // Add custom header for additional context
+        config.headers['X-Frontend-Route'] = window.location.pathname;
+      }
     }
     
     return config;
@@ -53,15 +65,8 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle authentication errors
-    if (error.response?.status === 401) {
-      // Only access localStorage and window in browser environment
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        // Redirect to login page
-        window.location.href = '/login';
-      }
-    }
+    // Let individual components handle authentication errors
+    // Don't automatically redirect - let the UI handle it gracefully
     return Promise.reject(error);
   }
 );

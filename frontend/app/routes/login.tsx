@@ -22,13 +22,13 @@ export default function Login() {
 
   // Check if user is already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !authLoading) {
       // Redirect after a short delay to show the message
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,20 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import AuthService from '../api/auth';
-import type { LoginCredentials, LoginResponse } from '../api/auth';
-
-interface User {
-  user_id: number;
-  username: string;
-  is_superuser: boolean;
-}
+import type { LoginCredentials, LoginResponse, UserInfo } from '../api/auth';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -26,7 +20,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,33 +28,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check if we have a token (either from localStorage or environment)
-        if (AuthService.isAuthenticated()) {
-          const currentUser = AuthService.getCurrentUser();
-          
-          if (currentUser) {
-            // We have both token and user info
-            setUser(currentUser);
-          } else {
-            // We have a token but no user info (likely environment token)
-            // Try to validate the token with the backend
-            const isValid = await AuthService.validateToken();
-            if (isValid) {
-              // For environment tokens, create a default user
-              setUser({
-                user_id: 0,
-                username: 'API User',
-                is_superuser: true,
-              });
-            } else {
-              // Token is invalid, clear it
-              AuthService.logout();
-            }
-          }
+        // Check if user is authenticated by fetching user info from session
+        const currentUser = await AuthService.getCurrentUser();
+        
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          // No user found - this is a normal state, not an error
+          setUser(null);
         }
       } catch (err) {
-        console.error('Error initializing auth:', err);
-        AuthService.logout();
+        console.error('Unexpected error initializing auth:', err);
+        // Set user to null on any unexpected error
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -75,6 +55,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
       
       const response = await AuthService.login(credentials);
+      
+      // Set user info from login response
       setUser({
         user_id: response.user_id,
         username: response.username,
@@ -88,10 +70,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    AuthService.logout();
-    setUser(null);
-    setError(null);
+  const logout = async () => {
+    try {
+      await AuthService.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setUser(null);
+      setError(null);
+    }
   };
 
   const clearError = () => {

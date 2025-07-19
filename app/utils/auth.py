@@ -17,41 +17,50 @@ security = HTTPBearer(
 )
 
 
+def get_token_from_cookie(
+    request: Request, db: Session = Depends(get_db)
+) -> Optional[Token]:
+    """Get token from session cookie."""
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        return None
+
+    token = db.query(Token).filter(Token.key == session_token).first()
+    if not token or not token.is_valid():
+        return None
+
+    return token
+
+
 def get_current_token(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> Token:
-    """Get the current token from the Authorization header."""
+    """Get the current token from either Authorization header or session cookie."""
     logger.debug(
         f"get_current_token called with credentials: {credentials.scheme if credentials else 'None'}"
     )
 
-    if not credentials:
-        logger.debug("No Authorization header provided, raising 401")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    # First try to get token from Authorization header
+    if credentials:
+        token_key = credentials.credentials
+        token = db.query(Token).filter(Token.key == token_key).first()
+        if token and token.is_valid():
+            return token
 
-    token_key = credentials.credentials
+    # If no valid header token, try cookie
+    cookie_token = get_token_from_cookie(request, db)
+    if cookie_token:
+        return cookie_token
 
-    token = db.query(Token).filter(Token.key == token_key).first()
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not token.is_valid():
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired or inactive",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    return token
+    # No valid token found
+    logger.debug("No valid token found in header or cookie, raising 401")
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def get_current_user(

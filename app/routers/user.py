@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,7 +11,12 @@ from app.schemas.user import (
     UserUpdate,
     UserLogin,
 )
-from app.utils.auth import require_any_token, security, require_superuser
+from app.utils.auth import (
+    require_any_token,
+    security,
+    require_superuser,
+    require_user,
+)
 from app.utils.password import hash_password, verify_password
 from app.utils.logger import get_logger
 
@@ -72,6 +77,7 @@ def create_user(
 @router.post("/login")
 def login_user(
     user_credentials: UserLogin,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
@@ -79,6 +85,7 @@ def login_user(
 
     **Returns:**
     - Token for authenticated user
+    - Sets HTTP-only cookie for session management
     """
     logger.debug(f"Login attempt for user: {user_credentials.username}")
 
@@ -125,6 +132,20 @@ def login_user(
     db.add(token)
     db.commit()
     db.refresh(token)
+
+    # Set HTTP-only cookie for session management
+    response.set_cookie(
+        key="session_token",
+        value=str(token.key),
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax",
+        max_age=3600 * 24 * 7,  # 7 days
+        path="/",
+        domain=None,  # Let browser set the domain
+    )
+
+    logger.info(f"Set session cookie for user {user.username}")
 
     logger.info(f"User {user.username} logged in successfully")
     return {
@@ -295,3 +316,24 @@ def delete_user(
 
     logger.info(f"User {user.username} deleted successfully")
     return {"message": "User deleted successfully"}
+
+
+@router.post("/logout")
+def logout_user(response: Response):
+    """
+    Logout current user by clearing the session cookie.
+    """
+    # Clear the session cookie
+    response.delete_cookie(key="session_token", path="/")
+
+    return {"message": "Logged out successfully"}
+
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_info(
+    current_user: User = Depends(require_user),
+):
+    """
+    Get current user information from session.
+    """
+    return current_user

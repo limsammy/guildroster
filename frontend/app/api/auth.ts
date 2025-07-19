@@ -14,6 +14,12 @@ export interface LoginResponse {
   is_superuser: boolean;
 }
 
+export interface UserInfo {
+  user_id: number;
+  username: string;
+  is_superuser: boolean;
+}
+
 export interface AuthError {
   message: string;
   status?: number;
@@ -22,8 +28,11 @@ export interface AuthError {
 // API base URL - adjust this to match your backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Environment token for development/testing
+// Environment token for development/testing (only for API calls, not user sessions)
 const ENV_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
+
+// Check if we're in development mode
+const isDevelopment = import.meta.env.DEV;
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -31,14 +40,23 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: !isDevelopment, // Only use cookies in production
 });
 
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token') || ENV_TOKEN;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // In development, add the session token from localStorage
+    if (isDevelopment) {
+      const sessionToken = localStorage.getItem('session_token');
+      if (sessionToken && config.url && config.url.includes('/users/')) {
+        config.headers.Authorization = `Bearer ${sessionToken}`;
+      }
+    }
+    
+    // Add API token for non-user endpoints
+    if (ENV_TOKEN && config.url && !config.url.includes('/users/')) {
+      config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
     }
     return config;
   },
@@ -51,12 +69,8 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_info');
-      window.location.href = '/login';
-    }
+    // Let individual components handle authentication errors
+    // Don't automatically redirect - let the UI handle it gracefully
     return Promise.reject(error);
   }
 );
@@ -69,13 +83,15 @@ export class AuthService {
     try {
       const response = await apiClient.post<LoginResponse>('/users/login', credentials);
       
-      // Store token and user info
-      localStorage.setItem('auth_token', response.data.access_token);
-      localStorage.setItem('user_info', JSON.stringify({
-        user_id: response.data.user_id,
-        username: response.data.username,
-        is_superuser: response.data.is_superuser,
-      }));
+      // In development, store the token in localStorage
+      if (isDevelopment) {
+        localStorage.setItem('session_token', response.data.access_token);
+        localStorage.setItem('user_info', JSON.stringify({
+          user_id: response.data.user_id,
+          username: response.data.username,
+          is_superuser: response.data.is_superuser,
+        }));
+      }
       
       return response.data;
     } catch (error: any) {
@@ -94,41 +110,74 @@ export class AuthService {
   /**
    * Logout current user
    */
-  static logout(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_info');
-    window.location.href = '/';
+  static async logout(): Promise<void> {
+    try {
+      await apiClient.post('/users/logout');
+    } catch (error) {
+      // Even if the logout request fails, clear local storage
+      console.warn('Logout request failed:', error);
+    } finally {
+      // Clear localStorage in development
+      if (isDevelopment) {
+        localStorage.removeItem('session_token');
+        localStorage.removeItem('user_info');
+      }
+      // Always redirect to home page
+      window.location.href = '/';
+    }
   }
 
   /**
-   * Get current user info from localStorage
+   * Get current user info from session
    */
-  static getCurrentUser(): { user_id: number; username: string; is_superuser: boolean } | null {
-    const userInfo = localStorage.getItem('user_info');
-    return userInfo ? JSON.parse(userInfo) : null;
+  static async getCurrentUser(): Promise<UserInfo | null> {
+    try {
+      // In development, try to get user info from localStorage first
+      if (isDevelopment) {
+        const userInfo = localStorage.getItem('user_info');
+        if (userInfo) {
+          return JSON.parse(userInfo);
+        }
+      }
+      
+      // Fall back to API call
+      const response = await apiClient.get<UserInfo>('/users/me');
+      return response.data;
+    } catch (error: any) {
+      // If the request fails with 401, user is not authenticated (normal state)
+      // If it fails with other errors, log them but still return null
+      if (error.response?.status !== 401) {
+        console.warn('Unexpected error getting current user:', error);
+      }
+      return null;
+    }
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated by attempting to get user info
    */
-  static isAuthenticated(): boolean {
-    return !!(localStorage.getItem('auth_token') || ENV_TOKEN);
+  static async isAuthenticated(): Promise<boolean> {
+    try {
+      const user = await this.getCurrentUser();
+      return user !== null;
+    } catch (error) {
+      return false;
+    }
   }
 
   /**
-   * Get auth token
+   * Get auth token (only for API tokens, not user sessions)
    */
   static getToken(): string | null {
-    const token = localStorage.getItem('auth_token') || ENV_TOKEN;
-    return token || null;
+    return ENV_TOKEN || null;
   }
 
   /**
-   * Validate token with backend
+   * Validate session with backend
    */
-  static async validateToken(): Promise<boolean> {
+  static async validateSession(): Promise<boolean> {
     try {
-      await apiClient.get('/'); // Health check endpoint
+      await apiClient.get('/users/me');
       return true;
     } catch (error) {
       return false;

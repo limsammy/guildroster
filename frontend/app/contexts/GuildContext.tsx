@@ -29,10 +29,10 @@ export const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   // Load available guilds on mount and when user changes
   useEffect(() => {
-    if (user?.is_superuser) {
+    if (user && user.is_superuser) {
       loadGuilds();
     } else {
-      // For non-superusers, clear guild context
+      // For non-superusers or when user is null, clear guild context
       setAvailableGuilds([]);
       setSelectedGuild(null);
     }
@@ -40,7 +40,7 @@ export const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   // Load selected guild from localStorage on mount
   useEffect(() => {
-    if (user?.is_superuser) {
+    if (user && user.is_superuser) {
       const savedGuildId = localStorage.getItem('selectedGuildId');
       if (savedGuildId && availableGuilds.length > 0) {
         const guild = availableGuilds.find(g => g.id === parseInt(savedGuildId));
@@ -58,8 +58,13 @@ export const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
       const guilds = await GuildService.getGuilds();
       setAvailableGuilds(guilds);
     } catch (err: any) {
-      setError(err.message || 'Failed to load guilds');
-      console.error('Error loading guilds:', err);
+      // Don't set error for 401 - user just needs to log in
+      if (err.response?.status !== 401) {
+        setError(err.message || 'Failed to load guilds');
+        console.error('Error loading guilds:', err);
+      }
+      // Clear guilds on any error
+      setAvailableGuilds([]);
     } finally {
       setIsLoading(false);
     }

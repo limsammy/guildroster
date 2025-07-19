@@ -1,209 +1,228 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import AuthService from '../../app/api/auth';
 
-// Mock axios with hoisted mock
-vi.mock('axios', () => {
-  const mockAxiosInstance = {
-    post: vi.fn(),
-    get: vi.fn(),
-    interceptors: {
-      request: { use: vi.fn() },
-      response: { use: vi.fn() },
-    },
-  };
-
-  return {
-    default: {
-      create: vi.fn(() => mockAxiosInstance),
-    },
-  };
-});
-
-// Create a test-specific AuthService that doesn't check environment variables
-class TestAuthService {
-  static isAuthenticated(): boolean {
-    return !!localStorage.getItem('auth_token');
-  }
-
-  static getToken(): string | null {
-    return localStorage.getItem('auth_token');
-  }
-
-  static getCurrentUser(): { user_id: number; username: string; is_superuser: boolean } | null {
-    const userInfo = localStorage.getItem('user_info');
-    return userInfo ? JSON.parse(userInfo) : null;
-  }
-
-  static logout(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_info');
-    window.location.href = '/';
-  }
-
-  static async login(credentials: any): Promise<any> {
-    // Mock implementation for tests
-    if (credentials.username === 'testuser' && credentials.password === 'testpass') {
-      const mockResponse = {
-        access_token: 'test-token',
-        token_type: 'bearer',
-        user_id: 1,
-        username: 'testuser',
-        is_superuser: false,
-      };
-      
-      // Store token and user info
-      localStorage.setItem('auth_token', mockResponse.access_token);
-      localStorage.setItem('user_info', JSON.stringify({
-        user_id: mockResponse.user_id,
-        username: mockResponse.username,
-        is_superuser: mockResponse.is_superuser,
-      }));
-      
-      return mockResponse;
-    } else if (credentials.username === 'wrong' && credentials.password === 'wrong') {
-      throw new Error('Invalid username or password');
-    } else if (credentials.username === '' && credentials.password === '') {
-      throw new Error('Invalid input data');
-    } else {
-      throw new Error('Login failed. Please try again.');
-    }
-  }
-
-  static async validateToken(): Promise<boolean> {
-    return false;
-  }
-}
-
-// Use the test version for these specific tests
-const AuthService = TestAuthService;
-
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
-
-// Mock window.location
-Object.defineProperty(window, 'location', {
-  value: {
-    href: '',
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      post: vi.fn(),
+      get: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() },
+      },
+    })),
   },
-  writable: true,
-});
+}));
 
 describe('AuthService', () => {
+  let mockAxiosInstance: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue(null);
+    // Get the mocked axios instance
+    const axios = require('axios');
+    mockAxiosInstance = axios.default.create();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('login', () => {
-    it('should successfully login and store token', async () => {
-      const credentials = { username: 'testuser', password: 'testpass' };
+    it('should login successfully and return user data', async () => {
+      const mockResponse = {
+        data: {
+          access_token: 'test-token',
+          token_type: 'bearer',
+          user_id: 1,
+          username: 'testuser',
+          is_superuser: false,
+        },
+      };
+
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const credentials = { username: 'testuser', password: 'password' };
       const result = await AuthService.login(credentials);
 
-      expect(result).toEqual({
-        access_token: 'test-token',
-        token_type: 'bearer',
-        user_id: 1,
-        username: 'testuser',
-        is_superuser: false,
-      });
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', 'test-token');
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('user_info', JSON.stringify({
-        user_id: 1,
-        username: 'testuser',
-        is_superuser: false,
-      }));
+      expect(result).toEqual(mockResponse.data);
     });
 
-    it('should throw error on invalid credentials', async () => {
-      const credentials = { username: 'wrong', password: 'wrong' };
+    it('should handle login errors', async () => {
+      const mockError = {
+        response: {
+          status: 401,
+          data: { detail: 'Invalid credentials' },
+        },
+      };
 
-      await expect(AuthService.login(credentials)).rejects.toThrow('Invalid username or password');
-    });
+      mockAxiosInstance.post.mockRejectedValue(mockError);
 
-    it('should throw error on validation failure', async () => {
-      const credentials = { username: '', password: '' };
+      const credentials = { username: 'testuser', password: 'wrongpassword' };
 
-      await expect(AuthService.login(credentials)).rejects.toThrow('Invalid input data');
+      await expect(AuthService.login(credentials)).rejects.toThrow(
+        'Invalid username or password'
+      );
     });
   });
 
   describe('logout', () => {
-    it('should clear localStorage and redirect', () => {
-      AuthService.logout();
+    it('should logout successfully', async () => {
+      const mockResponse = { data: { message: 'Logged out successfully' } };
 
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('user_info');
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      // Mock window.location
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        value: { href: '' },
+        writable: true,
+      });
+
+      await AuthService.logout();
+
       expect(window.location.href).toBe('/');
+      
+      // Restore original location
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+      });
+    });
+
+    it('should handle logout errors gracefully', async () => {
+      const mockError = new Error('Network error');
+
+      mockAxiosInstance.post.mockRejectedValue(mockError);
+
+      // Mock window.location
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        value: { href: '' },
+        writable: true,
+      });
+
+      // Mock console.warn
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await AuthService.logout();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Logout request failed:', mockError);
+      expect(window.location.href).toBe('/');
+      
+      // Restore
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+      });
+      consoleSpy.mockRestore();
     });
   });
 
   describe('getCurrentUser', () => {
-    it('should return user info from localStorage', () => {
-      const userInfo = {
+    it('should return user info when authenticated', async () => {
+      const mockUser = {
         user_id: 1,
         username: 'testuser',
         is_superuser: false,
       };
-      localStorageMock.getItem.mockReturnValue(JSON.stringify(userInfo));
 
-      const result = AuthService.getCurrentUser();
+      mockAxiosInstance.get.mockResolvedValue({ data: mockUser });
 
-      expect(result).toEqual(userInfo);
+      const result = await AuthService.getCurrentUser();
+
+      expect(result).toEqual(mockUser);
     });
 
-    it('should return null when no user info exists', () => {
-      localStorageMock.getItem.mockReturnValue(null);
+    it('should return null when not authenticated', async () => {
+      const mockError = { response: { status: 401 } };
 
-      const result = AuthService.getCurrentUser();
+      mockAxiosInstance.get.mockRejectedValue(mockError);
+
+      const result = await AuthService.getCurrentUser();
 
       expect(result).toBeNull();
     });
   });
 
   describe('isAuthenticated', () => {
-    it('should return true when token exists', () => {
-      localStorageMock.getItem.mockReturnValue('test-token');
+    it('should return true when user is authenticated', async () => {
+      const mockUser = {
+        user_id: 1,
+        username: 'testuser',
+        is_superuser: false,
+      };
 
-      const result = AuthService.isAuthenticated();
+      mockAxiosInstance.get.mockResolvedValue({ data: mockUser });
+
+      const result = await AuthService.isAuthenticated();
 
       expect(result).toBe(true);
     });
 
-    it('should return false when no token exists', () => {
-      localStorageMock.getItem.mockReturnValue(null);
+    it('should return false when user is not authenticated', async () => {
+      const mockError = { response: { status: 401 } };
 
-      const result = AuthService.isAuthenticated();
+      mockAxiosInstance.get.mockRejectedValue(mockError);
+
+      const result = await AuthService.isAuthenticated();
 
       expect(result).toBe(false);
     });
   });
 
   describe('getToken', () => {
-    it('should return token from localStorage', () => {
-      localStorageMock.getItem.mockReturnValue('test-token');
+    it('should return environment token when available', () => {
+      // Mock environment variable
+      const originalEnv = (import.meta as any).env.VITE_AUTH_TOKEN;
+      (import.meta as any).env.VITE_AUTH_TOKEN = 'env-token';
 
       const result = AuthService.getToken();
 
-      expect(result).toBe('test-token');
+      expect(result).toBe('env-token');
+      
+      // Restore
+      (import.meta as any).env.VITE_AUTH_TOKEN = originalEnv;
     });
 
-    it('should return null when no token exists', () => {
-      localStorageMock.getItem.mockReturnValue(null);
+    it('should return null when no environment token', () => {
+      // Mock environment variable
+      const originalEnv = (import.meta as any).env.VITE_AUTH_TOKEN;
+      (import.meta as any).env.VITE_AUTH_TOKEN = undefined;
 
       const result = AuthService.getToken();
 
       expect(result).toBeNull();
+      
+      // Restore
+      (import.meta as any).env.VITE_AUTH_TOKEN = originalEnv;
+    });
+  });
+
+  describe('validateSession', () => {
+    it('should return true when session is valid', async () => {
+      const mockUser = {
+        user_id: 1,
+        username: 'testuser',
+        is_superuser: false,
+      };
+
+      mockAxiosInstance.get.mockResolvedValue({ data: mockUser });
+
+      const result = await AuthService.validateSession();
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when session is invalid', async () => {
+      const mockError = { response: { status: 401 } };
+
+      mockAxiosInstance.get.mockRejectedValue(mockError);
+
+      const result = await AuthService.validateSession();
+
+      expect(result).toBe(false);
     });
   });
 }); 

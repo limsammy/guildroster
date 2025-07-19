@@ -18,7 +18,7 @@ export function meta() {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { selectedGuild } = useGuild();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -30,6 +30,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      // Only fetch data if user is authenticated
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         setError(null);
@@ -49,15 +54,25 @@ export default function Dashboard() {
         setRaids(raidsData);
         setScenarios(scenariosData);
       } catch (err: any) {
-        console.error('Error fetching dashboard data:', err);
-        setError(err.message || 'Failed to load dashboard data');
+        // Don't set error for 401 - user just needs to log in
+        if (err.response?.status !== 401) {
+          console.error('Error fetching dashboard data:', err);
+          setError(err.message || 'Failed to load dashboard data');
+        } else {
+          // For 401, just set empty data - user will be redirected to login by navigation
+          setGuilds([]);
+          setTeams([]);
+          setMembers([]);
+          setRaids([]);
+          setScenarios([]);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Calculate statistics (filtered by selected guild if applicable)
   const filteredTeams = selectedGuild 
@@ -103,6 +118,21 @@ export default function Dashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
           <p className="text-slate-300">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔐</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
+          <p className="text-slate-300 mb-4">Please log in to access the dashboard.</p>
+          <Link to="/login">
+            <Button variant="primary">Go to Login</Button>
+          </Link>
         </div>
       </div>
     );

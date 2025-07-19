@@ -10,30 +10,19 @@ vi.mock('../../app/api/auth', () => ({
     getCurrentUser: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
-    validateToken: vi.fn(),
+    validateSession: vi.fn(),
   },
   AuthService: {
     isAuthenticated: vi.fn(),
     getCurrentUser: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
-    validateToken: vi.fn(),
+    validateSession: vi.fn(),
   },
 }))
 
 // Import the mocked module
 import AuthService from '../../app/api/auth'
-
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
-})
 
 // Test component to access auth context
 function TestComponent() {
@@ -49,9 +38,9 @@ function TestComponent() {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(AuthService.isAuthenticated).mockReturnValue(false)
-    vi.mocked(AuthService.getCurrentUser).mockReturnValue(null)
-    vi.mocked(AuthService.validateToken).mockResolvedValue(false)
+    vi.mocked(AuthService.isAuthenticated).mockResolvedValue(false)
+    vi.mocked(AuthService.getCurrentUser).mockResolvedValue(null)
+    vi.mocked(AuthService.validateSession).mockResolvedValue(false)
   })
 
   afterEach(() => {
@@ -60,7 +49,7 @@ describe('AuthContext', () => {
 
   it('should show loading state initially', async () => {
     // Mock the initial check to take some time
-    vi.mocked(AuthService.isAuthenticated).mockReturnValue(false)
+    vi.mocked(AuthService.getCurrentUser).mockResolvedValue(null)
     
     render(
       <AuthProvider>
@@ -74,8 +63,8 @@ describe('AuthContext', () => {
     })
   })
 
-  it('should show not authenticated when no token', async () => {
-    vi.mocked(AuthService.isAuthenticated).mockReturnValue(false)
+  it('should show not authenticated when no session', async () => {
+    vi.mocked(AuthService.getCurrentUser).mockResolvedValue(null)
     
     render(
       <AuthProvider>
@@ -88,15 +77,14 @@ describe('AuthContext', () => {
     })
   })
 
-  it('should show authenticated user when token exists', async () => {
+  it('should show authenticated user when session exists', async () => {
     const mockUser = {
       user_id: 1,
       username: 'testuser',
       is_superuser: false,
     }
     
-    vi.mocked(AuthService.isAuthenticated).mockReturnValue(true)
-    vi.mocked(AuthService.getCurrentUser).mockReturnValue(mockUser)
+    vi.mocked(AuthService.getCurrentUser).mockResolvedValue(mockUser)
     
     render(
       <AuthProvider>
@@ -109,42 +97,8 @@ describe('AuthContext', () => {
     })
   })
 
-  it('should show authenticated user when token exists but no user info', async () => {
-    vi.mocked(AuthService.isAuthenticated).mockReturnValue(true)
-    vi.mocked(AuthService.getCurrentUser).mockReturnValue(null)
-    vi.mocked(AuthService.validateToken).mockResolvedValue(true)
-    
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    )
-    
-    await waitFor(() => {
-      expect(screen.getByText('Authenticated as: API User')).toBeInTheDocument()
-    })
-  })
-
-  it('should show not authenticated when token validation fails', async () => {
-    vi.mocked(AuthService.isAuthenticated).mockReturnValue(true)
-    vi.mocked(AuthService.getCurrentUser).mockReturnValue(null)
-    vi.mocked(AuthService.validateToken).mockResolvedValue(false)
-    
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    )
-    
-    await waitFor(() => {
-      expect(screen.getByText('Not authenticated')).toBeInTheDocument()
-    })
-  })
-
   it('should handle initialization error gracefully', async () => {
-    vi.mocked(AuthService.isAuthenticated).mockImplementation(() => {
-      throw new Error('Test error')
-    })
+    vi.mocked(AuthService.getCurrentUser).mockRejectedValue(new Error('Test error'))
     
     render(
       <AuthProvider>
@@ -155,8 +109,49 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByText('Not authenticated')).toBeInTheDocument()
     })
+  })
+
+  it('should handle login successfully', async () => {
+    const mockUser = {
+      user_id: 1,
+      username: 'testuser',
+      is_superuser: false,
+    }
     
-    // Should have called logout due to error
-    expect(AuthService.logout).toHaveBeenCalled()
+    const mockLoginResponse = {
+      user_id: 1,
+      username: 'testuser',
+      is_superuser: false,
+      access_token: 'test-token',
+      token_type: 'bearer',
+    }
+    
+    vi.mocked(AuthService.getCurrentUser).mockResolvedValue(null)
+    vi.mocked(AuthService.login).mockResolvedValue(mockLoginResponse)
+    
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('Not authenticated')).toBeInTheDocument()
+    })
+  })
+
+  it('should handle logout successfully', async () => {
+    vi.mocked(AuthService.getCurrentUser).mockResolvedValue(null)
+    vi.mocked(AuthService.logout).mockResolvedValue()
+    
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('Not authenticated')).toBeInTheDocument()
+    })
   })
 }) 

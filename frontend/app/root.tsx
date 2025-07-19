@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import { AuthProvider } from "./contexts/AuthContext";
 import { GuildProvider } from "./contexts/GuildContext";
+import DevTools from "./components/DevTools";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -48,6 +49,7 @@ export default function App() {
     <AuthProvider>
       <GuildProvider>
         <Outlet />
+        {import.meta.env.DEV && <DevTools />}
       </GuildProvider>
     </AuthProvider>
   );
