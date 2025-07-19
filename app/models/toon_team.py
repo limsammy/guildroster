@@ -19,8 +19,12 @@ class ToonTeam(Base):
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     # Relationships
-    toon = relationship("Toon", back_populates="toon_teams")
-    team = relationship("Team", back_populates="toon_teams")
+    toon = relationship(
+        "Toon", back_populates="toon_teams", overlaps="teams,toons"
+    )
+    team = relationship(
+        "Team", back_populates="toon_teams", overlaps="teams,toons"
+    )
 
     # Constraints
     __table_args__ = (

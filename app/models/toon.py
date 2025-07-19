@@ -55,7 +55,12 @@ class Toon(Base):
     toon_teams = relationship(
         "ToonTeam", back_populates="toon", cascade="all, delete-orphan"
     )
-    teams = relationship("Team", secondary="toon_teams", back_populates="toons")
+    teams = relationship(
+        "Team",
+        secondary="toon_teams",
+        back_populates="toons",
+        overlaps="toon_teams",
+    )
 
     @property
     def team_ids(self) -> List[int]:

@@ -35,7 +35,12 @@ class Team(Base):
     toon_teams = relationship(
         "ToonTeam", back_populates="team", cascade="all, delete-orphan"
     )
-    toons = relationship("Toon", secondary="toon_teams", back_populates="teams")
+    toons = relationship(
+        "Toon",
+        secondary="toon_teams",
+        back_populates="teams",
+        overlaps="toon_teams",
+    )
 
     # Constraints
     __table_args__ = (
