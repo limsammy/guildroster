@@ -239,28 +239,17 @@ describe('Members', () => {
     userEvent.click(screen.getByText('Add Member'));
     await waitFor(() => expect(screen.getByTestId('member-form-modal')).toBeInTheDocument());
 
-    // Test that submit button is disabled when fields are empty
+    // Test that submit button is disabled when name is empty
     const submitButton = screen.getByTestId('member-form-submit');
     expect(submitButton).toBeDisabled();
 
-    // Fill in name but leave guild empty
+    // Fill in name - button should be enabled (guild is auto-selected)
     await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'Test Member');
-    
-    // Submit button should still be disabled because guild is empty
-    expect(submitButton).toBeDisabled();
-    
-    // Select guild - now submit button should be enabled
-    userEvent.selectOptions(screen.getByLabelText(/guild/i), ['1']);
     await waitFor(() => expect(submitButton).not.toBeDisabled());
     
     // Clear name field - button should be disabled again
     userEvent.clear(screen.getByPlaceholderText(/enter member name/i));
     expect(submitButton).toBeDisabled();
-    
-    // Fill name and clear guild - button should be disabled
-    await userEvent.type(screen.getByPlaceholderText(/enter member name/i), 'Test Member');
-    await userEvent.selectOptions(screen.getByLabelText(/guild/i), ['']);
-    await waitFor(() => expect(submitButton).toBeDisabled());
   });
 
   it('submits the add member form and calls createMember', async () => {

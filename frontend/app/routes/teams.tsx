@@ -92,13 +92,17 @@ export default function Teams() {
   };
 
   const handleDeleteTeam = async (teamId: number) => {
-    if (!confirm('Are you sure you want to delete this team?')) return;
+    if (!confirm('Are you sure you want to delete this team? This action cannot be undone.')) return;
     
     try {
       await TeamService.deleteTeam(teamId);
-      await reloadTeams();
+      // Update local state immediately for better UX
+      setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
     } catch (err: any) {
-      setError(err.message || 'Failed to delete team');
+      const errorMessage = err.message || 'Failed to delete team';
+      alert(`Failed to delete team: ${errorMessage}`);
+      // Reload teams to ensure UI is in sync
+      await reloadTeams();
     }
   };
 

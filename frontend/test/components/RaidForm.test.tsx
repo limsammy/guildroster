@@ -35,12 +35,14 @@ describe('RaidForm', () => {
     fireEvent.change(screen.getByLabelText(/WarcraftLogs URL/i), { target: { value: 'https://www.warcraftlogs.com/reports/abc123' } });
     fireEvent.change(screen.getByLabelText(/Team/i), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText(/Scenario/i), { target: { value: '11' } });
+    fireEvent.change(screen.getByLabelText(/Scheduled Date\/Time/i), { target: { value: '2024-01-01T10:00' } });
     expect(screen.getByRole('button', { name: /Add Raid/i })).not.toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: /Add Raid/i }));
     expect(onSubmit).toHaveBeenCalledWith({
       warcraftlogs_url: 'https://www.warcraftlogs.com/reports/abc123',
       team_id: 2,
       scenario_id: 11,
+      scheduled_at: '2024-01-01T10:00',
     });
   });
 

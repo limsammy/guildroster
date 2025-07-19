@@ -46,7 +46,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // In development, add the session token from localStorage
+    // In development, add the session token from localStorage for user endpoints
     if (isDevelopment) {
       const sessionToken = localStorage.getItem('session_token');
       if (sessionToken && config.url && config.url.includes('/users/')) {
@@ -54,9 +54,19 @@ apiClient.interceptors.request.use(
       }
     }
     
-    // Add API token for non-user endpoints
+    // For all other endpoints (teams, members, guilds, etc.), use session token if available
+    if (isDevelopment && config.url && !config.url.includes('/users/')) {
+      const sessionToken = localStorage.getItem('session_token');
+      if (sessionToken && config.headers && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${sessionToken}`;
+      }
+    }
+    
+    // Add API token for non-user endpoints (fallback for testing)
     if (ENV_TOKEN && config.url && !config.url.includes('/users/')) {
-      config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
+      if (config.headers && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
+      }
     }
     return config;
   },
