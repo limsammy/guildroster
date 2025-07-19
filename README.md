@@ -519,7 +519,15 @@ GuildRoster integrates with the [WarcraftLogs API](https://www.warcraftlogs.com/
 
 3. **Test the Integration:**
    ```bash
-   python test_warcraftlogs.py
+   # Interactive mode (recommended for first-time testing)
+   python test_warcraftlogs.py --interactive
+   
+   # Command line testing
+   python test_warcraftlogs.py --url "https://www.warcraftlogs.com/reports/YOUR_REPORT_CODE"
+   
+   # Test specific functionality
+   python test_warcraftlogs.py --url "URL" --type participants
+   python test_warcraftlogs.py --url "URL" --type fights
    ```
 
 **What this enables:**
@@ -529,6 +537,96 @@ GuildRoster integrates with the [WarcraftLogs API](https://www.warcraftlogs.com/
 - ✅ Public report access (no user authorization required)
 
 **Note:** This uses the Client Credentials Flow, which provides access to all public WarcraftLogs data. No redirect URLs or user authorization are required.
+
+#### Testing WarcraftLogs Integration
+
+The project includes a comprehensive test script to verify your WarcraftLogs API integration. This script helps you:
+
+- ✅ Verify your API credentials are working
+- ✅ Test URL parsing functionality
+- ✅ Fetch and display participant data from reports
+- ✅ Fetch and display fight/encounter data
+- ✅ Debug API issues before integrating with the main application
+
+**Available Test Modes:**
+
+1. **Interactive Mode** (Recommended for first-time testing):
+   ```bash
+   python test_warcraftlogs.py --interactive
+   ```
+   - Prompts for WarcraftLogs report URL
+   - Lets you choose what to test (all, participants, or fights)
+   - Provides step-by-step guidance
+
+2. **Command Line Mode**:
+   ```bash
+   # Test everything with a specific report
+   python test_warcraftlogs.py --url "https://www.warcraftlogs.com/reports/abc123def456"
+   
+   # Test only participant data
+   python test_warcraftlogs.py --url "URL" --type participants
+   
+   # Test only fight data
+   python test_warcraftlogs.py --url "URL" --type fights
+   ```
+
+3. **Basic Credential Test**:
+   ```bash
+   python test_warcraftlogs.py
+   ```
+   - Tests credentials and URL parsing without a real report
+   - Shows setup instructions
+
+**Sample Test Output:**
+
+```
+🔧 WarcraftLogs API Test - Interactive Mode
+==================================================
+
+📝 Enter WarcraftLogs report URL: https://www.warcraftlogs.com/reports/abc123def456
+
+🔍 What would you like to test?
+   1. All functionality
+   2. Participants only
+   3. Fights only
+
+Enter your choice (1-3): 1
+
+✅ WarcraftLogs credentials found
+✅ URL parsing works correctly
+✅ Extracted report code: abc123def456
+
+📊 Fetching report metadata...
+✅ Report metadata fetched successfully
+   Title: Mythic Amirdrassil, the Dream's Hope
+   Zone: Amirdrassil, the Dream's Hope
+   Start Time: 1703123456789
+   End Time: 1703126789012
+   Owner: GuildName
+
+👥 Fetching participant data...
+✅ Found 20 participants
+📋 Participant List:
+    1. PlayerName1 (Death Knight - Level 70, ClassID: 6)
+    2. PlayerName2 (Paladin - Level 70, ClassID: 2)
+    3. PlayerName3 (Mage - Level 70, ClassID: 8)
+
+⚔️ Fetching fight data...
+✅ Found 8 fights
+🗡️ Fight List:
+    1. Fyrakk (Mythic) - ✅ Killed
+    2. Tindral Sageswift (Mythic) - ✅ Killed
+    3. Smolderon (Mythic) - ❌ 45.2%
+
+🎉 All tests passed! WarcraftLogs integration is working correctly.
+```
+
+**Troubleshooting:**
+
+- **"Credentials not found"**: Check your `.env` file has `WARCRAFTLOGS_CLIENT_ID` and `WARCRAFTLOGS_CLIENT_SECRET`
+- **"URL parsing failed"**: Ensure the URL follows the format `https://www.warcraftlogs.com/reports/REPORT_CODE`
+- **"API request failed"**: Verify your credentials are correct and the report is public
+- **"No participants found"**: The report might be private or have no participant data
 
 ### Testing
 ```bash

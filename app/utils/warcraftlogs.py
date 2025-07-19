@@ -98,31 +98,22 @@ class WarcraftLogsAPI:
 
     def get_report_participants(self, report_code: str) -> Optional[List[Dict]]:
         """
-        Fetch all participants/characters from a WarcraftLogs report.
+        Fetch all participants/characters from a WarcraftLogs report using rankedCharacters.
+        This is the recommended approach as documented in the WarcraftLogs API notes.
         """
         query = f"""
         query {{
             reportData {{
                 report(code: "{report_code}") {{
-                    playerDetails {{
-                        dps {{
-                            name
-                            class
-                            spec
-                            role
-                        }}
-                        healers {{
-                            name
-                            class
-                            spec
-                            role
-                        }}
-                        tanks {{
-                            name
-                            class
-                            spec
-                            role
-                        }}
+                    title
+                    startTime
+                    endTime
+                    rankedCharacters {{
+                        id
+                        canonicalID
+                        name
+                        classID
+                        level
                     }}
                 }}
             }}
@@ -137,15 +128,80 @@ class WarcraftLogsAPI:
         if not report_data:
             return None
 
-        player_details = report_data["playerDetails"]
-        participants = []
+        ranked_characters = report_data.get("rankedCharacters", [])
 
-        # Combine all player types into a single list
-        for player_type in ["dps", "healers", "tanks"]:
-            if player_details.get(player_type):
-                participants.extend(player_details[player_type])
+        # Convert classID to class name for better usability
+        class_names = {
+            1: "Warrior",
+            2: "Paladin",
+            3: "Hunter",
+            4: "Rogue",
+            5: "Priest",
+            6: "Death Knight",
+            7: "Shaman",
+            8: "Mage",
+            9: "Warlock",
+            10: "Monk",
+            11: "Druid",
+            12: "Demon Hunter",
+            13: "Evoker",
+        }
+
+        participants = []
+        for character in ranked_characters:
+            class_id = character.get("classID")
+            class_name = class_names.get(class_id, "Unknown")
+
+            participant = {
+                "id": character.get("id"),
+                "canonicalID": character.get("canonicalID"),
+                "name": character.get("name"),
+                "class": class_name,
+                "classID": character.get("classID"),
+                # "level": character.get("level"),
+                # Note: rankedCharacters doesn't provide spec/role info
+                # We'll need to get this from other sources if needed
+                # "spec": "Unknown",
+                # "role": "Unknown",
+            }
+            participants.append(participant)
 
         return participants
+
+    def get_report_fights(self, report_code: str) -> Optional[List[Dict]]:
+        """
+        Fetch all fights from a WarcraftLogs report.
+        This can be useful for understanding raid progression and attendance.
+        """
+        query = f"""
+        query {{
+            reportData {{
+                report(code: "{report_code}") {{
+                    fights {{
+                        id
+                        name
+                        startTime
+                        endTime
+                        difficulty
+                        kill
+                        encounterID
+                        averageItemLevel
+                        bossPercentage
+                    }}
+                }}
+            }}
+        }}
+        """
+
+        result = self._make_api_request(query)
+        if not result or "data" not in result:
+            return None
+
+        report_data = result["data"]["reportData"]["report"]
+        if not report_data:
+            return None
+
+        return report_data.get("fights", [])
 
 
 # Global API client instance
@@ -188,3 +244,14 @@ def fetch_report_participants(report_code: str) -> Optional[List[Dict]]:
         List of participant dictionaries with name, class, spec, and role, or None if failed.
     """
     return warcraftlogs_api.get_report_participants(report_code)
+
+
+def fetch_report_fights(report_code: str) -> Optional[List[Dict]]:
+    """
+    Fetch all fights from a WarcraftLogs report.
+    Args:
+        report_code: The WarcraftLogs report code (from the URL).
+    Returns:
+        List of fight dictionaries, or None if failed.
+    """
+    return warcraftlogs_api.get_report_fights(report_code)
