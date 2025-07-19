@@ -55,6 +55,15 @@ class TestRaidSchemas:
             "created_at": now,
             "updated_at": now,
             "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test4",
+            "warcraftlogs_report_code": "test4",
+            "warcraftlogs_metadata": {
+                "title": "Test Raid",
+                "zone": "Test Zone",
+            },
+            "warcraftlogs_participants": [
+                {"name": "TestPlayer", "class": "Mage"}
+            ],
+            "warcraftlogs_fights": [{"name": "Test Boss", "kill": True}],
         }
         raid = RaidResponse(**data)
         assert raid.id == 1
@@ -64,3 +73,45 @@ class TestRaidSchemas:
         assert raid.created_at == now
         assert raid.updated_at == now
         assert raid.warcraftlogs_url == data["warcraftlogs_url"]
+        assert raid.warcraftlogs_report_code == "test4"
+        assert raid.warcraftlogs_metadata == {
+            "title": "Test Raid",
+            "zone": "Test Zone",
+        }
+        assert raid.warcraftlogs_participants == [
+            {"name": "TestPlayer", "class": "Mage"}
+        ]
+        assert raid.warcraftlogs_fights == [{"name": "Test Boss", "kill": True}]
+
+    def test_warcraftlogs_url_validation_valid(self):
+        """Test that valid WarcraftLogs URLs are accepted."""
+        data = {
+            "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
+            "team_id": 1,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/abc123def456",
+        }
+        raid = RaidBase(**data)
+        assert raid.warcraftlogs_url == data["warcraftlogs_url"]
+
+    def test_warcraftlogs_url_validation_invalid(self):
+        """Test that invalid WarcraftLogs URLs are rejected."""
+        data = {
+            "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
+            "team_id": 1,
+            "warcraftlogs_url": "https://www.google.com/reports/abc123",
+        }
+        with pytest.raises(ValueError, match="Invalid WarcraftLogs URL format"):
+            RaidBase(**data)
+
+    def test_warcraftlogs_url_validation_none(self):
+        """Test that None WarcraftLogs URLs are accepted."""
+        data = {
+            "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
+            "team_id": 1,
+            "warcraftlogs_url": None,
+        }
+        raid = RaidBase(**data)
+        assert raid.warcraftlogs_url is None

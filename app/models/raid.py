@@ -4,6 +4,7 @@ from sqlalchemy import (
     String,
     ForeignKey,
     DateTime,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -21,6 +22,10 @@ class Raid(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     warcraftlogs_url = Column(String(255), nullable=True)
+    warcraftlogs_report_code = Column(String(50), nullable=True, index=True)
+    warcraftlogs_metadata = Column(JSON, nullable=True)
+    warcraftlogs_participants = Column(JSON, nullable=True)
+    warcraftlogs_fights = Column(JSON, nullable=True)
 
     # Relationships
     team = relationship("Team", back_populates="raids")
