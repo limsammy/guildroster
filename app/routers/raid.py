@@ -10,6 +10,7 @@ from app.schemas.raid import RaidCreate, RaidUpdate, RaidResponse
 from app.models.token import Token
 from app.utils.auth import require_any_token, require_superuser
 from app.models.user import User
+from app.utils.warcraftlogs import extract_report_code, fetch_report_metadata
 
 router = APIRouter(prefix="/raids", tags=["Raids"])
 
@@ -58,10 +59,14 @@ def create_raid(
 
     # Placeholder: process warcraftlogs_url if provided
     if raid_in.warcraftlogs_url:
-        # TODO: Implement WarcraftLogs parsing logic here
-        # For now, just log or print the URL
-        print(f"Received WarcraftLogs URL: {raid_in.warcraftlogs_url}")
-        # In the future, set scheduled_at and other fields based on log
+        report_code = extract_report_code(raid_in.warcraftlogs_url)
+        if report_code:
+            # TODO: Obtain a valid OAuth2 access token for WarcraftLogs
+            access_token = "your_access_token"  # Replace with real token logic
+            report_data = fetch_report_metadata(report_code, access_token)
+            print(f"Fetched WarcraftLogs report data: {report_data}")
+        else:
+            print(f"Invalid WarcraftLogs URL: {raid_in.warcraftlogs_url}")
 
     raid = Raid(
         scheduled_at=raid_in.scheduled_at,

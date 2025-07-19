@@ -7,9 +7,9 @@ interface RaidFormProps {
   scenarios: Scenario[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_id: number }) => void;
+  onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => void;
   onCancel: () => void;
-  initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_id: number }>;
+  initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }>;
 }
 
 export const RaidForm: React.FC<RaidFormProps> = ({
@@ -24,6 +24,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [warcraftlogsUrl, setWarcraftlogsUrl] = useState(initialValues.warcraftlogs_url || '');
   const [teamId, setTeamId] = useState<number | ''>(initialValues.team_id ?? (teams.length > 0 ? teams[0].id : ''));
   const [scenarioId, setScenarioId] = useState<number | ''>(initialValues.scenario_id ?? (scenarios.length > 0 ? scenarios[0].id : ''));
+  const [scheduledAt, setScheduledAt] = useState(initialValues.scheduled_at || '');
   const [showErrors, setShowErrors] = useState(false);
 
   const noTeams = teams.length === 0;
@@ -32,17 +33,19 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!warcraftlogsUrl.trim() || !teamId || !scenarioId) return;
+    if (!warcraftlogsUrl.trim() || !teamId || !scenarioId || !scheduledAt) return;
     onSubmit({
       warcraftlogs_url: warcraftlogsUrl.trim(),
       team_id: Number(teamId),
       scenario_id: Number(scenarioId),
+      scheduled_at: scheduledAt,
     });
   };
 
   const urlError = showErrors && !warcraftlogsUrl.trim() ? 'WarcraftLogs URL is required' : '';
   const teamError = showErrors && !teamId ? 'Team is required' : '';
   const scenarioError = showErrors && !scenarioId ? 'Scenario is required' : '';
+  const scheduledAtError = showErrors && !scheduledAt ? 'Scheduled date/time is required' : '';
 
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
@@ -87,7 +90,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           </select>
           {teamError && <div className="text-red-400 text-xs mt-1">{teamError}</div>}
         </div>
-        <div className="mb-6">
+        <div className="mb-4">
           <label htmlFor="raid-scenario" className="block text-sm font-medium text-slate-300 mb-2">Scenario</label>
           <select
             id="raid-scenario"
@@ -103,11 +106,23 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           </select>
           {scenarioError && <div className="text-red-400 text-xs mt-1">{scenarioError}</div>}
         </div>
+        <div className="mb-6">
+          <label htmlFor="scheduled-at" className="block text-sm font-medium text-slate-300 mb-2">Scheduled Date/Time</label>
+          <input
+            id="scheduled-at"
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={e => setScheduledAt(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={loading}
+          />
+          {scheduledAtError && <div className="text-red-400 text-xs mt-1">{scheduledAtError}</div>}
+        </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={loading || !warcraftlogsUrl.trim() || !teamId || !scenarioId || noTeams || noScenarios} data-testid="raid-form-submit">
+          <Button type="submit" variant="primary" disabled={loading || !warcraftlogsUrl.trim() || !teamId || !scenarioId || !scheduledAt || noTeams || noScenarios} data-testid="raid-form-submit">
             {loading ? 'Adding...' : 'Add Raid'}
           </Button>
         </div>

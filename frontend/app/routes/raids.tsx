@@ -4,6 +4,11 @@ import { Button, Card, Container } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { RaidService } from '../api/raids';
 import type { Raid } from '../api/types';
+import { RaidForm } from '../components/ui/RaidForm';
+import { TeamService } from '../api/teams';
+import { ScenarioService } from '../api/scenarios';
+import type { Team } from '../api/types';
+import type { Scenario } from '../api/types';
 
 export function meta() {
   return [
@@ -20,6 +25,8 @@ export default function Raids() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRaid, setEditingRaid] = useState<Raid | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -45,15 +52,80 @@ export default function Raids() {
     setRaids(updatedRaids);
   };
 
-  // Placeholder for add/edit/delete handlers
-  const handleAddRaid = async (values: any) => {
-    // TODO: Implement RaidForm and actual logic
-    setShowAddForm(false);
+  // Fetch teams and scenarios when showing the form
+  const openAddForm = async () => {
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const [teamsData, scenariosData] = await Promise.all([
+        TeamService.getTeams(),
+        ScenarioService.getScenarios(),
+      ]);
+      setTeams(teamsData);
+      setScenarios(scenariosData);
+      setShowAddForm(true);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to load form data');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+  const openEditForm = async (raid: Raid) => {
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const [teamsData, scenariosData] = await Promise.all([
+        TeamService.getTeams(),
+        ScenarioService.getScenarios(),
+      ]);
+      setTeams(teamsData);
+      setScenarios(scenariosData);
+      setEditingRaid(raid);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to load form data');
+    } finally {
+      setFormLoading(false);
+    }
   };
 
-  const handleEditRaid = async (values: any) => {
-    // TODO: Implement RaidForm and actual logic
-    setEditingRaid(null);
+  // Placeholder for add/edit/delete handlers
+  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => {
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      await RaidService.createRaid({
+        scheduled_at: values.scheduled_at,
+        team_id: values.team_id,
+        scenario_id: values.scenario_id,
+        // warcraftlogs_url is not part of RaidCreate, so do not send it here
+      });
+      setShowAddForm(false);
+      await reloadRaids();
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to add raid');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => {
+    if (!editingRaid) return;
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      await RaidService.updateRaid(editingRaid.id, {
+        scheduled_at: values.scheduled_at,
+        team_id: values.team_id,
+        scenario_id: values.scenario_id,
+        // warcraftlogs_url is not part of RaidUpdate, so do not send it here
+      });
+      setEditingRaid(null);
+      await reloadRaids();
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to update raid');
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleDeleteRaid = async (raidId: number) => {
@@ -121,7 +193,7 @@ export default function Raids() {
                 <Link to="/dashboard">
                   <Button variant="secondary">Dashboard</Button>
                 </Link>
-                <Button variant="primary" onClick={() => setShowAddForm(true)}>
+                <Button variant="primary" onClick={openAddForm}>
                   Add Raid
                 </Button>
               </div>
@@ -182,7 +254,7 @@ export default function Raids() {
                   }
                 </p>
                 {!searchTerm && (
-                  <Button variant="primary" onClick={() => setShowAddForm(true)}>
+                  <Button variant="primary" onClick={openAddForm}>
                     Add First Raid
                   </Button>
                 )}
@@ -208,7 +280,7 @@ export default function Raids() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => setEditingRaid(raid)}
+                        onClick={() => openEditForm(raid)}
                       >
                         Edit
                       </Button>
@@ -228,18 +300,23 @@ export default function Raids() {
         </div>
       </Container>
 
-      {/* Add/Edit Form Modal (placeholder) */}
+      {/* Add/Edit Form Modal */}
       {(showAddForm || editingRaid) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-md">
-            <Card variant="elevated" className="p-6 text-center">
-              <div className="mb-4">
-                <span className="text-lg text-slate-300">Raid form coming soon...</span>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="secondary" onClick={handleCancelForm}>Cancel</Button>
-              </div>
-            </Card>
+            <RaidForm
+              teams={teams}
+              scenarios={scenarios}
+              loading={formLoading}
+              error={formError}
+              onSubmit={showAddForm ? handleAddRaid : handleEditRaid}
+              onCancel={handleCancelForm}
+              initialValues={editingRaid ? {
+                scheduled_at: editingRaid.scheduled_at,
+                team_id: editingRaid.team_id,
+                scenario_id: editingRaid.scenario_id,
+              } : {}}
+            />
           </div>
         </div>
       )}
