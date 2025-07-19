@@ -10,6 +10,7 @@ interface RaidFormProps {
   onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => void;
   onCancel: () => void;
   initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }>;
+  isEditing?: boolean;
 }
 
 export const RaidForm: React.FC<RaidFormProps> = ({
@@ -20,6 +21,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   onSubmit,
   onCancel,
   initialValues = {},
+  isEditing = false,
 }) => {
   const [warcraftlogsUrl, setWarcraftlogsUrl] = useState(initialValues.warcraftlogs_url || '');
   const [teamId, setTeamId] = useState<number | ''>(initialValues.team_id ?? (teams.length > 0 ? teams[0].id : ''));
@@ -33,16 +35,16 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!warcraftlogsUrl.trim() || !teamId || !scenarioId || !scheduledAt) return;
+    if (!teamId || !scenarioId || !scheduledAt) return;
     onSubmit({
-      warcraftlogs_url: warcraftlogsUrl.trim(),
+      warcraftlogs_url: warcraftlogsUrl.trim() || '',
       team_id: Number(teamId),
       scenario_id: Number(scenarioId),
       scheduled_at: scheduledAt,
     });
   };
 
-  const urlError = showErrors && !warcraftlogsUrl.trim() ? 'WarcraftLogs URL is required' : '';
+  const urlError = showErrors && warcraftlogsUrl.trim() && !warcraftlogsUrl.includes('warcraftlogs.com/reports/') ? 'Invalid WarcraftLogs URL format' : '';
   const teamError = showErrors && !teamId ? 'Team is required' : '';
   const scenarioError = showErrors && !scenarioId ? 'Scenario is required' : '';
   const scheduledAtError = showErrors && !scheduledAt ? 'Scheduled date/time is required' : '';
@@ -50,7 +52,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
       <form onSubmit={handleSubmit}>
-        <h2 className="text-xl font-bold text-white mb-4">Add Raid</h2>
+        <h2 className="text-xl font-bold text-white mb-4">{isEditing ? 'Edit Raid' : 'Add Raid'}</h2>
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
             <p className="text-red-400 text-sm">{error}</p>
@@ -62,14 +64,16 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           </div>
         )}
         <div className="mb-4">
-          <label htmlFor="warcraftlogs-url" className="block text-sm font-medium text-slate-300 mb-2">WarcraftLogs URL</label>
+          <label htmlFor="warcraftlogs-url" className="block text-sm font-medium text-slate-300 mb-2">
+            WarcraftLogs URL <span className="text-slate-500">(Optional)</span>
+          </label>
           <input
             id="warcraftlogs-url"
             type="text"
             value={warcraftlogsUrl}
             onChange={e => setWarcraftlogsUrl(e.target.value)}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            placeholder="Paste WarcraftLogs report URL here"
+            placeholder="Paste WarcraftLogs report URL here (optional)"
             disabled={loading || noTeams || noScenarios}
           />
           {urlError && <div className="text-red-400 text-xs mt-1">{urlError}</div>}
@@ -122,8 +126,8 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={loading || !warcraftlogsUrl.trim() || !teamId || !scenarioId || !scheduledAt || noTeams || noScenarios} data-testid="raid-form-submit">
-            {loading ? 'Adding...' : 'Add Raid'}
+          <Button type="submit" variant="primary" disabled={loading || !teamId || !scenarioId || !scheduledAt || noTeams || noScenarios} data-testid="raid-form-submit">
+            {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Raid' : 'Add Raid')}
           </Button>
         </div>
       </form>

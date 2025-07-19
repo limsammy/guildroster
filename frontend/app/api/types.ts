@@ -165,6 +165,11 @@ export interface Raid {
   scheduled_at: string;
   team_id: number;
   scenario_id: number;
+  warcraftlogs_url?: string;
+  warcraftlogs_report_code?: string;
+  warcraftlogs_metadata?: Record<string, any>;
+  warcraftlogs_participants?: Record<string, any>[];
+  warcraftlogs_fights?: Record<string, any>[];
   created_at: string;
   updated_at: string;
 }
@@ -173,12 +178,14 @@ export interface RaidCreate {
   scheduled_at: string;
   team_id: number;
   scenario_id: number;
+  warcraftlogs_url?: string;
 }
 
 export interface RaidUpdate {
   scheduled_at?: string;
   team_id?: number;
   scenario_id?: number;
+  warcraftlogs_url?: string;
 }
 
 // Attendance Types

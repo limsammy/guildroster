@@ -23,6 +23,7 @@ export default function Raids() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRaid, setEditingRaid] = useState<Raid | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -31,25 +32,64 @@ export default function Raids() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchRaids = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const raidsData = await RaidService.getRaids();
+        const [raidsData, teamsData, scenariosData] = await Promise.all([
+          RaidService.getRaids(),
+          TeamService.getTeams(),
+          ScenarioService.getScenarios(),
+        ]);
         setRaids(raidsData);
+        setTeams(teamsData);
+        setScenarios(scenariosData);
       } catch (err: any) {
-        setError(err.message || 'Failed to load raids');
+        setError(err.message || 'Failed to load data');
       } finally {
         setLoading(false);
       }
     };
-    fetchRaids();
+    fetchData();
   }, []);
 
-  // Add this function to reload raids from the API
+  // Helper function to get team name by ID
+  const getTeamName = (teamId: number) => {
+    const team = teams.find(t => t.id === teamId);
+    return team ? team.name : `Team #${teamId}`;
+  };
+
+  // Helper function to get scenario name by ID
+  const getScenarioName = (scenarioId: number) => {
+    const scenario = scenarios.find(s => s.id === scenarioId);
+    return scenario ? `${scenario.name} (${scenario.difficulty}, ${scenario.size})` : `Scenario #${scenarioId}`;
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // Helper function to check if raid is in the past
+  const isPastRaid = (dateString: string) => {
+    return new Date(dateString) < new Date();
+  };
+
+  // Reload raids from the API
   const reloadRaids = async () => {
-    const updatedRaids = await RaidService.getRaids();
-    setRaids(updatedRaids);
+    try {
+      const updatedRaids = await RaidService.getRaids();
+      setRaids(updatedRaids);
+    } catch (err: any) {
+      setError(err.message || 'Failed to reload raids');
+    }
   };
 
   // Fetch teams and scenarios when showing the form
@@ -70,6 +110,7 @@ export default function Raids() {
       setFormLoading(false);
     }
   };
+
   const openEditForm = async (raid: Raid) => {
     setFormLoading(true);
     setFormError(null);
@@ -88,7 +129,6 @@ export default function Raids() {
     }
   };
 
-  // Placeholder for add/edit/delete handlers
   const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => {
     setFormLoading(true);
     setFormError(null);
@@ -97,7 +137,7 @@ export default function Raids() {
         scheduled_at: values.scheduled_at,
         team_id: values.team_id,
         scenario_id: values.scenario_id,
-        // warcraftlogs_url is not part of RaidCreate, so do not send it here
+        warcraftlogs_url: values.warcraftlogs_url || undefined,
       });
       setShowAddForm(false);
       await reloadRaids();
@@ -117,7 +157,7 @@ export default function Raids() {
         scheduled_at: values.scheduled_at,
         team_id: values.team_id,
         scenario_id: values.scenario_id,
-        // warcraftlogs_url is not part of RaidUpdate, so do not send it here
+        warcraftlogs_url: values.warcraftlogs_url || undefined,
       });
       setEditingRaid(null);
       await reloadRaids();
@@ -129,7 +169,7 @@ export default function Raids() {
   };
 
   const handleDeleteRaid = async (raidId: number) => {
-    if (!confirm('Are you sure you want to delete this raid?')) return;
+    if (!confirm('Are you sure you want to delete this raid? This action cannot be undone.')) return;
     try {
       await RaidService.deleteRaid(raidId);
       await reloadRaids();
@@ -144,10 +184,23 @@ export default function Raids() {
     setFormError(null);
   };
 
-  // Filter raids based on search (by ID for now)
+  // Filter raids based on search and date filter
   const filteredRaids = raids.filter(raid => {
-    return raid.id.toString().includes(searchTerm);
+    const matchesSearch = searchTerm === '' || 
+      raid.id.toString().includes(searchTerm) ||
+      getTeamName(raid.team_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getScenarioName(raid.scenario_id).toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesDate = dateFilter === '' || 
+      raid.scheduled_at.startsWith(dateFilter);
+    
+    return matchesSearch && matchesDate;
   });
+
+  // Sort raids by scheduled date (newest first)
+  const sortedRaids = [...filteredRaids].sort((a, b) => 
+    new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
+  );
 
   if (loading) {
     return (
@@ -204,9 +257,9 @@ export default function Raids() {
 
       <Container>
         <div className="py-8">
-          {/* Search Controls */}
+          {/* Search and Filter Controls */}
           <Card variant="elevated" className="p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="search" className="block text-sm font-medium text-slate-300 mb-2">
                   Search Raids
@@ -217,16 +270,31 @@ export default function Raids() {
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="Search by raid ID..."
+                  placeholder="Search by ID, team, or scenario..."
+                />
+              </div>
+              <div>
+                <label htmlFor="date-filter" className="block text-sm font-medium text-slate-300 mb-2">
+                  Filter by Date
+                </label>
+                <input
+                  id="date-filter"
+                  type="date"
+                  value={dateFilter}
+                  onChange={e => setDateFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 />
               </div>
               <div className="flex items-end">
                 <Button 
                   variant="secondary" 
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => {
+                    setSearchTerm('');
+                    setDateFilter('');
+                  }}
                   className="w-full"
                 >
-                  Clear Search
+                  Clear Filters
                 </Button>
               </div>
             </div>
@@ -237,23 +305,23 @@ export default function Raids() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Raids</h2>
               <div className="text-sm text-slate-400">
-                {filteredRaids.length} of {raids.length} raids
+                {sortedRaids.length} of {raids.length} raids
               </div>
             </div>
 
-            {filteredRaids.length === 0 ? (
+            {sortedRaids.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-slate-400 text-6xl mb-4">🗡️</div>
                 <h3 className="text-xl font-semibold text-white mb-2">
-                  {searchTerm ? 'No raids found' : 'No raids yet'}
+                  {searchTerm || dateFilter ? 'No raids found' : 'No raids yet'}
                 </h3>
                 <p className="text-slate-400 mb-6">
-                  {searchTerm 
-                    ? 'Try adjusting your search terms' 
+                  {searchTerm || dateFilter 
+                    ? 'Try adjusting your search terms or filters' 
                     : 'Get started by adding your first raid'
                   }
                 </p>
-                {!searchTerm && (
+                {!searchTerm && !dateFilter && (
                   <Button variant="primary" onClick={openAddForm}>
                     Add First Raid
                   </Button>
@@ -261,22 +329,43 @@ export default function Raids() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredRaids.map(raid => (
+                {sortedRaids.map(raid => (
                   <div
                     key={raid.id}
-                    className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-slate-600/50 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                      isPastRaid(raid.scheduled_at)
+                        ? 'bg-slate-800/30 border-slate-700/30'
+                        : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600/50'
+                    }`}
                   >
-                    <div className="flex items-center space-x-4">
-                      <span className="text-white font-medium">Raid #{raid.id}</span>
-                      <div className="flex items-center space-x-4 text-sm text-slate-400">
-                        <span>{raid.scheduled_at}</span>
-                        <span>•</span>
-                        <span>Team ID: {raid.team_id}</span>
-                        <span>•</span>
-                        <span>Scenario ID: {raid.scenario_id}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4 mb-2">
+                        <span className="text-white font-medium">Raid #{raid.id}</span>
+                        {isPastRaid(raid.scheduled_at) && (
+                          <span className="px-2 py-1 text-xs bg-slate-700 text-slate-300 rounded">
+                            Past
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-400">
+                        <div>
+                          <span className="font-medium text-slate-300">Scheduled:</span>
+                          <br />
+                          {formatDate(raid.scheduled_at)}
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-300">Team:</span>
+                          <br />
+                          {getTeamName(raid.team_id)}
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-300">Scenario:</span>
+                          <br />
+                          {getScenarioName(raid.scenario_id)}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 ml-4">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -311,10 +400,12 @@ export default function Raids() {
               error={formError}
               onSubmit={showAddForm ? handleAddRaid : handleEditRaid}
               onCancel={handleCancelForm}
+              isEditing={!!editingRaid}
               initialValues={editingRaid ? {
                 scheduled_at: editingRaid.scheduled_at,
                 team_id: editingRaid.team_id,
                 scenario_id: editingRaid.scenario_id,
+                warcraftlogs_url: editingRaid.warcraftlogs_url || '',
               } : {}}
             />
           </div>
