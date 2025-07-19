@@ -215,6 +215,10 @@ def extract_report_code(url: str) -> Optional[str]:
     """
     import re
 
+    # Handle None or empty URLs
+    if not url:
+        return None
+
     match = re.search(r"/reports/([a-zA-Z0-9]+)", url)
     if match:
         return match.group(1)
