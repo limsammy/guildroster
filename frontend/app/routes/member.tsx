@@ -1,82 +1,82 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router';
 import { Container, Button, Card } from '../components/ui';
 import { ToonForm } from '../components/ui/ToonForm';
 import { MemberService, ToonService, GuildService, TeamService } from '../api';
 import type { Member, Toon, Guild, Team } from '../api/types';
-
-// Import the generated route types (this will be created by React Router)
-// import type { Route } from '../+types/members.$id';
+import { useAuth } from '../contexts/AuthContext';
 
 // Temporary type definitions until React Router generates them
-type LoaderArgs = { params: { id: string } };
-type ComponentProps = { loaderData: any };
-type MetaArgs = { loaderData?: any };
+type ComponentProps = {};
 
-export async function loader({ params }: LoaderArgs) {
-  const memberId = parseInt(params.id);
-  
-  // Validate member ID
-  if (isNaN(memberId)) {
-    throw new Error('Invalid member ID');
-  }
-  
-  try {
-    const [memberData, toonsData, teamsData] = await Promise.all([
-      MemberService.getMember(memberId),
-      ToonService.getToonsByMember(memberId),
-      TeamService.getTeams(),
-    ]);
-
-    // Load guild and team data
-    let guild = null;
-    let team = null;
-    
-    if (memberData.guild_id) {
-      guild = await GuildService.getGuild(memberData.guild_id);
-    }
-
-    if (memberData.team_id) {
-      team = await TeamService.getTeam(memberData.team_id);
-    }
-
-    return {
-      member: memberData,
-      toons: toonsData,
-      teams: teamsData,
-      guild,
-      team,
-    };
-  } catch (err: any) {
-    throw new Error('Failed to load member data');
-  }
-}
-
-export function meta({ loaderData }: MetaArgs) {
-  if (!loaderData?.member) {
-    return [
-      { title: "Member Not Found - GuildRoster" },
-      { name: "description", content: "The requested member could not be found." },
-    ];
-  }
-  
+export function meta() {
   return [
-    { title: `${loaderData.member.display_name} - GuildRoster` },
-    { name: "description", content: `View ${loaderData.member.display_name}'s details and manage their characters.` },
+    { title: "Member Details - GuildRoster" },
+    { name: "description", content: "View member details and manage their characters." },
   ];
 }
 
-export default function MemberDetail({ loaderData }: ComponentProps) {
-  const { member, toons: initialToons, guild, team, teams } = loaderData;
-  
-  const [toons, setToons] = React.useState<Toon[]>(initialToons);
-  const [showToonForm, setShowToonForm] = React.useState(false);
-  const [editingToon, setEditingToon] = React.useState<Toon | null>(null);
-  const [formLoading, setFormLoading] = React.useState(false);
-  const [formError, setFormError] = React.useState<string | null>(null);
+export default function MemberDetail({}: ComponentProps) {
+  const { id } = useParams();
+  const { isAuthenticated } = useAuth();
+  const [member, setMember] = useState<Member | null>(null);
+  const [toons, setToons] = useState<Toon[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [guild, setGuild] = useState<Guild | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showToonForm, setShowToonForm] = useState(false);
+  const [editingToon, setEditingToon] = useState<Toon | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const memberId = parseInt(id || '0');
+
+  useEffect(() => {
+    const loadMemberData = async () => {
+      if (!isAuthenticated || isNaN(memberId)) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [memberData, toonsData, teamsData] = await Promise.all([
+          MemberService.getMember(memberId),
+          ToonService.getToonsByMember(memberId),
+          TeamService.getTeams(),
+        ]);
+
+        setMember(memberData);
+        setToons(toonsData);
+        setTeams(teamsData);
+
+        // Load guild and team data
+        if (memberData.guild_id) {
+          const guildData = await GuildService.getGuild(memberData.guild_id);
+          setGuild(guildData);
+        }
+
+        if (memberData.team_id) {
+          const teamData = await TeamService.getTeam(memberData.team_id);
+          setTeam(teamData);
+        }
+      } catch (err: any) {
+        console.error('Error loading member data:', err);
+        setError(err.message || 'Failed to load member data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMemberData();
+  }, [isAuthenticated, memberId]);
 
   const reloadToons = async () => {
-    const updatedToons = await ToonService.getToonsByMember(member.id);
+    const updatedToons = await ToonService.getToonsByMember(memberId);
     setToons(updatedToons);
   };
 
@@ -129,6 +129,48 @@ export default function MemberDetail({ loaderData }: ComponentProps) {
     setEditingToon(null);
     setFormError(null);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Unauthorized</h2>
+          <p className="text-slate-300 mb-4">You must be logged in to view this page.</p>
+          <Link to="/login">
+            <Button>Login</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-amber-400 text-6xl mb-4">⚙️</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Loading Member</h2>
+          <p className="text-slate-300 mb-4">Please wait while we fetch the member details.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Error Loading Member</h2>
+          <p className="text-slate-300 mb-4">{error}</p>
+          <Link to="/members">
+            <Button>Back to Members</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!member) {
     return (

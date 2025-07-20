@@ -40,28 +40,12 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: !isDevelopment, // Only use cookies in production
+  withCredentials: true, // Enable cookies for both development and production
 });
 
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // In development, add the session token from localStorage for user endpoints
-    if (isDevelopment) {
-      const sessionToken = localStorage.getItem('session_token');
-      if (sessionToken && config.url && config.url.includes('/users/')) {
-        config.headers.Authorization = `Bearer ${sessionToken}`;
-      }
-    }
-    
-    // For all other endpoints (teams, members, guilds, etc.), use session token if available
-    if (isDevelopment && config.url && !config.url.includes('/users/')) {
-      const sessionToken = localStorage.getItem('session_token');
-      if (sessionToken && config.headers && !config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${sessionToken}`;
-      }
-    }
-    
     // Add API token for non-user endpoints (fallback for testing)
     if (ENV_TOKEN && config.url && !config.url.includes('/users/')) {
       if (config.headers && !config.headers.Authorization) {
@@ -93,9 +77,8 @@ export class AuthService {
     try {
       const response = await apiClient.post<LoginResponse>('/users/login', credentials);
       
-      // In development, store the token in localStorage
-      if (isDevelopment) {
-        localStorage.setItem('session_token', response.data.access_token);
+      // Store user info in localStorage for client-side access
+      if (typeof window !== 'undefined') {
         localStorage.setItem('user_info', JSON.stringify({
           user_id: response.data.user_id,
           username: response.data.username,
@@ -127,13 +110,14 @@ export class AuthService {
       // Even if the logout request fails, clear local storage
       console.warn('Logout request failed:', error);
     } finally {
-      // Clear localStorage in development
-      if (isDevelopment) {
-        localStorage.removeItem('session_token');
+      // Clear localStorage
+      if (typeof window !== 'undefined') {
         localStorage.removeItem('user_info');
       }
       // Always redirect to home page
-      window.location.href = '/';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     }
   }
 
@@ -142,8 +126,8 @@ export class AuthService {
    */
   static async getCurrentUser(): Promise<UserInfo | null> {
     try {
-      // In development, try to get user info from localStorage first
-      if (isDevelopment) {
+      // Try to get user info from localStorage first (for faster client-side access)
+      if (typeof window !== 'undefined') {
         const userInfo = localStorage.getItem('user_info');
         if (userInfo) {
           return JSON.parse(userInfo);
