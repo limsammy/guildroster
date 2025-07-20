@@ -154,7 +154,9 @@ describe('Attendance', () => {
     await waitFor(() => {
       expect(screen.getByText('PlayerName1 (Mage - DPS)')).toBeInTheDocument();
       expect(screen.getByText('PlayerName2 (Tank - Tank)')).toBeInTheDocument();
-      expect(screen.getByText(/Raid #1/)).toBeInTheDocument();
+      // Use getAllByText since there are multiple elements with "Raid #1"
+      const raidElements = screen.getAllByText(/Raid #1/);
+      expect(raidElements.length).toBeGreaterThan(0);
     });
   });
 
@@ -360,8 +362,20 @@ describe('Attendance', () => {
     renderAttendance();
     
     await waitFor(() => {
-      expect(screen.getByText('Present')).toBeInTheDocument();
-      expect(screen.getByText('Absent')).toBeInTheDocument();
+      // Look for the status badges specifically, not the statistics text
+      const presentBadges = screen.getAllByText('Present');
+      const absentBadges = screen.getAllByText('Absent');
+      
+      // Should have at least one present and one absent status badge
+      expect(presentBadges.length).toBeGreaterThan(0);
+      expect(absentBadges.length).toBeGreaterThan(0);
+      
+      // Check that we have the status badges (not just statistics text)
+      const hasStatusBadge = presentBadges.some(element => 
+        element.className.includes('bg-green-600/20') || 
+        element.className.includes('bg-red-600/20')
+      );
+      expect(hasStatusBadge).toBe(true);
     });
   });
 }); 

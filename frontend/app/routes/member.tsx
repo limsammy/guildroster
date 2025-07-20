@@ -54,15 +54,17 @@ export default function MemberDetail({}: ComponentProps) {
         setToons(toonsData);
         setTeams(teamsData);
 
-        // Load guild and team data
-        if (memberData.guild_id) {
-          const guildData = await GuildService.getGuild(memberData.guild_id);
-          setGuild(guildData);
-        }
+        // Load guild and team data only if member exists
+        if (memberData) {
+          if (memberData.guild_id) {
+            const guildData = await GuildService.getGuild(memberData.guild_id);
+            setGuild(guildData);
+          }
 
-        if (memberData.team_id) {
-          const teamData = await TeamService.getTeam(memberData.team_id);
-          setTeam(teamData);
+          if (memberData.team_id) {
+            const teamData = await TeamService.getTeam(memberData.team_id);
+            setTeam(teamData);
+          }
         }
       } catch (err: any) {
         console.error('Error loading member data:', err);

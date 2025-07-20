@@ -2,8 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import MemberDetail, { loader } from '../../app/routes/member';
-import { AuthProvider } from '../../app/contexts/AuthContext';
+import MemberDetail from '../../app/routes/member';
 
 // Mock the API services
 vi.mock('../../app/api/members', () => ({
@@ -34,22 +33,22 @@ vi.mock('../../app/api/teams', () => ({
   },
 }));
 
-vi.mock('../../app/api/auth', () => ({
-  default: {
-    isAuthenticated: vi.fn(() => true),
-    getCurrentUser: vi.fn(() => ({ user_id: 1, username: 'testuser', is_superuser: true })),
-    login: vi.fn(),
-    logout: vi.fn(),
-    validateToken: vi.fn(() => Promise.resolve(true)),
-  },
-  AuthService: {
-    isAuthenticated: vi.fn(() => true),
-    getCurrentUser: vi.fn(() => ({ user_id: 1, username: 'testuser', is_superuser: true })),
-    login: vi.fn(),
-    logout: vi.fn(),
-    validateToken: vi.fn(() => Promise.resolve(true)),
-  },
+// Mock the AuthContext with a simple authenticated user
+vi.mock('../../app/contexts/AuthContext', () => ({
+  useAuth: () => ({ 
+    isAuthenticated: true,
+    user: { user_id: 1, username: 'testuser', is_superuser: true }
+  }),
 }));
+
+// Mock useParams to return the member ID
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router');
+  return {
+    ...actual,
+    useParams: () => ({ id: '1' }),
+  };
+});
 
 // Import the mocked services
 import { MemberService } from '../../app/api/members';
@@ -102,12 +101,10 @@ const mockTeam = {
 
 const mockTeams = [mockTeam];
 
-const renderMember = (loaderData: any) => {
+const renderMember = () => {
   return render(
-    <MemoryRouter>
-      <AuthProvider>
-        <MemberDetail loaderData={loaderData} />
-      </AuthProvider>
+    <MemoryRouter initialEntries={['/members/1']}>
+      <MemberDetail />
     </MemoryRouter>
   );
 };
@@ -128,16 +125,13 @@ describe('Member Detail Page', () => {
     vi.resetAllMocks();
   });
 
-  describe('Loader Function', () => {
+  describe('Component Loading', () => {
     it('should load member data successfully', async () => {
-      const result = await loader({ params: { id: '1' } });
+      renderMember();
       
-      expect(result).toEqual({
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
       });
       
       expect(mockMemberService.getMember).toHaveBeenCalledWith(1);
@@ -149,17 +143,23 @@ describe('Member Detail Page', () => {
     it('should handle member not found', async () => {
       mockMemberService.getMember.mockRejectedValue(new Error('Member not found'));
       
-      await expect(loader({ params: { id: '999' } })).rejects.toThrow('Failed to load member data');
+      renderMember();
+      
+      await waitFor(() => {
+        expect(screen.getByText('Error Loading Member')).toBeInTheDocument();
+      });
     });
 
     it('should handle missing team gracefully', async () => {
       const memberWithoutTeam = { ...mockMember, team_id: undefined };
       mockMemberService.getMember.mockResolvedValue(memberWithoutTeam);
       
-      const result = await loader({ params: { id: '1' } });
+      renderMember();
       
-      expect(result.guild).toEqual(mockGuild);
-      expect(result.team).toBeNull();
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
+      
       expect(mockGuildService.getGuild).toHaveBeenCalledWith(1);
       expect(mockTeamService.getTeam).not.toHaveBeenCalled();
     });
@@ -167,15 +167,12 @@ describe('Member Detail Page', () => {
 
   describe('Component Rendering', () => {
     it('should render member information correctly', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
+      renderMember();
       
-      renderMember(loaderData);
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       // Check for member name in the main heading
       expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
@@ -184,64 +181,47 @@ describe('Member Detail Page', () => {
     });
 
     it('should render toons correctly', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
+      renderMember();
       
-      renderMember(loaderData);
+      await waitFor(() => {
+        expect(screen.getByText('TestToon')).toBeInTheDocument();
+      });
       
-      expect(screen.getByText('TestToon')).toBeInTheDocument();
       expect(screen.getByText('Warrior')).toBeInTheDocument();
       expect(screen.getByText('Tank')).toBeInTheDocument();
       expect(screen.getByText('Main')).toBeInTheDocument();
     });
 
     it('should show empty state when no toons exist', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: [],
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
+      mockToonService.getToonsByMember.mockResolvedValue([]);
       
-      renderMember(loaderData);
+      renderMember();
       
-      expect(screen.getByText('No Characters Found')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('No Characters Found')).toBeInTheDocument();
+      });
       expect(screen.getByText('Add First Character')).toBeInTheDocument();
     });
 
     it('should show member not found when member is null', async () => {
-      const loaderData = {
-        member: null,
-        toons: [],
-        teams: [],
-        guild: null,
-        team: null,
-      };
+      mockMemberService.getMember.mockResolvedValue(null);
       
-      renderMember(loaderData);
+      renderMember();
       
-      expect(screen.getByText('Member Not Found')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Member Not Found')).toBeInTheDocument();
+      });
       expect(screen.getByText('Back to Members')).toBeInTheDocument();
     });
   });
 
   describe('Toon Management', () => {
     it('should show toon form when add character button is clicked', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
+      renderMember();
       
-      renderMember(loaderData);
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       const addButton = screen.getByText('Add Character');
       fireEvent.click(addButton);
@@ -253,19 +233,15 @@ describe('Member Detail Page', () => {
     });
 
     it('should handle toon creation', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
-      
       const { id, ...toonWithoutId } = mockToons[0];
       mockToonService.createToon.mockResolvedValue({ id: 2, ...toonWithoutId });
       mockToonService.getToonsByMember.mockResolvedValue([...mockToons, { id: 2, ...toonWithoutId }]);
       
-      renderMember(loaderData);
+      renderMember();
+      
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       const addButton = screen.getByText('Add Character');
       fireEvent.click(addButton);
@@ -293,18 +269,14 @@ describe('Member Detail Page', () => {
     });
 
     it('should handle toon deletion', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
-      
       // Mock confirm to return true
       global.confirm = vi.fn(() => true);
       
-      renderMember(loaderData);
+      renderMember();
+      
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       const deleteButton = screen.getByText('Delete');
       fireEvent.click(deleteButton);
@@ -317,15 +289,11 @@ describe('Member Detail Page', () => {
 
   describe('Navigation', () => {
     it('should have correct breadcrumb navigation', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
+      renderMember();
       
-      renderMember(loaderData);
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Members')).toBeInTheDocument();
@@ -335,15 +303,11 @@ describe('Member Detail Page', () => {
     });
 
     it('should have back to members button', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
+      renderMember();
       
-      renderMember(loaderData);
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       expect(screen.getByText('Back to Members')).toBeInTheDocument();
     });
@@ -351,17 +315,13 @@ describe('Member Detail Page', () => {
 
   describe('Error Handling', () => {
     it('should handle API errors gracefully', async () => {
-      const loaderData = {
-        member: mockMember,
-        toons: mockToons,
-        teams: mockTeams,
-        guild: mockGuild,
-        team: mockTeam,
-      };
-      
       mockToonService.createToon.mockRejectedValue(new Error('API Error'));
       
-      renderMember(loaderData);
+      renderMember();
+      
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Test Member' })).toBeInTheDocument();
+      });
       
       const addButton = screen.getByText('Add Character');
       fireEvent.click(addButton);
