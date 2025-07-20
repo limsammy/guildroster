@@ -6,6 +6,8 @@ from app.database import get_db
 from app.models.raid import Raid
 from app.models.team import Team
 from app.models.scenario import Scenario
+from app.models.toon import Toon
+from app.models.attendance import Attendance
 from app.schemas.raid import RaidCreate, RaidUpdate, RaidResponse
 from app.models.token import Token
 from app.utils.auth import require_any_token, require_superuser
@@ -14,6 +16,7 @@ from app.utils.warcraftlogs import (
     extract_report_code,
     fetch_report_metadata,
     fetch_report_participants,
+    process_warcraftlogs_raid,
 )
 
 router = APIRouter(prefix="/raids", tags=["Raids"])
@@ -40,6 +43,72 @@ def get_scenario_or_404(db: Session, scenario_id: int) -> Scenario:
     return scenario
 
 
+def get_team_toons(db: Session, team_id: int) -> List[dict]:
+    """
+    Get all toons for a team with their member information.
+    """
+    toons = db.query(Toon).join(Toon.teams).filter(Team.id == team_id).all()
+
+    return [
+        {
+            "id": toon.id,
+            "username": toon.username,
+            "class": toon.class_,
+            "role": toon.role,
+            "is_main": toon.is_main,
+            "member_id": toon.member_id,
+            "member_name": toon.member.display_name if toon.member else None,
+        }
+        for toon in toons
+    ]
+
+
+@router.post(
+    "/process-warcraftlogs",
+    dependencies=[Depends(require_superuser)],
+)
+def process_warcraftlogs_report(
+    warcraftlogs_url: str,
+    team_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_superuser),
+):
+    """
+    Process a WarcraftLogs report and return participant matching information.
+    This endpoint helps the frontend handle unknown participants before creating a raid.
+    Superuser only.
+    """
+    # Verify team exists
+    team = get_team_or_404(db, team_id)
+
+    # Get team toons
+    team_toons = get_team_toons(db, team_id)
+
+    if not team_toons:
+        raise HTTPException(
+            status_code=400, detail=f"No toons found for team {team_id}"
+        )
+
+    # Process WarcraftLogs report
+    processing_result = process_warcraftlogs_raid(warcraftlogs_url, team_toons)
+
+    if not processing_result["success"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to process WarcraftLogs report: {processing_result['error']}",
+        )
+
+    return {
+        "success": True,
+        "report_metadata": processing_result["report_metadata"],
+        "participants": processing_result["participants"],
+        "matched_participants": processing_result["matched_participants"],
+        "unknown_participants": processing_result["unknown_participants"],
+        "attendance_records": processing_result["attendance_records"],
+        "team_toons": team_toons,
+    }
+
+
 @router.post(
     "/",
     response_model=RaidResponse,
@@ -61,35 +130,7 @@ def create_raid(
     # Verify scenario exists
     scenario = get_scenario_or_404(db, raid_in.scenario_id)
 
-    # Process warcraftlogs_url if provided
-    participants = []
-    if raid_in.warcraftlogs_url:
-        report_code = extract_report_code(raid_in.warcraftlogs_url)
-        if report_code:
-            # Fetch report metadata
-            report_data = fetch_report_metadata(report_code)
-            if report_data:
-                print(
-                    f"Fetched WarcraftLogs report: {report_data.get('title', 'Unknown')}"
-                )
-
-                # Fetch participant data
-                participants = fetch_report_participants(report_code)
-                if participants:
-                    print(f"Found {len(participants)} participants in the raid")
-                    for participant in participants:
-                        print(
-                            f"  - {participant.get('name', 'Unknown')} ({participant.get('class', 'Unknown')} {participant.get('spec', 'Unknown')})"
-                        )
-                else:
-                    print("No participants found in the report")
-            else:
-                print(
-                    f"Failed to fetch WarcraftLogs report data for code: {report_code}"
-                )
-        else:
-            print(f"Invalid WarcraftLogs URL: {raid_in.warcraftlogs_url}")
-
+    # Create the raid first
     raid = Raid(
         scheduled_at=raid_in.scheduled_at,
         scenario_id=raid_in.scenario_id,
@@ -99,6 +140,92 @@ def create_raid(
     db.add(raid)
     db.commit()
     db.refresh(raid)
+
+    # Process WarcraftLogs URL if provided
+    processing_result = None
+    if raid_in.warcraftlogs_url:
+        try:
+            # Get team toons
+            team_toons = get_team_toons(db, raid_in.team_id)
+
+            if not team_toons:
+                print(f"No toons found for team {raid_in.team_id}")
+            else:
+                print(
+                    f"Found {len(team_toons)} toons in team {raid_in.team_id}"
+                )
+
+                # Process WarcraftLogs report
+                processing_result = process_warcraftlogs_raid(
+                    raid_in.warcraftlogs_url, team_toons
+                )
+
+                if processing_result["success"]:
+                    # Store WarcraftLogs data in the raid record
+                    report_code = extract_report_code(raid_in.warcraftlogs_url)
+                    raid.warcraftlogs_report_code = report_code
+                    raid.warcraftlogs_metadata = processing_result[
+                        "report_metadata"
+                    ]
+                    raid.warcraftlogs_participants = processing_result[
+                        "participants"
+                    ]
+
+                    # Create attendance records
+                    attendance_records = processing_result["attendance_records"]
+                    created_attendance = []
+
+                    for record in attendance_records:
+                        # Check if attendance record already exists
+                        existing = (
+                            db.query(Attendance)
+                            .filter(
+                                Attendance.raid_id == raid.id,
+                                Attendance.toon_id == record["toon_id"],
+                            )
+                            .first()
+                        )
+
+                        if not existing:
+                            attendance = Attendance(
+                                raid_id=raid.id,
+                                toon_id=record["toon_id"],
+                                is_present=record["is_present"],
+                                notes=record["notes"],
+                            )
+                            db.add(attendance)
+                            created_attendance.append(attendance)
+
+                    if created_attendance:
+                        db.commit()
+                        print(
+                            f"Created {len(created_attendance)} attendance records"
+                        )
+
+                    # Log processing results
+                    print(f"WarcraftLogs processing completed:")
+                    print(
+                        f"  - Report: {processing_result['report_metadata'].get('title', 'Unknown')}"
+                    )
+                    print(
+                        f"  - Participants found: {len(processing_result['participants'])}"
+                    )
+                    print(
+                        f"  - Attendance records created: {len(created_attendance)}"
+                    )
+                    print(
+                        f"  - Unknown participants: {len(processing_result['unknown_participants'])}"
+                    )
+
+                else:
+                    print(
+                        f"WarcraftLogs processing failed: {processing_result['error']}"
+                    )
+
+        except Exception as e:
+            print(f"Error processing WarcraftLogs report: {e}")
+            # Don't fail the raid creation, just log the error
+
     return raid
 
 
