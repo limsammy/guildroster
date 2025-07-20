@@ -124,13 +124,13 @@ This document outlines the current state of the GuildRoster frontend implementat
    - ✅ Fixed API type mismatch (display_name vs name)
    - ✅ Tests for member detail functionality
 
-5. **Raids page** - Raid scheduling
-   - [ ] Raids list page with date filtering
-   - [ ] RaidForm component with scenario/difficulty selection
-   - [ ] Raid detail view
-   - [ ] Calendar view for raid scheduling
-   - [ ] Team assignment for raids
-   - [ ] Tests for raid functionality
+5. ✅ **Raids page** - Raid scheduling
+   - ✅ Raids list page with date filtering
+   - ✅ RaidForm component with scenario/difficulty selection
+   - ✅ Raid detail view
+   - ✅ Team assignment for raids
+   - ✅ Tests for raid functionality
+   - ✅ Removed scheduled date/time field (extracted from WarcraftLogs)
 
 6. **Scenarios page** - Raid instance management
    - [ ] Scenarios list page with active/inactive filter
