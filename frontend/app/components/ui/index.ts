@@ -8,4 +8,5 @@ export { MemberSelector } from './MemberSelector';
 export { RaidForm } from './RaidForm';
 export { ScenarioForm } from './ScenarioForm';
 export { TeamForm } from './TeamForm';
-export { ToonForm } from './ToonForm'; 
+export { ToonForm } from './ToonForm';
+export { AttendanceForm } from './AttendanceForm'; 

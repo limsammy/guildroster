@@ -11,5 +11,6 @@ export default [
   route("settings", "routes/settings.tsx"),
   route("teams", "routes/teams.tsx"),
   route("toons", "routes/toons.tsx"),
-  route("raids", "routes/raids.tsx")
+  route("raids", "routes/raids.tsx"),
+  route("attendance", "routes/attendance.tsx")
 ] satisfies RouteConfig;

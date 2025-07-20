@@ -129,12 +129,12 @@ export default function Raids() {
     }
   };
 
-  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => {
+  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number }) => {
     setFormLoading(true);
     setFormError(null);
     try {
       await RaidService.createRaid({
-        scheduled_at: values.scheduled_at,
+        scheduled_at: new Date().toISOString(), // Placeholder - backend will extract from WarcraftLogs
         team_id: values.team_id,
         scenario_id: values.scenario_id,
         warcraftlogs_url: values.warcraftlogs_url || undefined,
@@ -148,13 +148,12 @@ export default function Raids() {
     }
   };
 
-  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number; scheduled_at: string }) => {
+  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number }) => {
     if (!editingRaid) return;
     setFormLoading(true);
     setFormError(null);
     try {
       await RaidService.updateRaid(editingRaid.id, {
-        scheduled_at: values.scheduled_at,
         team_id: values.team_id,
         scenario_id: values.scenario_id,
         warcraftlogs_url: values.warcraftlogs_url || undefined,
@@ -402,7 +401,6 @@ export default function Raids() {
               onCancel={handleCancelForm}
               isEditing={!!editingRaid}
               initialValues={editingRaid ? {
-                scheduled_at: editingRaid.scheduled_at,
                 team_id: editingRaid.team_id,
                 scenario_id: editingRaid.scenario_id,
                 warcraftlogs_url: editingRaid.warcraftlogs_url || '',
