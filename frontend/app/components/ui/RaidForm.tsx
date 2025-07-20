@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card } from './';
-import type { Team, Scenario } from '../../api/types';
+import { Button, Card, WarcraftLogsResults, UnknownParticipantsModal } from './';
+import type { Team, Scenario, WarcraftLogsProcessingResult, UnknownParticipant, ToonCreate } from '../../api/types';
+import { RaidService } from '../../api/raids';
+import { ToonService } from '../../api/toons';
 
 interface RaidFormProps {
   teams: Team[];
@@ -12,6 +14,8 @@ interface RaidFormProps {
   initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_id: number }>;
   isEditing?: boolean;
 }
+
+type FormStep = 'form' | 'processing' | 'results' | 'unknown-participants';
 
 export const RaidForm: React.FC<RaidFormProps> = ({
   teams,
@@ -27,25 +31,141 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [teamId, setTeamId] = useState<number | ''>(initialValues.team_id ?? (teams.length > 0 ? teams[0].id : ''));
   const [scenarioId, setScenarioId] = useState<number | ''>(initialValues.scenario_id ?? (scenarios.length > 0 ? scenarios[0].id : ''));
   const [showErrors, setShowErrors] = useState(false);
+  
+  // WarcraftLogs processing state
+  const [currentStep, setCurrentStep] = useState<FormStep>('form');
+  const [processingResult, setProcessingResult] = useState<WarcraftLogsProcessingResult | null>(null);
+  const [processingLoading, setProcessingLoading] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [showUnknownParticipantsModal, setShowUnknownParticipantsModal] = useState(false);
+  const [toonAssignments, setToonAssignments] = useState<Array<{ participant: UnknownParticipant; memberId: number; toonData: ToonCreate }>>([]);
 
   const noTeams = teams.length === 0;
   const noScenarios = scenarios.length === 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
     if (!teamId || !scenarioId) return;
-    onSubmit({
-      warcraftlogs_url: warcraftlogsUrl.trim() || '',
-      team_id: Number(teamId),
-      scenario_id: Number(scenarioId),
-    });
+
+    // If no WarcraftLogs URL, proceed with normal form submission
+    if (!warcraftlogsUrl.trim()) {
+      onSubmit({
+        warcraftlogs_url: '',
+        team_id: Number(teamId),
+        scenario_id: Number(scenarioId),
+      });
+      return;
+    }
+
+    // Process WarcraftLogs URL
+    await processWarcraftLogs();
+  };
+
+  const processWarcraftLogs = async () => {
+    if (!warcraftlogsUrl.trim() || !teamId) return;
+
+    setProcessingLoading(true);
+    setProcessingError(null);
+    setCurrentStep('processing');
+
+    try {
+      const result = await RaidService.processWarcraftLogs(warcraftlogsUrl.trim(), Number(teamId));
+      setProcessingResult(result);
+      setCurrentStep('results');
+    } catch (err: any) {
+      setProcessingError(err.response?.data?.detail || 'Failed to process WarcraftLogs report');
+      setCurrentStep('form');
+    } finally {
+      setProcessingLoading(false);
+    }
+  };
+
+  const handleProceedWithRaid = async () => {
+    if (!processingResult) return;
+
+    setProcessingLoading(true);
+    try {
+      // Create toons for unknown participants if any were assigned
+      if (toonAssignments.length > 0) {
+        for (const assignment of toonAssignments) {
+          await ToonService.createToon(assignment.toonData);
+        }
+      }
+
+      // Submit the raid creation
+      onSubmit({
+        warcraftlogs_url: warcraftlogsUrl.trim(),
+        team_id: Number(teamId),
+        scenario_id: Number(scenarioId),
+      });
+    } catch (err: any) {
+      setProcessingError(err.response?.data?.detail || 'Failed to create raid');
+      setCurrentStep('results');
+    } finally {
+      setProcessingLoading(false);
+    }
+  };
+
+  const handleUnknownParticipantsComplete = (assignments: Array<{ participant: UnknownParticipant; memberId: number; toonData: ToonCreate }>) => {
+    setToonAssignments(assignments);
+    setShowUnknownParticipantsModal(false);
+    // Return to results step
+    setCurrentStep('results');
+  };
+
+  const handleBackToForm = () => {
+    setCurrentStep('form');
+    setProcessingResult(null);
+    setProcessingError(null);
+    setToonAssignments([]);
   };
 
   const urlError = showErrors && warcraftlogsUrl.trim() && !warcraftlogsUrl.includes('warcraftlogs.com/reports/') ? 'Invalid WarcraftLogs URL format' : '';
   const teamError = showErrors && !teamId ? 'Team is required' : '';
   const scenarioError = showErrors && !scenarioId ? 'Scenario is required' : '';
 
+  // Show processing step
+  if (currentStep === 'processing') {
+    return (
+      <Card variant="elevated" className="max-w-md mx-auto p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-white mb-2">Processing WarcraftLogs Report</h2>
+          <p className="text-slate-300">Fetching participant data and matching to team members...</p>
+        </div>
+      </Card>
+    );
+  }
+
+  // Show results step
+  if (currentStep === 'results' && processingResult) {
+    return (
+      <WarcraftLogsResults
+        result={processingResult}
+        onHandleUnknownParticipants={() => setShowUnknownParticipantsModal(true)}
+        onProceed={handleProceedWithRaid}
+        onCancel={handleBackToForm}
+        loading={processingLoading}
+      />
+    );
+  }
+
+  // Show unknown participants modal
+  if (showUnknownParticipantsModal && processingResult) {
+    return (
+      <UnknownParticipantsModal
+        unknownParticipants={processingResult.unknown_participants}
+        teamId={Number(teamId)}
+        guildId={teams.find(t => t.id === teamId)?.guild_id || 0}
+        onComplete={handleUnknownParticipantsComplete}
+        onCancel={() => setShowUnknownParticipantsModal(false)}
+        isOpen={showUnknownParticipantsModal}
+      />
+    );
+  }
+
+  // Show main form
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
       <form onSubmit={handleSubmit}>
@@ -53,6 +173,11 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
             <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+        {processingError && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+            <p className="text-red-400 text-sm">{processingError}</p>
           </div>
         )}
         {(noTeams || noScenarios) && (
@@ -74,6 +199,11 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             disabled={loading || noTeams || noScenarios}
           />
           {urlError && <div className="text-red-400 text-xs mt-1">{urlError}</div>}
+          {warcraftlogsUrl.trim() && (
+            <div className="text-amber-400 text-xs mt-1">
+              ⚡ This will automatically process attendance from the WarcraftLogs report
+            </div>
+          )}
         </div>
         <div className="mb-4">
           <label htmlFor="raid-team" className="block text-sm font-medium text-slate-300 mb-2">Team</label>

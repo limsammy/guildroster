@@ -188,6 +188,69 @@ export interface RaidUpdate {
   warcraftlogs_url?: string;
 }
 
+// WarcraftLogs Types
+export interface WarcraftLogsParticipant {
+  id: string;
+  canonicalID: string;
+  name: string;
+  class: string;
+  classID: number;
+}
+
+export interface WarcraftLogsReportMetadata {
+  title: string;
+  startTime: number;
+  endTime: number;
+  owner: { name: string };
+  zone: { name: string };
+}
+
+export interface MatchedParticipant {
+  toon: {
+    id: number;
+    username: string;
+    class: string;
+    role: string;
+    is_main: boolean;
+    member_id: number;
+    member_name?: string;
+  };
+  participant: WarcraftLogsParticipant;
+  is_present: boolean;
+  notes: string;
+}
+
+export interface UnknownParticipant {
+  participant: WarcraftLogsParticipant;
+  suggested_member?: Member | null;
+  notes: string;
+}
+
+export interface AttendanceRecord {
+  toon_id: number;
+  is_present: boolean;
+  notes: string;
+}
+
+export interface WarcraftLogsProcessingResult {
+  success: boolean;
+  report_metadata: WarcraftLogsReportMetadata;
+  participants: WarcraftLogsParticipant[];
+  matched_participants: MatchedParticipant[];
+  unknown_participants: UnknownParticipant[];
+  attendance_records: AttendanceRecord[];
+  team_toons: Array<{
+    id: number;
+    username: string;
+    class: string;
+    role: string;
+    is_main: boolean;
+    member_id: number;
+    member_name?: string;
+  }>;
+  error?: string;
+}
+
 // Attendance Types
 export interface Attendance {
   id: number;

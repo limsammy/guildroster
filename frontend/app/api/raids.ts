@@ -1,5 +1,5 @@
 import apiClient from './config';
-import type { Raid, RaidCreate, RaidUpdate } from './types';
+import type { Raid, RaidCreate, RaidUpdate, WarcraftLogsProcessingResult } from './types';
 
 export class RaidService {
   // Get all raids
@@ -41,5 +41,14 @@ export class RaidService {
   // Delete raid
   static async deleteRaid(raidId: number): Promise<void> {
     await apiClient.delete(`/raids/${raidId}`);
+  }
+
+  // Process WarcraftLogs report
+  static async processWarcraftLogs(warcraftlogsUrl: string, teamId: number): Promise<WarcraftLogsProcessingResult> {
+    const response = await apiClient.post<WarcraftLogsProcessingResult>('/raids/process-warcraftlogs', {
+      warcraftlogs_url: warcraftlogsUrl,
+      team_id: teamId,
+    });
+    return response.data;
   }
 } 
