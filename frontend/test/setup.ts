@@ -1,6 +1,52 @@
 import '@testing-library/jest-dom';
 import { vi, beforeAll, afterAll } from 'vitest';
 
+// Add jest-dom types
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeInTheDocument(): R;
+      toHaveClass(className: string): R;
+      toHaveAttribute(attr: string, value?: string): R;
+      toHaveTextContent(text: string): R;
+      toBeVisible(): R;
+      toBeDisabled(): R;
+      toBeEnabled(): R;
+      toHaveValue(value: string | number | string[]): R;
+      toBeChecked(): R;
+      toBePartiallyChecked(): R;
+      toHaveFocus(): R;
+      toHaveFormValues(expectedValues: Record<string, any>): R;
+      toHaveDisplayValue(value: string | string[]): R;
+      toBeEmpty(): R;
+      toBeEmptyDOMElement(): R;
+      toHaveAccessibleDescription(expectedAccessibleDescription?: string | RegExp): R;
+      toHaveAccessibleName(expectedAccessibleName?: string | RegExp): R;
+      toHaveErrorMessage(expectedErrorMessage?: string | RegExp): R;
+      toHaveStyle(css: string | Record<string, any>): R;
+      toHaveTextContent(text: string | RegExp): R;
+      toHaveValue(value: string | number | string[]): R;
+      toBeInTheDocument(): R;
+      toBeVisible(): R;
+      toBeDisabled(): R;
+      toBeEnabled(): R;
+      toBeEmpty(): R;
+      toBeEmptyDOMElement(): R;
+      toHaveAttribute(attr: string, value?: string): R;
+      toHaveClass(className: string): R;
+      toHaveFocus(): R;
+      toHaveFormValues(expectedValues: Record<string, any>): R;
+      toHaveDisplayValue(value: string | string[]): R;
+      toBeChecked(): R;
+      toBePartiallyChecked(): R;
+      toHaveAccessibleDescription(expectedAccessibleDescription?: string | RegExp): R;
+      toHaveAccessibleName(expectedAccessibleName?: string | RegExp): R;
+      toHaveErrorMessage(expectedErrorMessage?: string | RegExp): R;
+      toHaveStyle(css: string | Record<string, any>): R;
+    }
+  }
+}
+
 // Mock AbortSignal for React Router compatibility
 class MockAbortSignal {
   aborted = false;

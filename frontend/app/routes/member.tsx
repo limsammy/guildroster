@@ -16,6 +16,11 @@ type MetaArgs = { loaderData?: any };
 export async function loader({ params }: LoaderArgs) {
   const memberId = parseInt(params.id);
   
+  // Validate member ID
+  if (isNaN(memberId)) {
+    throw new Error('Invalid member ID');
+  }
+  
   try {
     const [memberData, toonsData, teamsData] = await Promise.all([
       MemberService.getMember(memberId),
@@ -43,7 +48,7 @@ export async function loader({ params }: LoaderArgs) {
       team,
     };
   } catch (err: any) {
-    throw new Response(err.message || 'Failed to load member data', { status: 500 });
+    throw new Error('Failed to load member data');
   }
 }
 
