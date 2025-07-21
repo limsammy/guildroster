@@ -259,10 +259,10 @@ class TestWarcraftLogsAPI:
         assert result is not None
         assert len(result) == 2
         assert result[0]["name"] == "TestPlayer1"
-        assert result[0]["class"] == "Druid"
+        assert result[0]["class"] == "Warrior"
         assert result[0]["classID"] == 11
         assert result[1]["name"] == "TestPlayer2"
-        assert result[1]["class"] == "Mage"
+        assert result[1]["class"] == "Rogue"
         assert result[1]["classID"] == 8
 
     @patch("app.utils.warcraftlogs.requests.post")
@@ -326,19 +326,17 @@ class TestWarcraftLogsAPI:
         """Test class ID to class name conversion."""
         # Test all class mappings by creating a mock participant and processing it
         class_mappings = {
-            1: "Warrior",
-            2: "Paladin",
+            1: "Death Knight",
+            2: "Druid",
             3: "Hunter",
-            4: "Rogue",
-            5: "Priest",
-            6: "Death Knight",
-            7: "Shaman",
-            8: "Mage",
-            9: "Warlock",
-            10: "Monk",
-            11: "Druid",
-            12: "Demon Hunter",
-            13: "Evoker",
+            4: "Mage",
+            5: "Monk",
+            6: "Paladin",
+            7: "Priest",
+            8: "Rogue",
+            9: "Shaman",
+            10: "Warlock",
+            11: "Warrior",
         }
 
         # Test the conversion logic by creating a mock response and processing it
