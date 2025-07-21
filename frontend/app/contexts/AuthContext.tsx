@@ -54,14 +54,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       
-      const response = await AuthService.login(credentials);
+      await AuthService.login(credentials);
       
-      // Set user info from login response
-      setUser({
-        user_id: response.user_id,
-        username: response.username,
-        is_superuser: response.is_superuser,
-      });
+      // Get user info from server after successful login
+      const currentUser = await AuthService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed');
       throw err;
@@ -74,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await AuthService.logout();
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error('AuthContext: Logout error:', err);
     } finally {
       setUser(null);
       setError(null);

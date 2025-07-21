@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -14,9 +14,8 @@ from app.schemas.user import (
 from app.utils.auth import (
     require_any_token,
     security,
-    require_superuser,
-    require_user,
 )
+from app.utils.session_auth import require_superuser, require_user
 from app.utils.password import hash_password, verify_password
 from app.utils.logger import get_logger
 
@@ -117,26 +116,27 @@ def login_user(
         )
 
     # Check if user is active
-    if not user.is_active:  # type: ignore[truthy-bool]
+    if user.is_active is False:
         logger.warning(
             f"Login failed: inactive user {user_credentials.username}"
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is inactive",
-            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create a user token
-    token = Token.create_user_token(user_id=user.id, name="Login Token")  # type: ignore[arg-type]
-    db.add(token)
+    # Create a session
+    from app.models.session import Session as SessionModel
+
+    session = SessionModel.create_session(user_id=user.id)  # type: ignore
+    db.add(session)
     db.commit()
-    db.refresh(token)
+    db.refresh(session)
 
     # Set HTTP-only cookie for session management
     response.set_cookie(
-        key="session_token",
-        value=str(token.key),
+        key="session_id",
+        value=session.session_id,  # type: ignore
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
         samesite="lax",
@@ -149,8 +149,6 @@ def login_user(
 
     logger.info(f"User {user.username} logged in successfully")
     return {
-        "access_token": token.key,
-        "token_type": "bearer",
         "user_id": user.id,
         "username": user.username,
         "is_superuser": user.is_superuser,
@@ -319,12 +317,31 @@ def delete_user(
 
 
 @router.post("/logout")
-def logout_user(response: Response):
+def logout_user(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     """
-    Logout current user by clearing the session cookie.
+    Logout current user by clearing the session.
     """
+    # Get the current session and deactivate it
+    from app.models.session import Session as SessionModel
+
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        session = (
+            db.query(SessionModel)
+            .filter(SessionModel.session_id == session_id)
+            .first()
+        )
+        if session:
+            session.is_active = False  # type: ignore
+            db.commit()
+            logger.info(f"Deactivated session for user {session.user_id}")
+
     # Clear the session cookie
-    response.delete_cookie(key="session_token", path="/")
+    response.delete_cookie(key="session_id", path="/")
 
     return {"message": "Logged out successfully"}
 

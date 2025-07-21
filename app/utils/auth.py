@@ -22,13 +22,23 @@ def get_token_from_cookie(
 ) -> Optional[Token]:
     """Get token from session cookie."""
     session_token = request.cookies.get("session_token")
+    logger.debug(f"Session token from cookie: {session_token}")
     if not session_token:
+        logger.debug("No session token found in cookie")
         return None
 
     token = db.query(Token).filter(Token.key == session_token).first()
-    if not token or not token.is_valid():
+    if not token:
+        logger.debug("No token found in database")
         return None
 
+    if not token.is_valid():
+        logger.debug("Token is invalid")
+        return None
+
+    logger.debug(
+        f"Valid token found: type={token.token_type}, user_id={token.user_id}"
+    )
     return token
 
 
@@ -67,7 +77,7 @@ def get_current_user(
     token: Token = Depends(get_current_token), db: Session = Depends(get_db)
 ) -> Optional[User]:
     """Get the current user from the token."""
-    if not token.user_id:
+    if token.user_id is None:
         # System or API token - no user associated
         return None
 
@@ -79,7 +89,7 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not user.is_active:
+    if user.is_active is False:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is inactive",
@@ -108,7 +118,7 @@ def require_superuser(user: User = Depends(require_user)) -> User:
     logger.debug(
         f"require_superuser called with user: {user.username if user else 'None'}"
     )
-    if not user.is_superuser:
+    if user.is_superuser is False:
         logger.debug("User is not superuser, raising 403")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

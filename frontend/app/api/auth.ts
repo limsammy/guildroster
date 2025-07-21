@@ -7,8 +7,6 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
   user_id: number;
   username: string;
   is_superuser: boolean;
@@ -46,8 +44,13 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // Add API token for non-user endpoints (fallback for testing)
-    if (ENV_TOKEN && config.url && !config.url.includes('/users/')) {
+    // Add API token only for system/admin endpoints (not user authentication)
+    // This is for backend-to-backend communication, not user sessions
+    if (ENV_TOKEN && config.url && (
+      config.url.includes('/tokens/') || 
+      config.url.includes('/admin/') ||
+      config.url.includes('/system/')
+    )) {
       if (config.headers && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
       }
@@ -77,14 +80,8 @@ export class AuthService {
     try {
       const response = await apiClient.post<LoginResponse>('/users/login', credentials);
       
-      // Store user info in localStorage for client-side access
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user_info', JSON.stringify({
-          user_id: response.data.user_id,
-          username: response.data.username,
-          is_superuser: response.data.is_superuser,
-        }));
-      }
+      // Don't store user info in localStorage - rely on session cookies
+      // The session cookie will be automatically sent with requests
       
       return response.data;
     } catch (error: any) {
@@ -107,12 +104,13 @@ export class AuthService {
     try {
       await apiClient.post('/users/logout');
     } catch (error) {
-      // Even if the logout request fails, clear local storage
+      // Even if the logout request fails, clear any stored data
       console.warn('Logout request failed:', error);
     } finally {
-      // Clear localStorage
+      // Clear any stored user data (for cleanup)
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user_info');
+        localStorage.removeItem('selectedGuildId');
       }
       // Always redirect to home page
       if (typeof window !== 'undefined') {
@@ -126,15 +124,7 @@ export class AuthService {
    */
   static async getCurrentUser(): Promise<UserInfo | null> {
     try {
-      // Try to get user info from localStorage first (for faster client-side access)
-      if (typeof window !== 'undefined') {
-        const userInfo = localStorage.getItem('user_info');
-        if (userInfo) {
-          return JSON.parse(userInfo);
-        }
-      }
-      
-      // Fall back to API call
+      // Always get user info from the server via session cookie
       const response = await apiClient.get<UserInfo>('/users/me');
       return response.data;
     } catch (error: any) {

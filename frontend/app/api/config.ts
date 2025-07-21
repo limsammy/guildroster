@@ -23,8 +23,13 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token for API calls
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Add API token for non-user endpoints (fallback for testing)
-    if (ENV_TOKEN && config.url && !config.url.includes('/users/')) {
+    // Add API token only for system/admin endpoints (not user authentication)
+    // This is for backend-to-backend communication, not user sessions
+    if (ENV_TOKEN && config.url && (
+      config.url.includes('/tokens/') || 
+      config.url.includes('/admin/') ||
+      config.url.includes('/system/')
+    )) {
       if (config.headers && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
       }

@@ -18,7 +18,7 @@ export function meta() {
 }
 
 export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { selectedGuild } = useGuild();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -177,9 +177,13 @@ export default function Dashboard() {
                 <Link to="/">
                   <Button variant="primary">Home</Button>
                 </Link>
-                <Link to="/login">
-                  <Button variant="danger">Logout</Button>
-                </Link>
+                <Button variant="danger" onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (error) {
+                    console.error('Dashboard logout failed:', error);
+                  }
+                }}>Logout</Button>
               </div>
             </div>
           </div>
