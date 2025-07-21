@@ -260,7 +260,21 @@ export default function MemberDetail({}: ComponentProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Team</label>
-                <p className="text-white">{team?.name || 'No Team Assigned'}</p>
+                <p className="text-white">
+                  {(() => {
+                    // Get all unique team IDs from the member's toons
+                    const teamIds = [
+                      ...new Set(
+                        toons.flatMap(toon => toon.team_ids || [])
+                      )
+                    ];
+                    // Map team IDs to team names
+                    const teamNames = teamIds
+                      .map(id => teams.find(team => team.id === id)?.name)
+                      .filter(Boolean);
+                    return teamNames.length > 0 ? teamNames.join(', ') : 'No Team Assigned';
+                  })()}
+                </p>
               </div>
             </div>
           </Card>

@@ -28,7 +28,6 @@ class Team(Base):
     # Relationships
     guild = relationship("Guild", back_populates="teams")
     creator = relationship("User", back_populates="created_teams")
-    members = relationship("Member", back_populates="team")
     raids = relationship(
         "Raid", back_populates="team", cascade="all, delete-orphan"
     )
