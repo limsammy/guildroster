@@ -66,14 +66,13 @@ export default function Members() {
     setMembers(updatedMembers);
   };
 
-  const handleAddMember = async (values: { display_name: string; guild_id: number; team_id?: number | null }) => {
+  const handleAddMember = async (values: { display_name: string; guild_id: number }) => {
     try {
       setFormLoading(true);
       setFormError(null);
       const memberData = {
         display_name: values.display_name,
         guild_id: values.guild_id,
-        team_id: values.team_id ? values.team_id : undefined,
       };
       await MemberService.createMember(memberData);
       await reloadMembers();
@@ -87,7 +86,7 @@ export default function Members() {
     }
   };
 
-  const handleEditMember = async (values: { display_name: string; guild_id: number; team_id?: number | null }) => {
+  const handleEditMember = async (values: { display_name: string; guild_id: number }) => {
     if (!editingMember) return;
     try {
       setFormLoading(true);
@@ -95,7 +94,6 @@ export default function Members() {
       const memberData = {
         display_name: values.display_name,
         guild_id: values.guild_id,
-        team_id: values.team_id ? values.team_id : undefined,
       };
       await MemberService.updateMember(editingMember.id, memberData);
       await reloadMembers();
@@ -130,7 +128,10 @@ export default function Members() {
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.display_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesGuild = selectedGuild === '' || member.guild_id === selectedGuild;
-    const matchesTeam = selectedTeam === '' || member.team_id === selectedTeam;
+    
+    // For team filtering, we need to check if any of the member's toons are in the selected team
+    const matchesTeam = selectedTeam === '' || 
+      toons.some(toon => toon.member_id === member.id && toon.team_ids?.includes(Number(selectedTeam)));
     
     return matchesSearch && matchesGuild && matchesTeam;
   });
@@ -286,15 +287,15 @@ export default function Members() {
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-blue-400 mb-2">
-                {members.filter(m => m.team_id).length}
+                {members.filter(m => toons.some(t => t.member_id === m.id && t.team_ids?.length > 0)).length}
               </div>
-              <div className="text-slate-300">Assigned to Teams</div>
+              <div className="text-slate-300">With Team Characters</div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-green-400 mb-2">
-                {members.filter(m => !m.team_id).length}
+                {members.filter(m => !toons.some(t => t.member_id === m.id && t.team_ids?.length > 0)).length}
               </div>
-              <div className="text-slate-300">Unassigned</div>
+              <div className="text-slate-300">No Team Characters</div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
               <div className="text-3xl font-bold text-purple-400 mb-2">{toons.length}</div>
@@ -356,13 +357,26 @@ export default function Members() {
                           <span className="text-slate-300">{getGuildName(member.guild_id)}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            member.team_id 
-                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                              : 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
-                          }`}>
-                            {getTeamName(member.team_id)}
-                          </span>
+                          {(() => {
+                            const memberToons = toons.filter(t => t.member_id === member.id);
+                            const hasTeamToons = memberToons.some(t => t.team_ids?.length > 0);
+                            const teamNames = [...new Set(
+                              memberToons
+                                .flatMap(t => t.team_ids || [])
+                                .map(teamId => teams.find(team => team.id === teamId)?.name)
+                                .filter(Boolean)
+                            )];
+                            
+                            return (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                hasTeamToons
+                                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                  : 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
+                              }`}>
+                                {hasTeamToons ? teamNames.join(', ') : 'No Team'}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-slate-300">
@@ -410,7 +424,6 @@ export default function Members() {
               mode={showAddForm ? 'add' : 'edit'}
               initialValues={editingMember || undefined}
               guilds={guilds}
-              teams={teams}
               loading={formLoading}
               error={formError}
               onSubmit={showAddForm ? handleAddMember : handleEditMember}

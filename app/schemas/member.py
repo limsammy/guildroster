@@ -9,9 +9,6 @@ class MemberBase(BaseModel):
     )
     rank: str = Field("Member", max_length=20, description="Guild rank")
     guild_id: int = Field(..., description="Guild ID this member belongs to")
-    team_id: Optional[int] = Field(
-        None, description="Team ID this member is assigned to"
-    )
 
 
 class MemberCreate(MemberBase):
@@ -23,9 +20,6 @@ class MemberCreate(MemberBase):
 class MemberUpdate(BaseModel):
     display_name: Optional[str] = Field(None, min_length=1, max_length=50)
     rank: Optional[str] = Field(None, max_length=20)
-    team_id: Optional[int] = Field(
-        None, description="Team ID to assign member to"
-    )
     is_active: Optional[bool] = None
 
 

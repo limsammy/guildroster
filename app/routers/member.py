@@ -53,16 +53,6 @@ def create_member(
     # Verify guild exists
     guild = get_guild_or_404(db, member_in.guild_id)
 
-    # Verify team exists if provided
-    if member_in.team_id is not None:
-        team = get_team_or_404(db, member_in.team_id)
-        # Ensure team belongs to the same guild
-        if team.guild_id != member_in.guild_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Team does not belong to the specified guild",
-            )
-
     # Check for unique display name within the guild
     if (
         db.query(Member)
@@ -81,7 +71,6 @@ def create_member(
         display_name=member_in.display_name,
         rank=member_in.rank,
         guild_id=member_in.guild_id,
-        team_id=member_in.team_id,
         join_date=member_in.join_date,
     )
     db.add(member)

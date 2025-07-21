@@ -84,7 +84,6 @@ export interface Member {
   id: number;
   display_name: string;
   guild_id: number;
-  team_id?: number;
   created_at: string;
   updated_at: string;
 }
@@ -92,13 +91,11 @@ export interface Member {
 export interface MemberCreate {
   display_name: string;
   guild_id: number;
-  team_id?: number;
 }
 
 export interface MemberUpdate {
   display_name?: string;
   guild_id?: number;
-  team_id?: number;
 }
 
 // Toon Types

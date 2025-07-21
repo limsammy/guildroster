@@ -6,10 +6,9 @@ interface MemberFormProps {
   mode: 'add' | 'edit';
   initialValues?: Partial<Member>;
   guilds: Guild[];
-  teams: Team[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { display_name: string; guild_id: number; team_id?: number | null }) => void;
+  onSubmit: (values: { display_name: string; guild_id: number }) => void;
   onCancel: () => void;
 }
 
@@ -17,7 +16,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   mode,
   initialValues = {},
   guilds,
-  teams,
   loading = false,
   error = null,
   onSubmit,
@@ -27,13 +25,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   // Auto-select first guild if adding and none is set
   const initialGuildId = initialValues.guild_id ?? (mode === 'add' && guilds.length > 0 ? guilds[0].id : '');
   const [guildId, setGuildId] = useState<number | ''>(initialGuildId);
-  const [teamId, setTeamId] = useState<number | ''>(initialValues.team_id ?? '');
   const [showErrors, setShowErrors] = useState(false);
-
-  const filteredTeams = useMemo(() => {
-    if (!guildId) return [];
-    return teams.filter(team => team.guild_id === guildId);
-  }, [guildId, teams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +34,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     onSubmit({
       display_name: displayName.trim(),
       guild_id: Number(guildId),
-      team_id: teamId ? Number(teamId) : null,
     });
   };
 
@@ -81,12 +72,12 @@ export const MemberForm: React.FC<MemberFormProps> = ({
           />
           {displayNameError && <div className="text-red-400 text-xs mt-1">{displayNameError}</div>}
         </div>
-        <div className="mb-4">
+        <div className="mb-6">
           <label htmlFor="member-guild" className="block text-sm font-medium text-slate-300 mb-2">Guild</label>
           <select
             id="member-guild"
             value={guildId}
-            onChange={e => { setGuildId(e.target.value ? Number(e.target.value) : ''); setTeamId(''); }}
+            onChange={e => setGuildId(e.target.value ? Number(e.target.value) : '')}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading || noGuilds}
           >
@@ -96,21 +87,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             ))}
           </select>
           {guildError && <div className="text-red-400 text-xs mt-1">{guildError}</div>}
-        </div>
-        <div className="mb-6">
-          <label htmlFor="member-team" className="block text-sm font-medium text-slate-300 mb-2">Team</label>
-          <select
-            id="member-team"
-            value={teamId}
-            onChange={e => setTeamId(e.target.value ? Number(e.target.value) : '')}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            disabled={loading || !guildId || noGuilds}
-          >
-            <option value="">No Team</option>
-            {filteredTeams.map(team => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>

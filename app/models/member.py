@@ -19,9 +19,6 @@ class Member(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     guild_id = Column(Integer, ForeignKey("guilds.id"), nullable=False)
-    team_id = Column(
-        Integer, ForeignKey("teams.id"), nullable=True
-    )  # Optional team assignment
 
     # Member profile fields
     display_name = Column(String(50), nullable=False)
@@ -35,7 +32,6 @@ class Member(Base):
 
     # Relationships
     guild = relationship("Guild", back_populates="members")
-    team = relationship("Team", back_populates="members")
     toons = relationship(
         "Toon", back_populates="member", cascade="all, delete-orphan"
     )
