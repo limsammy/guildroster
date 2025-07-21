@@ -239,14 +239,12 @@ class TestWarcraftLogsAPI:
                                 "canonicalID": 123,
                                 "name": "TestPlayer1",
                                 "classID": 11,
-                                "level": 70,
                             },
                             {
                                 "id": 456,
                                 "canonicalID": 456,
                                 "name": "TestPlayer2",
                                 "classID": 8,
-                                "level": 70,
                             },
                         ],
                     }
@@ -357,7 +355,6 @@ class TestWarcraftLogsAPI:
                                     "canonicalID": 1,
                                     "name": "TestPlayer",
                                     "classID": class_id,
-                                    "level": 70,
                                 }
                             ],
                         }
@@ -377,7 +374,7 @@ class TestWarcraftLogsAPI:
                 assert result[0]["classID"] == class_id
 
     def test_unknown_class_id(self, api_client):
-        """Test handling of unknown class IDs."""
+        """Test handling of unknown class ID."""
         # Create a mock response with an unknown class ID
         mock_response_data = {
             "data": {
@@ -390,7 +387,6 @@ class TestWarcraftLogsAPI:
                                 "canonicalID": 1,
                                 "name": "TestPlayer",
                                 "classID": 999,  # Unknown class ID
-                                "level": 70,
                             }
                         ],
                     }

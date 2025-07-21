@@ -18,8 +18,14 @@ from app.utils.warcraftlogs import (
     fetch_report_participants,
     process_warcraftlogs_raid,
 )
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/raids", tags=["Raids"])
+
+
+class WarcraftLogsProcessRequest(BaseModel):
+    warcraftlogs_url: str
+    team_id: int
 
 
 def get_raid_or_404(db: Session, raid_id: int) -> Raid:
@@ -68,8 +74,7 @@ def get_team_toons(db: Session, team_id: int) -> List[dict]:
     dependencies=[Depends(require_superuser)],
 )
 def process_warcraftlogs_report(
-    warcraftlogs_url: str,
-    team_id: int,
+    request: WarcraftLogsProcessRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_superuser),
 ):
@@ -79,18 +84,15 @@ def process_warcraftlogs_report(
     Superuser only.
     """
     # Verify team exists
-    team = get_team_or_404(db, team_id)
+    team = get_team_or_404(db, request.team_id)
 
-    # Get team toons
-    team_toons = get_team_toons(db, team_id)
-
-    if not team_toons:
-        raise HTTPException(
-            status_code=400, detail=f"No toons found for team {team_id}"
-        )
+    # Get team toons (can be empty)
+    team_toons = get_team_toons(db, request.team_id)
 
     # Process WarcraftLogs report
-    processing_result = process_warcraftlogs_raid(warcraftlogs_url, team_toons)
+    processing_result = process_warcraftlogs_raid(
+        request.warcraftlogs_url, team_toons
+    )
 
     if not processing_result["success"]:
         raise HTTPException(

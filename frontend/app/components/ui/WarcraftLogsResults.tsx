@@ -44,8 +44,8 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   const absentCount = result.matched_participants.filter(p => !p.is_present).length;
 
   return (
-    <Card variant="elevated" className="max-w-4xl mx-auto">
-      <div className="p-6">
+    <Card variant="elevated" className="max-w-4xl mx-auto max-h-[90vh] flex flex-col">
+      <div className="p-6 flex-1 overflow-hidden flex flex-col">
         <h2 className="text-xl font-bold text-white mb-4">
           WarcraftLogs Report Analysis
         </h2>
@@ -69,7 +69,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 flex-shrink-0">
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-green-400">{presentCount}</div>
             <div className="text-sm text-green-300">Present</div>
@@ -88,13 +88,22 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
           </div>
         </div>
 
-        {/* Matched Participants */}
-        <div className="mb-6">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Matched Participants */}
+          <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-3">
             Team Members ({result.matched_participants.length})
           </h3>
-          <div className="space-y-2">
-            {result.matched_participants.map((matched, index) => (
+          {result.matched_participants.length === 0 ? (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+              <p className="text-blue-300 text-sm">
+                No existing team members found. All participants from the report will need to be assigned to new or existing members.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {result.matched_participants.map((matched, index) => (
               <div
                 key={index}
                 className={`flex items-center justify-between p-3 rounded-lg border ${
@@ -126,7 +135,8 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Unknown Participants */}
@@ -162,22 +172,23 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
             </div>
           </div>
         )}
-
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
-          </Button>
-          {result.unknown_participants.length > 0 && (
-            <Button type="button" variant="secondary" onClick={onHandleUnknownParticipants} disabled={loading}>
-              Handle Unknown Participants
-            </Button>
-          )}
-          <Button type="button" variant="primary" onClick={onProceed} disabled={loading}>
-            {loading ? 'Creating Raid...' : 'Create Raid with Attendance'}
-          </Button>
-        </div>
       </div>
-    </Card>
-  );
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-2 flex-shrink-0 p-6 pt-0">
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+        {result.unknown_participants.length > 0 && (
+          <Button type="button" variant="secondary" onClick={onHandleUnknownParticipants} disabled={loading}>
+            Handle Unknown Participants
+          </Button>
+        )}
+        <Button type="button" variant="primary" onClick={onProceed} disabled={loading}>
+          {loading ? 'Creating Raid...' : 'Create Raid with Attendance'}
+        </Button>
+      </div>
+    </div>
+  </Card>
+);
 }; 

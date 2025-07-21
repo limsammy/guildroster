@@ -101,7 +101,7 @@ class WarcraftLogsAPI:
     def get_report_participants(self, report_code: str) -> Optional[List[Dict]]:
         """
         Fetch all participants/characters from a WarcraftLogs report using rankedCharacters.
-        This is the recommended approach as documented in the WarcraftLogs API notes.
+        Converts classID to class names using WarcraftLogs class ID mappings.
         """
         query = f"""
         query {{
@@ -115,7 +115,6 @@ class WarcraftLogsAPI:
                         canonicalID
                         name
                         classID
-                        level
                     }}
                 }}
             }}
@@ -133,20 +132,19 @@ class WarcraftLogsAPI:
         ranked_characters = report_data.get("rankedCharacters", [])
 
         # Convert classID to class name for better usability
+        # WarcraftLogs class ID mappings (these are the actual IDs used by WarcraftLogs)
         class_names = {
-            1: "Warrior",
-            2: "Paladin",
+            1: "Death Knight",
+            2: "Druid",
             3: "Hunter",
-            4: "Rogue",
-            5: "Priest",
-            6: "Death Knight",
-            7: "Shaman",
-            8: "Mage",
-            9: "Warlock",
-            10: "Monk",
-            11: "Druid",
-            12: "Demon Hunter",
-            13: "Evoker",
+            4: "Mage",
+            5: "Monk",
+            6: "Paladin",
+            7: "Priest",
+            8: "Rogue",
+            9: "Shaman",
+            10: "Warlock",
+            11: "Warrior",
         }
 
         participants = []
@@ -160,11 +158,7 @@ class WarcraftLogsAPI:
                 "name": character.get("name"),
                 "class": class_name,
                 "classID": character.get("classID"),
-                # "level": character.get("level"),
-                # Note: rankedCharacters doesn't provide spec/role info
-                # We'll need to get this from other sources if needed
-                # "spec": "Unknown",
-                # "role": "Unknown",
+                "role": "DPS",  # Default role
             }
             participants.append(participant)
 

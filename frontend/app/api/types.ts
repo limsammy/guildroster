@@ -195,6 +195,7 @@ export interface WarcraftLogsParticipant {
   name: string;
   class: string;
   classID: number;
+  role: string;
 }
 
 export interface WarcraftLogsReportMetadata {

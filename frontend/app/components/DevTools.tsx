@@ -88,8 +88,8 @@ export const DevTools: React.FC<DevToolsProps> = ({ isVisible = false }) => {
         )}
 
         <div className="text-xs text-gray-500">
-          <p>Note: This app uses {import.meta.env.DEV ? 'localStorage' : 'cookie'}-based authentication.</p>
-          <p>localStorage is also used for guild selection.</p>
+          <p>Note: This app uses session-based authentication (cookies).</p>
+          <p>localStorage is only used for guild selection preferences.</p>
         </div>
       </div>
     </div>

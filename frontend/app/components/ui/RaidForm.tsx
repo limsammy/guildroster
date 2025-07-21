@@ -74,7 +74,16 @@ export const RaidForm: React.FC<RaidFormProps> = ({
       setProcessingResult(result);
       setCurrentStep('results');
     } catch (err: any) {
-      setProcessingError(err.response?.data?.detail || 'Failed to process WarcraftLogs report');
+      // Handle different types of error responses
+      let errorMessage = 'Failed to process WarcraftLogs report';
+      if (err.response?.data?.detail) {
+        errorMessage = typeof err.response.data.detail === 'string' 
+          ? err.response.data.detail 
+          : 'Invalid request format';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setProcessingError(errorMessage);
       setCurrentStep('form');
     } finally {
       setProcessingLoading(false);
@@ -100,7 +109,16 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         scenario_id: Number(scenarioId),
       });
     } catch (err: any) {
-      setProcessingError(err.response?.data?.detail || 'Failed to create raid');
+      // Handle different types of error responses
+      let errorMessage = 'Failed to create raid';
+      if (err.response?.data?.detail) {
+        errorMessage = typeof err.response.data.detail === 'string' 
+          ? err.response.data.detail 
+          : 'Invalid request format';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setProcessingError(errorMessage);
       setCurrentStep('results');
     } finally {
       setProcessingLoading(false);
@@ -172,12 +190,12 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         <h2 className="text-xl font-bold text-white mb-4">{isEditing ? 'Edit Raid' : 'Add Raid'}</h2>
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{typeof error === 'string' ? error : 'An error occurred'}</p>
           </div>
         )}
         {processingError && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-            <p className="text-red-400 text-sm">{processingError}</p>
+            <p className="text-red-400 text-sm">{typeof processingError === 'string' ? processingError : 'An error occurred'}</p>
           </div>
         )}
         {(noTeams || noScenarios) && (

@@ -43,7 +43,7 @@ export const UnknownParticipantsModal: React.FC<UnknownParticipantsModalProps> =
           toonData: {
             username: participant.participant.name,
             class: participant.participant.class,
-            role: 'DPS', // Default role
+            role: participant.participant.role || 'DPS', // Use role from WarcraftLogs
             is_main: false,
             member_id: 0,
             team_ids: [teamId],
@@ -145,9 +145,6 @@ export const UnknownParticipantsModal: React.FC<UnknownParticipantsModalProps> =
                     <p className={`text-sm ${getClassColor(assignment.participant.participant.class)}`}>
                       {assignment.participant.participant.class}
                     </p>
-                  </div>
-                  <div className="text-slate-400 text-sm">
-                    Level 70
                   </div>
                 </div>
 

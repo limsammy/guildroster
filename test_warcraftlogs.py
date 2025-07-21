@@ -119,8 +119,7 @@ def test_participants(report_code: str) -> bool:
         for i, participant in enumerate(participants, 1):
             name = participant.get("name", "Unknown")
             class_name = participant.get("class", "Unknown")
-            level = participant.get("level", 0)
-            print(f"   {i:2d}. {name} ({class_name} - Level {level})")
+            print(f"   {i:2d}. {name} ({class_name})")
         return True
     else:
         print("❌ Failed to fetch participant data or no participants found")
