@@ -75,6 +75,11 @@ def get_current_user(
 
 def require_user(user: User = Depends(get_current_user)) -> User:
     """Require a user session."""
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     logger.debug(f"require_user called with user: {user.username}")
     return user
 
