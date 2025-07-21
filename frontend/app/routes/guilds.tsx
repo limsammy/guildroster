@@ -54,10 +54,7 @@ export default function Guilds() {
     try {
       setFormLoading(true);
       setFormError(null);
-      await GuildService.createGuild({
-        ...values,
-        created_by: user.user_id,
-      });
+      await GuildService.createGuild(values);
       await reloadGuilds();
       setShowAddForm(false);
     } catch (err: any) {

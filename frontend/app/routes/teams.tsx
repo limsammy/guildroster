@@ -61,10 +61,7 @@ export default function Teams() {
     try {
       setFormLoading(true);
       setFormError(null);
-      await TeamService.createTeam({
-        ...values,
-        created_by: user.user_id,
-      });
+      await TeamService.createTeam(values);
       await reloadTeams();
       setShowAddForm(false);
     } catch (err: any) {

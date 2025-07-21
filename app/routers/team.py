@@ -58,7 +58,7 @@ def create_team(
         name=team_in.name,
         description=team_in.description,
         guild_id=team_in.guild_id,
-        created_by=team_in.created_by,
+        created_by=current_user.id,
     )
     db.add(team)
     db.commit()

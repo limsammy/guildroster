@@ -54,7 +54,6 @@ export interface Guild {
 
 export interface GuildCreate {
   name: string;
-  created_by: number;
 }
 
 export interface GuildUpdate {
@@ -73,7 +72,6 @@ export interface Team {
 export interface TeamCreate {
   name: string;
   guild_id: number;
-  created_by: number;
 }
 
 export interface TeamUpdate {

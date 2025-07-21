@@ -10,7 +10,7 @@ from app.models.team import Team
 from app.models.user import User
 from app.schemas.member import MemberCreate, MemberUpdate, MemberResponse
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_user, require_superuser
 
 router = APIRouter(prefix="/members", tags=["Members"])
 
@@ -93,13 +93,12 @@ def create_member(
 @router.get(
     "/",
     response_model=List[MemberResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def list_members(
     guild_id: Optional[int] = None,
     team_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     List members. Can filter by guild_id or team_id. Any valid token required.
@@ -116,12 +115,11 @@ def list_members(
 @router.get(
     "/{member_id}",
     response_model=MemberResponse,
-    dependencies=[Depends(require_any_token)],
 )
 def get_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get a member by ID. Any valid token required.
@@ -133,12 +131,11 @@ def get_member(
 @router.get(
     "/guild/{guild_id}",
     response_model=List[MemberResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_members_by_guild(
     guild_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all members for a specific guild. Any valid token required.
@@ -151,12 +148,11 @@ def get_members_by_guild(
 @router.get(
     "/team/{team_id}",
     response_model=List[MemberResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_members_by_team(
     team_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all members for a specific team. Any valid token required.

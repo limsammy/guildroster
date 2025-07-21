@@ -10,7 +10,7 @@ from app.models.toon_team import ToonTeam
 from app.schemas.toon import ToonCreate, ToonUpdate, ToonResponse
 from app.models.token import Token
 from app.models.user import User
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_user, require_superuser
 
 router = APIRouter(prefix="/toons", tags=["Toons"])
 
@@ -127,12 +127,11 @@ def create_toon(
 @router.get(
     "/",
     response_model=List[ToonResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def list_toons(
     member_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     query = db.query(Toon)
     if member_id is not None:
@@ -143,12 +142,11 @@ def list_toons(
 @router.get(
     "/{toon_id}",
     response_model=ToonResponse,
-    dependencies=[Depends(require_any_token)],
 )
 def get_toon(
     toon_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     toon = get_toon_or_404(db, toon_id)
     return toon
@@ -157,12 +155,11 @@ def get_toon(
 @router.get(
     "/member/{member_id}",
     response_model=List[ToonResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_toons_by_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     member = get_member_or_404(db, member_id)
     toons = db.query(Toon).filter(Toon.member_id == member_id).all()
