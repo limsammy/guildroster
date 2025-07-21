@@ -8,7 +8,7 @@ from app.models.guild import Guild
 from app.models.user import User
 from app.schemas.team import TeamCreate, TeamUpdate, TeamResponse
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_user, require_superuser
 
 router = APIRouter(prefix="/teams", tags=["Teams"])
 
@@ -69,12 +69,11 @@ def create_team(
 @router.get(
     "/",
     response_model=List[TeamResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def list_teams(
     guild_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     List teams. Can filter by guild_id. Any valid token required.
@@ -89,12 +88,11 @@ def list_teams(
 @router.get(
     "/{team_id}",
     response_model=TeamResponse,
-    dependencies=[Depends(require_any_token)],
 )
 def get_team(
     team_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get a team by ID. Any valid token required.
@@ -106,12 +104,11 @@ def get_team(
 @router.get(
     "/guild/{guild_id}",
     response_model=List[TeamResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_teams_by_guild(
     guild_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all teams for a specific guild. Any valid token required.

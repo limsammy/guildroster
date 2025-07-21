@@ -10,7 +10,7 @@ from app.models.toon import Toon
 from app.models.attendance import Attendance
 from app.schemas.raid import RaidCreate, RaidUpdate, RaidResponse
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_user, require_superuser
 from app.models.user import User
 from app.utils.warcraftlogs import (
     extract_report_code,
@@ -234,13 +234,12 @@ def create_raid(
 @router.get(
     "/",
     response_model=List[RaidResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def list_raids(
     team_id: Optional[int] = None,
     scenario_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     List raids. Can filter by team_id or scenario_id. Any valid token required.
@@ -257,12 +256,11 @@ def list_raids(
 @router.get(
     "/{raid_id}",
     response_model=RaidResponse,
-    dependencies=[Depends(require_any_token)],
 )
 def get_raid(
     raid_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get a raid by ID. Any valid token required.
@@ -274,12 +272,11 @@ def get_raid(
 @router.get(
     "/team/{team_id}",
     response_model=List[RaidResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_raids_by_team(
     team_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all raids for a specific team. Any valid token required.
@@ -292,12 +289,11 @@ def get_raids_by_team(
 @router.get(
     "/scenario/{scenario_id}",
     response_model=List[RaidResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_raids_by_scenario(
     scenario_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all raids for a specific scenario. Any valid token required.

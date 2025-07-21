@@ -10,7 +10,7 @@ from app.schemas.scenario import (
     ScenarioResponse,
 )
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_user, require_superuser
 from app.models.user import User
 from app.utils.request_logger import log_request_context
 
@@ -53,13 +53,12 @@ def create_scenario(
 @router.get(
     "/",
     response_model=List[ScenarioResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def list_scenarios(
     request: Request,
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     List scenarios. Can filter by is_active. Any valid token required.
@@ -78,11 +77,10 @@ def list_scenarios(
 @router.get(
     "/active",
     response_model=List[ScenarioResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def get_active_scenarios(
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all active scenarios. Any valid token required.
@@ -94,12 +92,11 @@ def get_active_scenarios(
 @router.get(
     "/{scenario_id}",
     response_model=ScenarioResponse,
-    dependencies=[Depends(require_any_token)],
 )
 def get_scenario(
     scenario_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get a scenario by ID. Any valid token required.
