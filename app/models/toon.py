@@ -37,9 +37,6 @@ class Toon(Base):
     __tablename__ = "toons"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    member_id = Column(
-        Integer, ForeignKey("members.id"), nullable=False, index=True
-    )
     username = Column(String(50), nullable=False)
     is_main = Column(Boolean, default=False, nullable=False)
     class_ = Column("class", String(20), nullable=False)
@@ -48,7 +45,6 @@ class Toon(Base):
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     # Relationships
-    member = relationship("Member", back_populates="toons")
     attendance = relationship(
         "Attendance", back_populates="toon", cascade="all, delete-orphan"
     )
@@ -68,9 +64,6 @@ class Toon(Base):
         return [team.id for team in self.teams]
 
     __table_args__ = (
-        UniqueConstraint(
-            "member_id", "username", name="uq_toon_member_username"
-        ),
         CheckConstraint(
             f"class IN ({', '.join([repr(c) for c in WOW_CLASSES])})",
             name="ck_toon_class_valid",
