@@ -38,7 +38,7 @@ def create_guild(
         raise HTTPException(status_code=400, detail="Guild name already exists")
     guild = Guild(
         name=guild_in.name,
-        created_by=guild_in.created_by,
+        created_by=current_user.id,
     )
     db.add(guild)
     db.commit()

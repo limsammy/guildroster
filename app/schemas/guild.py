@@ -8,7 +8,7 @@ class GuildBase(BaseModel):
 
 
 class GuildCreate(GuildBase):
-    created_by: int = Field(..., description="User ID of the creator")
+    pass
 
 
 class GuildUpdate(BaseModel):
