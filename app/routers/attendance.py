@@ -7,7 +7,6 @@ from app.database import get_db
 from app.models.attendance import Attendance
 from app.models.raid import Raid
 from app.models.toon import Toon
-from app.models.member import Member
 from app.models.team import Team
 from app.schemas.attendance import (
     AttendanceCreate,
@@ -52,14 +51,6 @@ def get_toon_or_404(db: Session, toon_id: int) -> Toon:
     if not toon:
         raise HTTPException(status_code=404, detail="Toon not found")
     return toon
-
-
-def get_member_or_404(db: Session, member_id: int) -> Member:
-    """Get member by ID or raise 404."""
-    member = db.query(Member).filter(Member.id == member_id).first()
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
-    return member
 
 
 def get_team_or_404(db: Session, team_id: int) -> Team:
@@ -181,7 +172,6 @@ def create_attendance_bulk(
 def list_attendance(
     raid_id: Optional[int] = None,
     toon_id: Optional[int] = None,
-    member_id: Optional[int] = None,
     team_id: Optional[int] = None,
     is_present: Optional[bool] = None,
     start_date: Optional[datetime] = None,
@@ -199,13 +189,6 @@ def list_attendance(
 
     if toon_id:
         query = query.filter(Attendance.toon_id == toon_id)
-
-    if member_id:
-        # Get all toons for the member
-        member_toons = (
-            db.query(Toon.id).filter(Toon.member_id == member_id).subquery()
-        )
-        query = query.filter(Attendance.toon_id.in_(member_toons))
 
     if team_id:
         # Get all raids for the team
@@ -315,29 +298,6 @@ def get_attendance_by_toon(
     toon = get_toon_or_404(db, toon_id)
     attendance_records = (
         db.query(Attendance).filter(Attendance.toon_id == toon_id).all()
-    )
-    return attendance_records
-
-
-@router.get(
-    "/member/{member_id}",
-    response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_any_token)],
-)
-def get_attendance_by_member(
-    member_id: int,
-    db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
-):
-    """
-    Get all attendance records for all toons of a specific member. Any valid token required.
-    """
-    member = get_member_or_404(db, member_id)
-    member_toons = (
-        db.query(Toon.id).filter(Toon.member_id == member_id).subquery()
-    )
-    attendance_records = (
-        db.query(Attendance).filter(Attendance.toon_id.in_(member_toons)).all()
     )
     return attendance_records
 
@@ -517,76 +477,6 @@ def get_toon_attendance_stats(
 
 
 @router.get(
-    "/stats/member/{member_id}",
-    response_model=AttendanceStats,
-    dependencies=[Depends(require_any_token)],
-)
-def get_member_attendance_stats(
-    member_id: int,
-    db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
-):
-    """
-    Get attendance statistics for all toons of a specific member. Any valid token required.
-    """
-    member = get_member_or_404(db, member_id)
-
-    # Get all attendance records for all toons of this member
-    member_toons = (
-        db.query(Toon.id).filter(Toon.member_id == member_id).subquery()
-    )
-    attendance_records = (
-        db.query(Attendance)
-        .join(Raid)
-        .filter(Attendance.toon_id.in_(member_toons))
-        .order_by(Raid.scheduled_at)
-        .all()
-    )
-
-    total_raids = len(attendance_records)
-    raids_attended = sum(
-        1 for record in attendance_records if record.is_present
-    )
-    raids_missed = total_raids - raids_attended
-
-    attendance_percentage = (
-        (raids_attended / total_raids * 100) if total_raids > 0 else 0.0
-    )
-
-    # Calculate streaks (simplified for member stats)
-    current_streak = 0
-    longest_streak = 0
-    temp_streak = 0
-
-    for record in reversed(attendance_records):
-        if record.is_present:
-            temp_streak += 1
-            current_streak = temp_streak  # Update current streak continuously
-        else:
-            longest_streak = max(longest_streak, temp_streak)
-            temp_streak = 0
-            current_streak = 0  # Reset current streak when we hit an absence
-
-    longest_streak = max(longest_streak, temp_streak)
-
-    last_attendance = None
-    if attendance_records:
-        last_record = attendance_records[-1]
-        if last_record.is_present:
-            last_attendance = last_record.raid.scheduled_at
-
-    return AttendanceStats(
-        total_raids=total_raids,
-        raids_attended=raids_attended,
-        raids_missed=raids_missed,
-        attendance_percentage=attendance_percentage,
-        current_streak=current_streak,
-        longest_streak=longest_streak,
-        last_attendance=last_attendance,
-    )
-
-
-@router.get(
     "/stats/team/{team_id}",
     response_model=AttendanceStats,
     dependencies=[Depends(require_any_token)],
@@ -663,7 +553,6 @@ def get_attendance_report(
     start_date: datetime,
     end_date: datetime,
     team_id: Optional[int] = None,
-    member_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_token: Token = Depends(require_any_token),
 ):
@@ -704,15 +593,6 @@ def get_attendance_report(
     attendance_query = db.query(Attendance).filter(
         Attendance.raid_id.in_(raid_ids)
     )
-
-    if member_id:
-        member = get_member_or_404(db, member_id)
-        member_toons = (
-            db.query(Toon.id).filter(Toon.member_id == member_id).subquery()
-        )
-        attendance_query = attendance_query.filter(
-            Attendance.toon_id.in_(member_toons)
-        )
 
     attendance_records = attendance_query.all()
 

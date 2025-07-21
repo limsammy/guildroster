@@ -4,7 +4,6 @@ from typing import List, Optional
 
 from app.database import get_db
 from app.models.toon import Toon
-from app.models.member import Member
 from app.models.team import Team
 from app.models.toon_team import ToonTeam
 from app.schemas.toon import ToonCreate, ToonUpdate, ToonResponse
@@ -20,29 +19,6 @@ def get_toon_or_404(db: Session, toon_id: int) -> Toon:
     if not toon:
         raise HTTPException(status_code=404, detail="Toon not found")
     return toon
-
-
-def get_member_or_404(db: Session, member_id: int) -> Member:
-    member = db.query(Member).filter(Member.id == member_id).first()
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
-    return member
-
-
-def enforce_one_main_toon(
-    db: Session, member_id: int, is_main: bool, toon_id: Optional[int] = None
-):
-    if is_main:
-        q = db.query(Toon).filter(
-            Toon.member_id == member_id, Toon.is_main == True
-        )
-        if toon_id is not None:
-            q = q.filter(Toon.id != toon_id)
-        if q.first():
-            raise HTTPException(
-                status_code=400,
-                detail="A member can have only one main toon.",
-            )
 
 
 def update_toon_teams(
@@ -87,25 +63,7 @@ def create_toon(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_superuser),
 ):
-    # Validate member exists
-    member = get_member_or_404(db, toon_in.member_id)
-    # Enforce unique (member_id, username)
-    if (
-        db.query(Toon)
-        .filter(
-            Toon.member_id == toon_in.member_id,
-            Toon.username == toon_in.username,
-        )
-        .first()
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail="Toon username already exists for this member.",
-        )
-    # Enforce only one main toon per member
-    enforce_one_main_toon(db, toon_in.member_id, toon_in.is_main)
     toon = Toon(
-        member_id=toon_in.member_id,
         username=toon_in.username,
         class_=toon_in.class_,
         role=toon_in.role,
@@ -129,14 +87,10 @@ def create_toon(
     response_model=List[ToonResponse],
 )
 def list_toons(
-    member_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
-    query = db.query(Toon)
-    if member_id is not None:
-        query = query.filter(Toon.member_id == member_id)
-    return query.all()
+    return db.query(Toon).all()
 
 
 @router.get(
@@ -152,20 +106,6 @@ def get_toon(
     return toon
 
 
-@router.get(
-    "/member/{member_id}",
-    response_model=List[ToonResponse],
-)
-def get_toons_by_member(
-    member_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user),
-):
-    member = get_member_or_404(db, member_id)
-    toons = db.query(Toon).filter(Toon.member_id == member_id).all()
-    return toons
-
-
 @router.put(
     "/{toon_id}",
     response_model=ToonResponse,
@@ -178,28 +118,13 @@ def update_toon(
     current_user: User = Depends(require_superuser),
 ):
     toon = get_toon_or_404(db, toon_id)
-    # If username is changing, check uniqueness
     if toon_in.username and toon_in.username != toon.username:
-        if (
-            db.query(Toon)
-            .filter(
-                Toon.member_id == toon.member_id,
-                Toon.username == toon_in.username,
-                Toon.id != toon_id,
-            )
-            .first()
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="Toon username already exists for this member.",
-            )
         toon.username = toon_in.username  # type: ignore[assignment]
     if toon_in.class_:
         toon.class_ = toon_in.class_  # type: ignore[assignment]
     if toon_in.role:
         toon.role = toon_in.role  # type: ignore[assignment]
     if toon_in.is_main is not None:
-        enforce_one_main_toon(db, toon.member_id, toon_in.is_main, toon_id=toon_id)  # type: ignore[arg-type]
         toon.is_main = toon_in.is_main  # type: ignore[assignment]
 
     # Handle team assignments

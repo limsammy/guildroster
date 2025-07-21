@@ -67,7 +67,6 @@ def create_app() -> FastAPI:
         token,
         guild,
         team,
-        member,
         toon,
         raid,
         scenario,
@@ -78,7 +77,6 @@ def create_app() -> FastAPI:
     app.include_router(token.router)
     app.include_router(guild.router)
     app.include_router(team.router)
-    app.include_router(member.router)
     app.include_router(toon.router)
     app.include_router(raid.router)
     app.include_router(scenario.router)
