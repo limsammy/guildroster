@@ -13,9 +13,10 @@ from app.schemas.user import (
 )
 from app.utils.auth import (
     require_any_token,
+    require_user,
+    require_superuser,
     security,
 )
-from app.utils.session_auth import require_superuser, require_user
 from app.utils.password import hash_password, verify_password
 from app.utils.logger import get_logger
 
@@ -186,6 +187,16 @@ def get_users(
     )
 
 
+@router.get("/me", response_model=UserResponse)
+def get_current_user_info(
+    current_user: User = Depends(require_user),
+):
+    """
+    Get current user information from session.
+    """
+    return current_user
+
+
 @router.get(
     "/{user_id}", response_model=UserResponse, dependencies=[Depends(security)]
 )
@@ -344,13 +355,3 @@ def logout_user(
     response.delete_cookie(key="session_id", path="/")
 
     return {"message": "Logged out successfully"}
-
-
-@router.get("/me", response_model=UserResponse)
-def get_current_user_info(
-    current_user: User = Depends(require_user),
-):
-    """
-    Get current user information from session.
-    """
-    return current_user
