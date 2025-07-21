@@ -195,7 +195,7 @@ describe('RaidForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /Add Raid/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to process WarcraftLogs report/i)).toBeInTheDocument();
+        expect(screen.getByText(/API Error/i)).toBeInTheDocument();
       });
     });
 
