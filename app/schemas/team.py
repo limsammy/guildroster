@@ -10,7 +10,7 @@ class TeamBase(BaseModel):
 
 
 class TeamCreate(TeamBase):
-    created_by: int = Field(..., description="User ID of the creator")
+    pass
 
 
 class TeamUpdate(BaseModel):

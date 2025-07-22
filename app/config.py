@@ -21,11 +21,18 @@ class Settings(BaseSettings):
     ENV: str = "dev"
     SECRET_KEY: str = "supersecret"
 
+    # Database settings
     DB_USER: str = "guildroster"
     DB_PASSWORD: str = "password"
     DB_HOST: str = "localhost"
     DB_PORT: str = "5432"
     DB_NAME: str = "guildroster"
+
+    # WarcraftLogs API settings
+    WARCRAFTLOGS_CLIENT_ID: str = ""
+    WARCRAFTLOGS_CLIENT_SECRET: str = ""
+    WARCRAFTLOGS_API_URL: str = "https://www.warcraftlogs.com/api/v2/client"
+    WARCRAFTLOGS_TOKEN_URL: str = "https://www.warcraftlogs.com/oauth/token"
 
     def __init__(self, **values):
         super().__init__(**values)

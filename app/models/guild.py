@@ -15,9 +15,6 @@ class Guild(Base):
     teams = relationship(
         "Team", back_populates="guild", cascade="all, delete-orphan"
     )
-    members = relationship(
-        "Member", back_populates="guild", cascade="all, delete-orphan"
-    )
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.utils.logger import get_logger
+from app.utils.request_logger import RequestLoggingMiddleware
 from app.database import Base, engine
 from contextlib import asynccontextmanager
 import logging
@@ -46,11 +47,19 @@ def create_app() -> FastAPI:
     # Configure CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            "http://localhost:5173",  # Vite dev server
+            "http://localhost:3000",  # Alternative dev port
+            "http://127.0.0.1:5173",  # Alternative localhost
+            "http://127.0.0.1:3000",  # Alternative localhost
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Add request logging middleware
+    app.add_middleware(RequestLoggingMiddleware)
 
     # Include routers
     from app.routers import (
@@ -58,7 +67,6 @@ def create_app() -> FastAPI:
         token,
         guild,
         team,
-        member,
         toon,
         raid,
         scenario,
@@ -69,14 +77,13 @@ def create_app() -> FastAPI:
     app.include_router(token.router)
     app.include_router(guild.router)
     app.include_router(team.router)
-    app.include_router(member.router)
     app.include_router(toon.router)
     app.include_router(raid.router)
     app.include_router(scenario.router)
     app.include_router(attendance.router)
 
-    @app.get("/", dependencies=[Depends(security)])
-    def read_root(current_token: Token = Depends(require_any_token)):
+    @app.get("/")
+    def read_root():
         """Health check endpoint."""
         return {"status": "ok", "message": "GuildRoster API is running"}
 

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from app.models.user import User
 from app.models.guild import Guild
 from app.models.team import Team
-from app.models.scenario import Scenario
+from app.models.scenario import Scenario, SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 from app.models.raid import Raid
 from app.models.member import Member
 from app.models.toon import Toon
@@ -66,7 +66,12 @@ class TestAttendanceAPI:
         db_session.commit()
 
         # Create scenario
-        scenario = Scenario(name="Test Scenario", is_active=True)
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+            is_active=True,
+        )
         db_session.add(scenario)
         db_session.commit()
 
@@ -88,8 +93,6 @@ class TestAttendanceAPI:
         raid = Raid(
             scheduled_at=datetime.now() + timedelta(days=1),
             scenario_id=scenario.id,
-            difficulty="Normal",
-            size="10",
             team_id=team.id,
         )
         db_session.add(raid)
@@ -288,8 +291,6 @@ class TestAttendanceAPI:
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
             scenario_id=test_data["scenario_id"],
-            difficulty="Heroic",
-            size="25",
             team_id=test_data["team_id"],
         )
         db_session.add(raid2)
@@ -412,8 +413,6 @@ class TestAttendanceAPI:
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
             scenario_id=test_data["scenario_id"],
-            difficulty="Heroic",
-            size="25",
             team_id=test_data["team_id"],
         )
         db_session.add(raid2)
@@ -578,8 +577,6 @@ class TestAttendanceAPI:
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
             scenario_id=test_data["scenario_id"],
-            difficulty="Heroic",
-            size="25",
             team_id=test_data["team_id"],
         )
         db_session.add(raid2)
@@ -655,8 +652,6 @@ class TestAttendanceAPI:
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
             scenario_id=test_data["scenario_id"],
-            difficulty="Heroic",
-            size="25",
             team_id=test_data["team_id"],
         )
         db_session.add(raid2)
@@ -925,8 +920,6 @@ class TestAttendanceAPI:
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
             scenario_id=test_data["scenario_id"],
-            difficulty="Heroic",
-            size="25",
             team_id=test_data["team_id"],
         )
         db_session.add(raid2)

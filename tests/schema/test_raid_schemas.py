@@ -6,7 +6,6 @@ from app.schemas.raid import (
     RaidUpdate,
     RaidResponse,
 )
-from app.models.raid import RAID_DIFFICULTIES, RAID_SIZES
 
 
 class TestRaidSchemas:
@@ -14,71 +13,37 @@ class TestRaidSchemas:
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
             "scenario_id": 1,
-            "difficulty": RAID_DIFFICULTIES[0],
-            "size": RAID_SIZES[0],
             "team_id": 1,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test",
         }
         raid = RaidBase(**data)
         assert raid.scheduled_at == data["scheduled_at"]
         assert raid.scenario_id == 1
-        assert raid.difficulty == RAID_DIFFICULTIES[0]
-        assert raid.size == RAID_SIZES[0]
         assert raid.team_id == 1
-
-    @pytest.mark.parametrize("bad_diff", ["", "Impossible", "normal", "Mythic"])
-    def test_raid_base_invalid_difficulty(self, bad_diff):
-        data = {
-            "scheduled_at": datetime.now() + timedelta(days=1),
-            "scenario_id": 1,
-            "difficulty": bad_diff,
-            "size": RAID_SIZES[0],
-            "team_id": 1,
-        }
-        with pytest.raises(ValueError):
-            RaidBase(**data)
-
-    @pytest.mark.parametrize("bad_size", ["", "5", "15", "20", "30", "abc"])
-    def test_raid_base_invalid_size(self, bad_size):
-        data = {
-            "scheduled_at": datetime.now() + timedelta(days=1),
-            "scenario_id": 1,
-            "difficulty": RAID_DIFFICULTIES[0],
-            "size": bad_size,
-            "team_id": 1,
-        }
-        with pytest.raises(ValueError):
-            RaidBase(**data)
+        assert raid.warcraftlogs_url == data["warcraftlogs_url"]
 
     def test_raid_create(self):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
             "scenario_id": 2,
-            "difficulty": RAID_DIFFICULTIES[1],
-            "size": RAID_SIZES[1],
             "team_id": 2,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test2",
         }
         raid = RaidCreate(**data)
         assert raid.scenario_id == 2
-        assert raid.difficulty == RAID_DIFFICULTIES[1]
-        assert raid.size == RAID_SIZES[1]
         assert raid.team_id == 2
+        assert raid.warcraftlogs_url == data["warcraftlogs_url"]
 
     def test_raid_update_partial(self):
-        data = {"difficulty": RAID_DIFFICULTIES[2]}
+        data = {
+            "scenario_id": 3,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test3",
+        }
         raid = RaidUpdate(**data)
-        assert raid.difficulty == RAID_DIFFICULTIES[2]
+        assert raid.scenario_id == 3
         assert raid.scheduled_at is None
-        assert raid.scenario_id is None
-        assert raid.size is None
         assert raid.team_id is None
-
-    def test_raid_update_invalid(self):
-        # Test invalid difficulty
-        with pytest.raises(ValueError):
-            RaidUpdate(difficulty="Impossible")  # type: ignore[arg-type]
-        # Test invalid size
-        with pytest.raises(ValueError):
-            RaidUpdate(size="abc")  # type: ignore[arg-type]
+        assert raid.warcraftlogs_url == data["warcraftlogs_url"]
 
     def test_raid_response_serialization(self):
         now = datetime.utcnow()
@@ -86,18 +51,67 @@ class TestRaidSchemas:
             "id": 1,
             "scheduled_at": now,
             "scenario_id": 1,
-            "difficulty": RAID_DIFFICULTIES[0],
-            "size": RAID_SIZES[0],
             "team_id": 1,
             "created_at": now,
             "updated_at": now,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test4",
+            "warcraftlogs_report_code": "test4",
+            "warcraftlogs_metadata": {
+                "title": "Test Raid",
+                "zone": "Test Zone",
+            },
+            "warcraftlogs_participants": [
+                {"name": "TestPlayer", "class": "Mage"}
+            ],
+            "warcraftlogs_fights": [{"name": "Test Boss", "kill": True}],
         }
         raid = RaidResponse(**data)
         assert raid.id == 1
         assert raid.scheduled_at == now
         assert raid.scenario_id == 1
-        assert raid.difficulty == RAID_DIFFICULTIES[0]
-        assert raid.size == RAID_SIZES[0]
         assert raid.team_id == 1
         assert raid.created_at == now
         assert raid.updated_at == now
+        assert raid.warcraftlogs_url == data["warcraftlogs_url"]
+        assert raid.warcraftlogs_report_code == "test4"
+        assert raid.warcraftlogs_metadata == {
+            "title": "Test Raid",
+            "zone": "Test Zone",
+        }
+        assert raid.warcraftlogs_participants == [
+            {"name": "TestPlayer", "class": "Mage"}
+        ]
+        assert raid.warcraftlogs_fights == [{"name": "Test Boss", "kill": True}]
+
+    def test_warcraftlogs_url_validation_valid(self):
+        """Test that valid WarcraftLogs URLs are accepted."""
+        data = {
+            "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
+            "team_id": 1,
+            "warcraftlogs_url": "https://www.warcraftlogs.com/reports/abc123def456",
+        }
+        raid = RaidBase(**data)
+        assert raid.warcraftlogs_url == data["warcraftlogs_url"]
+
+    def test_warcraftlogs_url_validation_invalid(self):
+        """Test that invalid WarcraftLogs URLs are rejected."""
+        data = {
+            "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
+            "team_id": 1,
+            "warcraftlogs_url": "https://www.google.com/reports/abc123",
+        }
+        with pytest.raises(ValueError, match="Invalid WarcraftLogs URL format"):
+            RaidBase(**data)
+
+    def test_warcraftlogs_url_validation_none(self):
+        """Test that None WarcraftLogs URLs are accepted."""
+        data = {
+            "scheduled_at": datetime.now() + timedelta(days=1),
+            "scenario_id": 1,
+            "team_id": 1,
+            "warcraftlogs_url": None,
+        }
+        raid = RaidBase(**data)
+        assert raid.warcraftlogs_url is None

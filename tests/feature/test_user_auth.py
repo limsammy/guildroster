@@ -9,12 +9,12 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.models.token import Token
-from app.utils.password import hash_password
+from app.utils.password import hash_password, verify_password
 
 
 class TestUserAuthentication:
     def _create_test_superuser(self, db_session: Session) -> tuple[User, str]:
-        """Create a test superuser and return user and token."""
+        """Create a test superuser and return user and session_id."""
         # Create superuser
         hashed_password = hash_password("superpassword123")
         user = User(
@@ -26,17 +26,19 @@ class TestUserAuthentication:
         db_session.add(user)
         db_session.commit()
 
-        # Create token
-        token = Token.create_user_token(user.id, "Superuser Token")  # type: ignore[arg-type]
-        db_session.add(token)
+        # Create session
+        from app.models.session import Session as SessionModel
+
+        session = SessionModel.create_session(user_id=user.id)  # type: ignore
+        db_session.add(session)
         db_session.commit()
 
-        return user, token.key  # type: ignore[return-value]
+        return user, session.session_id  # type: ignore[return-value]
 
     def test_create_user_success(self, client: TestClient, db_session: Session):
         """Test successful user creation by superuser."""
-        superuser, token_key = self._create_test_superuser(db_session)
-        headers = {"Authorization": f"Bearer {token_key}"}
+        superuser, session_id = self._create_test_superuser(db_session)
+        cookies = {"session_id": session_id}
 
         user_data = {
             "username": "newuser",
@@ -45,7 +47,7 @@ class TestUserAuthentication:
             "is_superuser": False,
         }
 
-        response = client.post("/users/", json=user_data, headers=headers)
+        response = client.post("/users/", json=user_data, cookies=cookies)
         assert response.status_code == 200
 
         data = response.json()
@@ -58,8 +60,8 @@ class TestUserAuthentication:
         self, client: TestClient, db_session: Session
     ):
         """Test user creation with duplicate username."""
-        superuser, token_key = self._create_test_superuser(db_session)
-        headers = {"Authorization": f"Bearer {token_key}"}
+        superuser, session_id = self._create_test_superuser(db_session)
+        cookies = {"session_id": session_id}
 
         # Create first user
         user_data = {
@@ -68,11 +70,11 @@ class TestUserAuthentication:
             "is_active": True,
             "is_superuser": False,
         }
-        response = client.post("/users/", json=user_data, headers=headers)
+        response = client.post("/users/", json=user_data, cookies=cookies)
         assert response.status_code == 200
 
         # Try to create second user with same username
-        response = client.post("/users/", json=user_data, headers=headers)
+        response = client.post("/users/", json=user_data, cookies=cookies)
         assert response.status_code == 400
         assert "Username already registered" in response.json()["detail"]
 
@@ -105,12 +107,14 @@ class TestUserAuthentication:
         db_session.add(user)
         db_session.commit()
 
-        # Create token for regular user
-        token = Token.create_user_token(user.id, "User Token")  # type: ignore[arg-type]
-        db_session.add(token)
+        # Create session for regular user
+        from app.models.session import Session as SessionModel
+
+        session = SessionModel.create_session(user_id=user.id)  # type: ignore
+        db_session.add(session)
         db_session.commit()
 
-        headers = {"Authorization": f"Bearer {token.key}"}  # type: ignore[attr-defined]
+        cookies = {"session_id": session.session_id}  # type: ignore[attr-defined]
 
         user_data = {
             "username": "newuser",
@@ -119,7 +123,7 @@ class TestUserAuthentication:
             "is_superuser": False,
         }
 
-        response = client.post("/users/", json=user_data, headers=headers)
+        response = client.post("/users/", json=user_data, cookies=cookies)
         assert response.status_code == 403
 
     def test_login_success(self, client: TestClient, db_session: Session):
@@ -141,11 +145,13 @@ class TestUserAuthentication:
         assert response.status_code == 200
 
         data = response.json()
-        assert "access_token" in data
-        assert data["token_type"] == "bearer"
+        assert "user_id" in data
         assert data["username"] == "testuser"
         assert data["user_id"] == user.id
         assert data["is_superuser"] is False
+
+        # Check that session cookie was set
+        assert "session_id" in response.cookies
 
     def test_login_wrong_password(
         self, client: TestClient, db_session: Session
@@ -199,8 +205,8 @@ class TestUserAuthentication:
 
     def test_update_user_success(self, client: TestClient, db_session: Session):
         """Test successful user update by superuser."""
-        superuser, token_key = self._create_test_superuser(db_session)
-        headers = {"Authorization": f"Bearer {token_key}"}
+        superuser, session_id = self._create_test_superuser(db_session)
+        cookies = {"session_id": session_id}
 
         # Create user to update
         hashed_password = hash_password("oldpassword123")
@@ -220,7 +226,7 @@ class TestUserAuthentication:
         }
 
         response = client.put(
-            f"/users/{user.id}", json=update_data, headers=headers
+            f"/users/{user.id}", json=update_data, cookies=cookies
         )
         assert response.status_code == 200
 
@@ -230,8 +236,8 @@ class TestUserAuthentication:
 
     def test_delete_user_success(self, client: TestClient, db_session: Session):
         """Test successful user deletion by superuser."""
-        superuser, token_key = self._create_test_superuser(db_session)
-        headers = {"Authorization": f"Bearer {token_key}"}
+        superuser, session_id = self._create_test_superuser(db_session)
+        cookies = {"session_id": session_id}
 
         # Create user to delete
         hashed_password = hash_password("userpassword123")
@@ -244,7 +250,7 @@ class TestUserAuthentication:
         db_session.add(user)
         db_session.commit()
 
-        response = client.delete(f"/users/{user.id}", headers=headers)
+        response = client.delete(f"/users/{user.id}", cookies=cookies)
         assert response.status_code == 200
         assert "User deleted successfully" in response.json()["message"]
 
@@ -252,9 +258,9 @@ class TestUserAuthentication:
         self, client: TestClient, db_session: Session
     ):
         """Test that superuser cannot delete their own account."""
-        superuser, token_key = self._create_test_superuser(db_session)
-        headers = {"Authorization": f"Bearer {token_key}"}
+        superuser, session_id = self._create_test_superuser(db_session)
+        cookies = {"session_id": session_id}
 
-        response = client.delete(f"/users/{superuser.id}", headers=headers)
+        response = client.delete(f"/users/{superuser.id}", cookies=cookies)
         assert response.status_code == 400
         assert "Cannot delete your own account" in response.json()["detail"]

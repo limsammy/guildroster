@@ -1,5 +1,11 @@
 # Ignore user notes
-notes/
+# notes/
+
+# Ignore vite
+.vite/
+
+# Ignore Cypress screenshots
+frontend/cypress/screenshots/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

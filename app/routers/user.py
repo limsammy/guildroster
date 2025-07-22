@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,7 +11,12 @@ from app.schemas.user import (
     UserUpdate,
     UserLogin,
 )
-from app.utils.auth import require_any_token, security, require_superuser
+from app.utils.auth import (
+    require_any_token,
+    require_user,
+    require_superuser,
+    security,
+)
 from app.utils.password import hash_password, verify_password
 from app.utils.logger import get_logger
 
@@ -72,6 +77,7 @@ def create_user(
 @router.post("/login")
 def login_user(
     user_credentials: UserLogin,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
@@ -79,6 +85,7 @@ def login_user(
 
     **Returns:**
     - Token for authenticated user
+    - Sets HTTP-only cookie for session management
     """
     logger.debug(f"Login attempt for user: {user_credentials.username}")
 
@@ -110,26 +117,39 @@ def login_user(
         )
 
     # Check if user is active
-    if not user.is_active:  # type: ignore[truthy-bool]
+    if user.is_active is False:
         logger.warning(
             f"Login failed: inactive user {user_credentials.username}"
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is inactive",
-            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create a user token
-    token = Token.create_user_token(user_id=user.id, name="Login Token")  # type: ignore[arg-type]
-    db.add(token)
+    # Create a session
+    from app.models.session import Session as SessionModel
+
+    session = SessionModel.create_session(user_id=user.id)  # type: ignore
+    db.add(session)
     db.commit()
-    db.refresh(token)
+    db.refresh(session)
+
+    # Set HTTP-only cookie for session management
+    response.set_cookie(
+        key="session_id",
+        value=session.session_id,  # type: ignore
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax",
+        max_age=3600 * 24 * 7,  # 7 days
+        path="/",
+        domain=None,  # Let browser set the domain
+    )
+
+    logger.info(f"Set session cookie for user {user.username}")
 
     logger.info(f"User {user.username} logged in successfully")
     return {
-        "access_token": token.key,
-        "token_type": "bearer",
         "user_id": user.id,
         "username": user.username,
         "is_superuser": user.is_superuser,
@@ -165,6 +185,16 @@ def get_users(
     return UserListResponse(
         users=[UserResponse.model_validate(user) for user in users], total=total
     )
+
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_info(
+    current_user: User = Depends(require_user),
+):
+    """
+    Get current user information from session.
+    """
+    return current_user
 
 
 @router.get(
@@ -295,3 +325,33 @@ def delete_user(
 
     logger.info(f"User {user.username} deleted successfully")
     return {"message": "User deleted successfully"}
+
+
+@router.post("/logout")
+def logout_user(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Logout current user by clearing the session.
+    """
+    # Get the current session and deactivate it
+    from app.models.session import Session as SessionModel
+
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        session = (
+            db.query(SessionModel)
+            .filter(SessionModel.session_id == session_id)
+            .first()
+        )
+        if session:
+            session.is_active = False  # type: ignore
+            db.commit()
+            logger.info(f"Deactivated session for user {session.user_id}")
+
+    # Clear the session cookie
+    response.delete_cookie(key="session_id", path="/")
+
+    return {"message": "Logged out successfully"}

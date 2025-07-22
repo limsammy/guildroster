@@ -7,7 +7,7 @@ from app.models.guild import Guild
 from app.models.user import User
 from app.schemas.guild import GuildCreate, GuildUpdate, GuildResponse
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_user, require_superuser
 
 router = APIRouter(prefix="/guilds", tags=["Guilds"])
 
@@ -38,7 +38,7 @@ def create_guild(
         raise HTTPException(status_code=400, detail="Guild name already exists")
     guild = Guild(
         name=guild_in.name,
-        created_by=guild_in.created_by,
+        created_by=current_user.id,
     )
     db.add(guild)
     db.commit()
@@ -49,11 +49,10 @@ def create_guild(
 @router.get(
     "/",
     response_model=List[GuildResponse],
-    dependencies=[Depends(require_any_token)],
 )
 def list_guilds(
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     List all guilds. Any valid token required.
@@ -65,12 +64,11 @@ def list_guilds(
 @router.get(
     "/{guild_id}",
     response_model=GuildResponse,
-    dependencies=[Depends(require_any_token)],
 )
 def get_guild(
     guild_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get a guild by ID. Any valid token required.

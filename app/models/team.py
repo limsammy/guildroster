@@ -28,9 +28,17 @@ class Team(Base):
     # Relationships
     guild = relationship("Guild", back_populates="teams")
     creator = relationship("User", back_populates="created_teams")
-    members = relationship("Member", back_populates="team")
     raids = relationship(
         "Raid", back_populates="team", cascade="all, delete-orphan"
+    )
+    toon_teams = relationship(
+        "ToonTeam", back_populates="team", cascade="all, delete-orphan"
+    )
+    toons = relationship(
+        "Toon",
+        secondary="toon_teams",
+        back_populates="teams",
+        overlaps="toon_teams",
     )
 
     # Constraints

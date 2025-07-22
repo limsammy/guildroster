@@ -1,11 +1,17 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+
+from app.models.scenario import SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 
 
 class ScenarioBase(BaseModel):
     name: str = Field(..., max_length=100, description="Scenario name")
     is_active: bool = Field(True, description="Whether the scenario is active")
+    mop: bool = Field(
+        False,
+        description="Whether this is a Mists of Pandaria scenario (affects available difficulties)",
+    )
 
     @field_validator("name")
     @classmethod
@@ -26,6 +32,10 @@ class ScenarioUpdate(BaseModel):
     )
     is_active: Optional[bool] = Field(
         None, description="Whether the scenario is active"
+    )
+    mop: Optional[bool] = Field(
+        None,
+        description="Whether this is a Mists of Pandaria scenario (affects available difficulties)",
     )
 
     @field_validator("name")
@@ -48,3 +58,54 @@ class ScenarioResponse(ScenarioBase):
         from_attributes=True,
         populate_by_name=True,
     )
+
+
+# New schemas for scenario variations
+class ScenarioVariation(BaseModel):
+    name: str = Field(..., description="Scenario name")
+    difficulty: str = Field(..., description="Scenario difficulty")
+    size: str = Field(..., description="Scenario size")
+    display_name: str = Field(..., description="Display name for the variation")
+    variation_id: str = Field(..., description="Unique variation identifier")
+
+    @field_validator("difficulty")
+    @classmethod
+    def validate_difficulty(cls, v):
+        if v not in SCENARIO_DIFFICULTIES:
+            raise ValueError(f"Invalid difficulty: {v}")
+        return v
+
+    @field_validator("size")
+    @classmethod
+    def validate_size(cls, v):
+        if v not in SCENARIO_SIZES:
+            raise ValueError(f"Invalid size: {v}")
+        return v
+
+
+class ScenarioWithVariations(ScenarioResponse):
+    variations: List[ScenarioVariation] = Field(
+        ..., description="All variations for this scenario"
+    )
+
+
+# Schema for raid scenario information
+class RaidScenarioInfo(BaseModel):
+    name: str = Field(..., description="Scenario name")
+    difficulty: str = Field(..., description="Scenario difficulty")
+    size: str = Field(..., description="Scenario size")
+    display_name: str = Field(..., description="Display name for the variation")
+
+    @field_validator("difficulty")
+    @classmethod
+    def validate_difficulty(cls, v):
+        if v not in SCENARIO_DIFFICULTIES:
+            raise ValueError(f"Invalid difficulty: {v}")
+        return v
+
+    @field_validator("size")
+    @classmethod
+    def validate_size(cls, v):
+        if v not in SCENARIO_SIZES:
+            raise ValueError(f"Invalid size: {v}")
+        return v

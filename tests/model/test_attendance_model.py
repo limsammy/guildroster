@@ -5,7 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 
 from app.models.attendance import Attendance
-from app.models.raid import Raid, RAID_DIFFICULTIES, RAID_SIZES
+from app.models.raid import Raid
+from app.models.scenario import Scenario, SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 from app.models.toon import Toon, WOW_CLASSES, WOW_ROLES
 from app.models.member import Member
 from app.models.user import User
@@ -33,7 +34,12 @@ class TestAttendanceModel:
         db_session.commit()
 
         # Create scenario
-        scenario = Scenario(name="Test Scenario", is_active=True)
+        scenario = Scenario(
+            name="Test Scenario",
+            difficulty=SCENARIO_DIFFICULTIES[0],
+            size=SCENARIO_SIZES[0],
+            is_active=True,
+        )
         db_session.add(scenario)
         db_session.commit()
 
@@ -53,8 +59,6 @@ class TestAttendanceModel:
         raid = Raid(
             scheduled_at=datetime.now() + timedelta(days=1),
             scenario_id=scenario.id,
-            difficulty=RAID_DIFFICULTIES[0],
-            size=RAID_SIZES[0],
             team_id=team.id,
         )
         db_session.add(raid)
@@ -273,8 +277,6 @@ class TestAttendanceModel:
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
             scenario_id=scenario.id,
-            difficulty=RAID_DIFFICULTIES[1],
-            size=RAID_SIZES[1],
             team_id=team.id,
         )
         db_session.add(raid2)

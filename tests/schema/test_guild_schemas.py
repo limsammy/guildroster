@@ -20,13 +20,12 @@ class TestGuildSchemas:
             GuildBase(name="A" * 51)
 
     def test_guild_create(self):
-        obj = GuildCreate(name="GuildName", created_by=1)
+        obj = GuildCreate(name="GuildName")
         assert obj.name == "GuildName"
-        assert obj.created_by == 1
 
-        # created_by required
+        # name required
         with pytest.raises(pydantic.ValidationError):
-            GuildCreate(name="GuildName")
+            GuildCreate()
 
     def test_guild_update(self):
         # All optional

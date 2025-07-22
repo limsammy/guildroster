@@ -5,6 +5,12 @@ A FastAPI-based web and API application to manage and track your guild's roster 
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Docker Setup](#docker-setup)
+  - [Prerequisites](#docker-prerequisites)
+  - [Quick Start with Docker](#quick-start-with-docker)
+  - [Development Mode](#docker-development-mode)
+  - [Production Deployment](#docker-production-deployment)
+  - [Docker Commands](#docker-commands)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Password Authentication](#password-authentication)
@@ -68,6 +74,115 @@ pytest
 - **OpenAPI Spec:** http://localhost:8000/openapi.json
 - **Health Check:** http://localhost:8000
 
+## Docker Setup
+
+The easiest way to run GuildRoster is using Docker and Docker Compose. This approach provides a complete, isolated environment with all dependencies included.
+
+### Prerequisites
+
+- **Docker** (version 20.10 or later)
+- **Docker Compose** (version 2.0 or later)
+
+### Quick Start with Docker
+
+```bash
+# Clone the repository
+git clone https://github.com/limsammy/guildroster.git
+cd guildroster
+
+# Run the automated setup script (recommended)
+./scripts/docker-setup.sh prod
+
+# Or manually:
+# 1. Copy environment file
+cp env.docker.example .env
+
+# 2. Edit configuration (optional)
+nano .env
+
+# 3. Start all services
+docker-compose up -d --build
+```
+
+**Access the application:**
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8000
+- **API Documentation:** http://localhost:8000/docs
+- **Database:** localhost:5432
+
+### Development Mode
+
+For development with hot reloading and live code editing:
+
+```bash
+# Start in development mode
+./scripts/docker-setup.sh dev
+
+# Or manually:
+docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+**Development features:**
+- ✅ **Hot reloading** - Code changes automatically restart services
+- ✅ **Volume mounting** - Edit code locally, see changes immediately
+- ✅ **Development tools** - All debugging and testing tools included
+- ✅ **Live logs** - Real-time log monitoring
+
+### Production Deployment
+
+For production deployment with enhanced security and performance:
+
+```bash
+# Start with Nginx reverse proxy
+docker-compose --profile proxy up -d --build
+
+# Or use the automated script
+./scripts/docker-setup.sh prod
+```
+
+**Production features:**
+- 🔒 **Security headers** - XSS protection, CSRF prevention
+- ⚡ **Rate limiting** - API and frontend request throttling
+- 🗜️ **Gzip compression** - Optimized response sizes
+- 🔄 **Load balancing** - Multiple backend instances support
+- 📊 **Health checks** - Automatic service monitoring
+
+### Docker Commands
+
+```bash
+# View running services
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Restart specific service
+docker-compose restart backend
+
+# Access database shell
+docker-compose exec db psql -U guildroster -d guildroster
+
+# Run migrations manually
+docker-compose exec backend alembic upgrade head
+
+# Create superuser
+docker-compose exec backend python scripts/create_superuser.py
+
+# Create API token
+docker-compose exec backend python scripts/create_token.py --type system --name "Docker Token"
+
+# View container resource usage
+docker stats
+
+# Backup database
+docker-compose exec db pg_dump -U guildroster guildroster > backup.sql
+```
+
+**For detailed Docker documentation, see [DOCKER.md](DOCKER.md)**
+
 ## Features
 
 - **FastAPI REST API with automatic documentation**
@@ -83,18 +198,21 @@ pytest
 - User management with authentication-ready structure
 - **Guild management** - Full CRUD operations with role-based access control
 - **Team management** - Full CRUD operations with role-based access control
-- **Member management** - Guild member profiles with team assignments
-- **Toon management** - Character profiles for members with class, role, main/alt, and team assignment
+- **Character management** - Character profiles with class, role, and team assignments
 - **Raid management** - Raid scheduling and tracking with difficulty, size, and team assignments
 - **Scenario management** - Raid instance definitions with active/inactive status control
 - **Attendance tracking** - Comprehensive raid attendance system with individual and bulk operations, filtering, statistics, and streak tracking
+- **WarcraftLogs Integration** - Automatic participant extraction from WarcraftLogs reports with character name, class, spec, and role detection
 
 ## Tech Stack
 
 - **Backend:** FastAPI, SQLAlchemy, PostgreSQL
-- **Testing:** Pytest, TestClient
+- **Frontend:** React, TypeScript, Tailwind CSS
+- **Testing:** Pytest, TestClient, Vitest, Cypress
 - **Migrations:** Alembic
 - **Python:** 3.13.5
+- **Containerization:** Docker, Docker Compose
+- **Reverse Proxy:** Nginx (optional)
 
 ## Password Authentication
 
@@ -119,6 +237,14 @@ app/
 ├── schemas/         # Pydantic schemas
 ├── routers/         # API endpoints
 └── utils/           # Utilities
+
+frontend/
+├── app/             # React application
+│   ├── api/         # API services and types
+│   ├── components/  # React components
+│   └── routes/      # Page components
+├── test/            # Frontend tests
+└── public/          # Static assets
 
 scripts/
 └── create_token.py  # Token creation utility
@@ -215,22 +341,12 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /teams/{team_id}` - Update team (superuser only)
 - `DELETE /teams/{team_id}` - Delete team (superuser only)
 
-### Members
-- `POST /members/` - Create new member (superuser only)
-- `GET /members/` - List all members (any valid token)
-- `GET /members/{member_id}` - Get member by ID (any valid token)
-- `GET /members/guild/{guild_id}` - Get all members for a guild (any valid token)
-- `GET /members/team/{team_id}` - Get all members for a team (any valid token)
-- `PUT /members/{member_id}` - Update member (superuser only)
-- `DELETE /members/{member_id}` - Delete member (superuser only)
-
-### Toons
-- `POST /toons/` - Create new toon (superuser only)
-- `GET /toons/` - List all toons (any valid token)
-- `GET /toons/{toon_id}` - Get toon by ID (any valid token)
-- `GET /toons/member/{member_id}` - Get all toons for a member (any valid token)
-- `PUT /toons/{toon_id}` - Update toon (superuser only)
-- `DELETE /toons/{toon_id}` - Delete toon (superuser only)
+### Characters (Toons)
+- `POST /toons/` - Create new character (superuser only)
+- `GET /toons/` - List all characters (any valid token)
+- `GET /toons/{toon_id}` - Get character by ID (any valid token)
+- `PUT /toons/{toon_id}` - Update character (superuser only)
+- `DELETE /toons/{toon_id}` - Delete character (superuser only)
 
 ### Raids
 - `POST /raids/` - Create new raid (superuser only)
@@ -255,15 +371,13 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /attendance/` - List attendance records with filtering (any valid token)
 - `GET /attendance/{attendance_id}` - Get specific attendance record (any valid token)
 - `GET /attendance/raid/{raid_id}` - Get all attendance for a raid (any valid token)
-- `GET /attendance/toon/{toon_id}` - Get all attendance for a toon (any valid token)
-- `GET /attendance/member/{member_id}` - Get all attendance for a member's toons (any valid token)
+- `GET /attendance/toon/{toon_id}` - Get all attendance for a character (any valid token)
 - `GET /attendance/team/{team_id}` - Get all attendance for a team (any valid token)
 - `PUT /attendance/{attendance_id}` - Update attendance record (superuser only)
 - `PUT /attendance/bulk` - Update multiple attendance records (superuser only)
 - `DELETE /attendance/{attendance_id}` - Delete attendance record (superuser only)
 - `GET /attendance/stats/raid/{raid_id}` - Get attendance statistics for a raid (any valid token)
-- `GET /attendance/stats/toon/{toon_id}` - Get attendance statistics for a toon (any valid token)
-- `GET /attendance/stats/member/{member_id}` - Get attendance statistics for a member (any valid token)
+- `GET /attendance/stats/toon/{toon_id}` - Get attendance statistics for a character (any valid token)
 - `GET /attendance/stats/team/{team_id}` - Get attendance statistics for a team (any valid token)
 - `GET /attendance/report/date-range` - Get attendance report for date range (any valid token)
 
@@ -279,14 +393,13 @@ The attendance system provides comprehensive tracking of raid participation with
 - Bulk operations support up to 100 records per request
 
 **Flexible Filtering**
-- Filter by raid, toon, member, team, or attendance status
+- Filter by raid, character, team, or attendance status
 - Date range filtering for historical analysis
 - Multiple filter combinations supported
 
 **Comprehensive Statistics**
 - **Raid Stats**: Present/absent counts, attendance percentage
-- **Toon Stats**: Individual character attendance tracking with streaks
-- **Member Stats**: Combined attendance across all member's toons
+- **Character Stats**: Individual character attendance tracking with streaks
 - **Team Stats**: Team-wide attendance analysis
 
 **Advanced Analytics**
@@ -332,7 +445,7 @@ curl -X POST http://localhost:8000/attendance/bulk \
   }'
 ```
 
-**Get Toon Statistics**
+**Get Character Statistics**
 ```bash
 curl -X GET http://localhost:8000/attendance/stats/toon/2 \
   -H "Authorization: Bearer YOUR_TOKEN"
@@ -363,7 +476,7 @@ curl -X GET "http://localhost:8000/attendance/?team_id=1&is_present=true&start_d
 - `id` - Unique identifier
 - `raid_id` - Associated raid
 - `toon_id` - Character who attended
-- `is_present` - Whether the toon was present (true/false)
+- `is_present` - Whether the character was present (true/false)
 - `notes` - Optional notes about attendance
 - `created_at` - Record creation timestamp
 - `updated_at` - Last update timestamp
@@ -450,7 +563,7 @@ This returns:
 
 ## Database Schema
 
-The application uses a relational database with the following core tables and relationships:
+The application uses a simplified character-focused relational database with the following core tables and relationships:
 
 ![Database Schema](schema.png)
 
@@ -459,8 +572,7 @@ The application uses a relational database with the following core tables and re
 - **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
 - **Guilds** - Guild information and settings
 - **Teams** - Team organization within guilds
-- **Members** - Guild member profiles
-- **Toons** - Character information for guild members (username, class, role, is_main, member_id, created_at, updated_at)
+- **Characters (Toons)** - Character profiles with class, role, and team assignments
 - **Raids** - Raid scheduling and tracking (scheduled_at, difficulty, size, team_id, scenario_id, created_at, updated_at)
 - **Scenarios** - Raid instance definitions (name, is_active, created_at, updated_at)
 - **Attendance** - Raid attendance records with presence tracking, notes, and statistics
@@ -469,9 +581,8 @@ The application uses a relational database with the following core tables and re
 **Key Relationships:**
 - Users can belong to multiple guilds and have multiple tokens
 - Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
-- Guilds are created by users and contain multiple teams and members
-- Members can be assigned to teams and have guild-specific profiles
-- Members can have multiple characters (toons)
+- Guilds are created by users and contain multiple teams
+- Characters can be assigned to teams and have guild-specific profiles
 - Teams can have multiple scheduled raids with different difficulties and sizes
 - Raids are associated with specific scenarios for content tracking
 - Scenarios can be active or inactive to control availability
@@ -482,6 +593,7 @@ The application uses a relational database with the following core tables and re
 ### Prerequisites
 - Python 3.13.5
 - PostgreSQL
+- Node.js 18+ (for frontend)
 - pyenv (recommended)
 
 ### Environment Setup
@@ -493,7 +605,139 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=guildroster
 SECRET_KEY=your-secret-key
+
+# WarcraftLogs API Configuration
+WARCRAFTLOGS_CLIENT_ID=your_client_id_here
+WARCRAFTLOGS_CLIENT_SECRET=your_client_secret_here
 ```
+
+#### WarcraftLogs API Setup
+
+GuildRoster integrates with the [WarcraftLogs API](https://www.warcraftlogs.com/api/docs) to automatically fetch raid participant data from WarcraftLogs reports.
+
+**To set up WarcraftLogs API access:**
+
+1. **Create a WarcraftLogs API Application:**
+   - Go to the [WarcraftLogs Client Management Page](https://www.warcraftlogs.com/api/clients/)
+   - Click "Create Client"
+   - Enter a client name (e.g., "GuildRoster")
+   - **Leave redirect URIs blank** (not needed for client credentials flow)
+   - Click "Create"
+
+2. **Get Your Credentials:**
+   - Copy your `Client ID` and `Client Secret`
+   - Add them to your `.env` file as shown above
+
+3. **Test the Integration:**
+   ```bash
+   # Interactive mode (recommended for first-time testing)
+   python test_warcraftlogs.py --interactive
+   
+   # Command line testing
+   python test_warcraftlogs.py --url "https://www.warcraftlogs.com/reports/YOUR_REPORT_CODE"
+   
+   # Test specific functionality
+   python test_warcraftlogs.py --url "URL" --type participants
+   python test_warcraftlogs.py --url "URL" --type fights
+   ```
+
+**What this enables:**
+- ✅ Automatic participant extraction from WarcraftLogs reports
+- ✅ Character name, class, spec, and role detection
+- ✅ Integration with your existing character system
+- ✅ Public report access (no user authorization required)
+
+**Note:** This uses the Client Credentials Flow, which provides access to all public WarcraftLogs data. No redirect URLs or user authorization are required.
+
+#### Testing WarcraftLogs Integration
+
+The project includes a comprehensive test script to verify your WarcraftLogs API integration. This script helps you:
+
+- ✅ Verify your API credentials are working
+- ✅ Test URL parsing functionality
+- ✅ Fetch and display participant data from reports
+- ✅ Fetch and display fight/encounter data
+- ✅ Debug API issues before integrating with the main application
+
+**Available Test Modes:**
+
+1. **Interactive Mode** (Recommended for first-time testing):
+   ```bash
+   python test_warcraftlogs.py --interactive
+   ```
+   - Prompts for WarcraftLogs report URL
+   - Lets you choose what to test (all, participants, or fights)
+   - Provides step-by-step guidance
+
+2. **Command Line Mode**:
+   ```bash
+   # Test everything with a specific report
+   python test_warcraftlogs.py --url "https://www.warcraftlogs.com/reports/abc123def456"
+   
+   # Test only participant data
+   python test_warcraftlogs.py --url "URL" --type participants
+   
+   # Test only fight data
+   python test_warcraftlogs.py --url "URL" --type fights
+   ```
+
+3. **Basic Credential Test**:
+   ```bash
+   python test_warcraftlogs.py
+   ```
+   - Tests credentials and URL parsing without a real report
+   - Shows setup instructions
+
+**Sample Test Output:**
+
+```
+🔧 WarcraftLogs API Test - Interactive Mode
+==================================================
+
+📝 Enter WarcraftLogs report URL: https://www.warcraftlogs.com/reports/abc123def456
+
+🔍 What would you like to test?
+   1. All functionality
+   2. Participants only
+   3. Fights only
+
+Enter your choice (1-3): 1
+
+✅ WarcraftLogs credentials found
+✅ URL parsing works correctly
+✅ Extracted report code: abc123def456
+
+📊 Fetching report metadata...
+✅ Report metadata fetched successfully
+   Title: Mythic Amirdrassil, the Dream's Hope
+   Zone: Amirdrassil, the Dream's Hope
+   Start Time: 1703123456789
+   End Time: 1703126789012
+   Owner: GuildName
+
+👥 Fetching participant data...
+✅ Found 20 participants
+📋 Participant List:
+    1. PlayerName1 (Death Knight - Level 70, ClassID: 6)
+    2. PlayerName2 (Paladin - Level 70, ClassID: 2)
+    3. PlayerName3 (Mage - Level 70, ClassID: 8)
+
+⚔️ Fetching fight data...
+✅ Found 8 fights
+🗡️ Fight List:
+    1. Fyrakk (Mythic) - ✅ Killed
+    2. Tindral Sageswift (Mythic) - ✅ Killed
+    3. Smolderon (Mythic) - ❌ 45.2%
+
+🎉 All tests passed! WarcraftLogs integration is working correctly.
+```
+
+**Troubleshooting:**
+
+- **"Credentials not found"**: Check your `.env` file has `WARCRAFTLOGS_CLIENT_ID` and `WARCRAFTLOGS_CLIENT_SECRET`
+- **"URL parsing failed"**: Ensure the URL follows the format `https://www.warcraftlogs.com/reports/REPORT_CODE`
+- **"API request failed"**: Verify your credentials are correct and the report is public
+- **"No participants found"**: The report might be private or have no participant data
 
 ### Testing
 ```bash

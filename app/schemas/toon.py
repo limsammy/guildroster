@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 WOW_CLASSES = [
@@ -15,14 +15,13 @@ WOW_CLASSES = [
     "Priest",
     "Shaman",
 ]
-WOW_ROLES = ["DPS", "Healer", "Tank"]
+WOW_ROLES = ["Melee DPS", "Ranged DPS", "Healer", "Tank"]
 
 
 class ToonBase(BaseModel):
     username: str = Field(..., max_length=50)
     class_: str = Field(..., alias="class", max_length=20)
     role: str = Field(..., max_length=20)
-    is_main: bool = False
 
     @field_validator("class_")
     @classmethod
@@ -39,15 +38,11 @@ class ToonBase(BaseModel):
         return v
 
 
-class ToonCreate(ToonBase):
-    member_id: int
-
-
 class ToonUpdate(BaseModel):
     username: Optional[str] = Field(None, max_length=50)
     class_: Optional[str] = Field(None, alias="class", max_length=20)
     role: Optional[str] = Field(None, max_length=20)
-    is_main: Optional[bool] = None
+    team_ids: Optional[List[int]] = None
 
     @field_validator("class_")
     @classmethod
@@ -64,9 +59,12 @@ class ToonUpdate(BaseModel):
         return v
 
 
-class ToonResponse(ToonBase):
+class ToonResponse(BaseModel):
     id: int
-    member_id: int
+    username: str
+    class_: str = Field(..., alias="class")
+    role: str
+    team_ids: List[int]
     created_at: datetime
     updated_at: datetime
 
@@ -74,3 +72,7 @@ class ToonResponse(ToonBase):
         from_attributes=True,
         populate_by_name=True,
     )
+
+
+class ToonCreate(ToonBase):
+    team_ids: Optional[List[int]] = None
