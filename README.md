@@ -5,6 +5,12 @@ A FastAPI-based web and API application to manage and track your guild's roster 
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Docker Setup](#docker-setup)
+  - [Prerequisites](#docker-prerequisites)
+  - [Quick Start with Docker](#quick-start-with-docker)
+  - [Development Mode](#docker-development-mode)
+  - [Production Deployment](#docker-production-deployment)
+  - [Docker Commands](#docker-commands)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Password Authentication](#password-authentication)
@@ -68,6 +74,115 @@ pytest
 - **OpenAPI Spec:** http://localhost:8000/openapi.json
 - **Health Check:** http://localhost:8000
 
+## Docker Setup
+
+The easiest way to run GuildRoster is using Docker and Docker Compose. This approach provides a complete, isolated environment with all dependencies included.
+
+### Prerequisites
+
+- **Docker** (version 20.10 or later)
+- **Docker Compose** (version 2.0 or later)
+
+### Quick Start with Docker
+
+```bash
+# Clone the repository
+git clone https://github.com/limsammy/guildroster.git
+cd guildroster
+
+# Run the automated setup script (recommended)
+./scripts/docker-setup.sh prod
+
+# Or manually:
+# 1. Copy environment file
+cp env.docker.example .env
+
+# 2. Edit configuration (optional)
+nano .env
+
+# 3. Start all services
+docker-compose up -d --build
+```
+
+**Access the application:**
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8000
+- **API Documentation:** http://localhost:8000/docs
+- **Database:** localhost:5432
+
+### Development Mode
+
+For development with hot reloading and live code editing:
+
+```bash
+# Start in development mode
+./scripts/docker-setup.sh dev
+
+# Or manually:
+docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+**Development features:**
+- ✅ **Hot reloading** - Code changes automatically restart services
+- ✅ **Volume mounting** - Edit code locally, see changes immediately
+- ✅ **Development tools** - All debugging and testing tools included
+- ✅ **Live logs** - Real-time log monitoring
+
+### Production Deployment
+
+For production deployment with enhanced security and performance:
+
+```bash
+# Start with Nginx reverse proxy
+docker-compose --profile proxy up -d --build
+
+# Or use the automated script
+./scripts/docker-setup.sh prod
+```
+
+**Production features:**
+- 🔒 **Security headers** - XSS protection, CSRF prevention
+- ⚡ **Rate limiting** - API and frontend request throttling
+- 🗜️ **Gzip compression** - Optimized response sizes
+- 🔄 **Load balancing** - Multiple backend instances support
+- 📊 **Health checks** - Automatic service monitoring
+
+### Docker Commands
+
+```bash
+# View running services
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Restart specific service
+docker-compose restart backend
+
+# Access database shell
+docker-compose exec db psql -U guildroster -d guildroster
+
+# Run migrations manually
+docker-compose exec backend alembic upgrade head
+
+# Create superuser
+docker-compose exec backend python scripts/create_superuser.py
+
+# Create API token
+docker-compose exec backend python scripts/create_token.py --type system --name "Docker Token"
+
+# View container resource usage
+docker stats
+
+# Backup database
+docker-compose exec db pg_dump -U guildroster guildroster > backup.sql
+```
+
+**For detailed Docker documentation, see [DOCKER.md](DOCKER.md)**
+
 ## Features
 
 - **FastAPI REST API with automatic documentation**
@@ -96,6 +211,8 @@ pytest
 - **Testing:** Pytest, TestClient, Vitest, Cypress
 - **Migrations:** Alembic
 - **Python:** 3.13.5
+- **Containerization:** Docker, Docker Compose
+- **Reverse Proxy:** Nginx (optional)
 
 ## Password Authentication
 
