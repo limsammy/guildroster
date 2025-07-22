@@ -42,11 +42,41 @@ def get_team_or_404(db: Session, team_id: int) -> Team:
     return team
 
 
-def get_scenario_or_404(db: Session, scenario_id: int) -> Scenario:
-    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+def get_scenario_or_404(db: Session, scenario_name: str) -> Scenario:
+    scenario = db.query(Scenario).filter(Scenario.name == scenario_name).first()
     if not scenario:
-        raise HTTPException(status_code=404, detail="Scenario not found")
+        raise HTTPException(
+            status_code=404, detail=f"Scenario '{scenario_name}' not found"
+        )
     return scenario
+
+
+def validate_scenario_variation(
+    scenario_name: str, difficulty: str, size: str
+) -> bool:
+    """
+    Validate that a scenario variation is valid.
+    """
+    if size not in Scenario.SCENARIO_SIZES:
+        return False
+
+    # Check if the scenario template exists
+    from app.database import get_db
+
+    db = next(get_db())
+    scenario = db.query(Scenario).filter(Scenario.name == scenario_name).first()
+    if not scenario or not scenario.is_active:
+        return False
+
+    # Validate difficulty based on MoP flag
+    if scenario.mop:
+        # MoP scenarios have all difficulties
+        valid_difficulties = Scenario.SCENARIO_DIFFICULTIES
+    else:
+        # Non-MoP scenarios only have Normal and Heroic
+        valid_difficulties = ["Normal", "Heroic"]
+
+    return difficulty in valid_difficulties
 
 
 def get_team_toons(db: Session, team_id: int) -> List[dict]:
@@ -62,8 +92,6 @@ def get_team_toons(db: Session, team_id: int) -> List[dict]:
             "class": toon.class_,
             "role": toon.role,
             "is_main": toon.is_main,
-            "member_id": toon.member_id,
-            "member_name": toon.member.display_name if toon.member else None,
         }
         for toon in toons
     ]
@@ -129,13 +157,23 @@ def create_raid(
     # Verify team exists
     team = get_team_or_404(db, raid_in.team_id)
 
-    # Verify scenario exists
-    scenario = get_scenario_or_404(db, raid_in.scenario_id)
+    # Verify scenario variation is valid
+    if not validate_scenario_variation(
+        raid_in.scenario_name,
+        raid_in.scenario_difficulty,
+        raid_in.scenario_size,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid scenario variation: {raid_in.scenario_name} ({raid_in.scenario_difficulty}, {raid_in.scenario_size}-man)",
+        )
 
     # Create the raid first
     raid = Raid(
         scheduled_at=raid_in.scheduled_at,
-        scenario_id=raid_in.scenario_id,
+        scenario_name=raid_in.scenario_name,
+        scenario_difficulty=raid_in.scenario_difficulty,
+        scenario_size=raid_in.scenario_size,
         team_id=raid_in.team_id,
         warcraftlogs_url=raid_in.warcraftlogs_url,
     )
@@ -237,18 +275,18 @@ def create_raid(
 )
 def list_raids(
     team_id: Optional[int] = None,
-    scenario_id: Optional[int] = None,
+    scenario_name: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
     """
-    List raids. Can filter by team_id or scenario_id. Any valid token required.
+    List raids. Can filter by team_id or scenario_name. Any valid token required.
     """
     query = db.query(Raid)
     if team_id:
         query = query.filter(Raid.team_id == team_id)
-    if scenario_id:
-        query = query.filter(Raid.scenario_id == scenario_id)
+    if scenario_name:
+        query = query.filter(Raid.scenario_name == scenario_name)
     raids = query.all()
     return raids
 
@@ -287,19 +325,20 @@ def get_raids_by_team(
 
 
 @router.get(
-    "/scenario/{scenario_id}",
+    "/scenario/{scenario_name}",
     response_model=List[RaidResponse],
 )
 def get_raids_by_scenario(
-    scenario_id: int,
+    scenario_name: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
     """
     Get all raids for a specific scenario. Any valid token required.
     """
-    scenario = get_scenario_or_404(db, scenario_id)
-    raids = db.query(Raid).filter(Raid.scenario_id == scenario_id).all()
+    # Verify scenario exists
+    get_scenario_or_404(db, scenario_name)
+    raids = db.query(Raid).filter(Raid.scenario_name == scenario_name).all()
     return raids
 
 
@@ -320,17 +359,31 @@ def update_raid(
     raid = get_raid_or_404(db, raid_id)
 
     if raid_in.scheduled_at is not None:
-        raid.scheduled_at = raid_in.scheduled_at  # type: ignore[assignment]
+        raid.scheduled_at = raid_in.scheduled_at
 
-    if raid_in.scenario_id is not None:
-        # Verify new scenario exists
-        scenario = get_scenario_or_404(db, raid_in.scenario_id)
-        raid.scenario_id = raid_in.scenario_id  # type: ignore[assignment]
+    if (
+        raid_in.scenario_name is not None
+        and raid_in.scenario_difficulty is not None
+        and raid_in.scenario_size is not None
+    ):
+        # Verify new scenario variation is valid
+        if not validate_scenario_variation(
+            raid_in.scenario_name,
+            raid_in.scenario_difficulty,
+            raid_in.scenario_size,
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid scenario variation: {raid_in.scenario_name} ({raid_in.scenario_difficulty}, {raid_in.scenario_size}-man)",
+            )
+        raid.scenario_name = raid_in.scenario_name
+        raid.scenario_difficulty = raid_in.scenario_difficulty
+        raid.scenario_size = raid_in.scenario_size
 
     if raid_in.team_id is not None:
         # Verify new team exists
         team = get_team_or_404(db, raid_in.team_id)
-        raid.team_id = raid_in.team_id  # type: ignore[assignment]
+        raid.team_id = raid_in.team_id
 
     if raid_in.warcraftlogs_url is not None:
         raid.warcraftlogs_url = raid_in.warcraftlogs_url

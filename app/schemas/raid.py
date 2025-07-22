@@ -1,11 +1,16 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import Optional, Dict, List, Any
 from datetime import datetime
+from app.models.scenario import SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 
 
 class RaidBase(BaseModel):
     scheduled_at: datetime
-    scenario_id: int = Field(..., description="Scenario ID this raid is for")
+    scenario_name: str = Field(
+        ..., description="Scenario name this raid is for"
+    )
+    scenario_difficulty: str = Field(..., description="Scenario difficulty")
+    scenario_size: str = Field(..., description="Scenario size")
     team_id: int = Field(..., description="Team ID this raid belongs to")
     warcraftlogs_url: Optional[str] = Field(
         None, description="Optional WarcraftLogs report URL for this raid"
@@ -20,6 +25,20 @@ class RaidBase(BaseModel):
                 raise ValueError("Invalid WarcraftLogs URL format")
         return v
 
+    @field_validator("scenario_difficulty")
+    @classmethod
+    def validate_scenario_difficulty(cls, v):
+        if v not in SCENARIO_DIFFICULTIES:
+            raise ValueError(f"Invalid difficulty: {v}")
+        return v
+
+    @field_validator("scenario_size")
+    @classmethod
+    def validate_scenario_size(cls, v):
+        if v not in SCENARIO_SIZES:
+            raise ValueError(f"Invalid size: {v}")
+        return v
+
 
 class RaidCreate(RaidBase):
     warcraftlogs_url: Optional[str] = Field(
@@ -29,15 +48,33 @@ class RaidCreate(RaidBase):
 
 class RaidUpdate(BaseModel):
     scheduled_at: Optional[datetime] = None
-    scenario_id: Optional[int] = Field(
-        None, description="Scenario ID this raid is for"
+    scenario_name: Optional[str] = Field(
+        None, description="Scenario name this raid is for"
     )
+    scenario_difficulty: Optional[str] = Field(
+        None, description="Scenario difficulty"
+    )
+    scenario_size: Optional[str] = Field(None, description="Scenario size")
     team_id: Optional[int] = Field(
         None, description="Team ID this raid belongs to"
     )
     warcraftlogs_url: Optional[str] = Field(
         None, description="Optional WarcraftLogs report URL for this raid"
     )
+
+    @field_validator("scenario_difficulty")
+    @classmethod
+    def validate_scenario_difficulty(cls, v):
+        if v is not None and v not in SCENARIO_DIFFICULTIES:
+            raise ValueError(f"Invalid difficulty: {v}")
+        return v
+
+    @field_validator("scenario_size")
+    @classmethod
+    def validate_scenario_size(cls, v):
+        if v is not None and v not in SCENARIO_SIZES:
+            raise ValueError(f"Invalid size: {v}")
+        return v
 
 
 class RaidResponse(RaidBase):

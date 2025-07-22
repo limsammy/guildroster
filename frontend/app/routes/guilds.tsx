@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Button, Card, Container, GuildForm } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
+import { useGuild } from '../contexts/GuildContext';
 import { GuildService } from '../api/guilds';
 import type { Guild } from '../api/types';
 
@@ -14,6 +15,7 @@ export function meta() {
 
 export default function Guilds() {
   const { user } = useAuth();
+  const { refreshGuilds: refreshGuildContext } = useGuild();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,8 @@ export default function Guilds() {
   const reloadGuilds = async () => {
     const updatedGuilds = await GuildService.getGuilds();
     setGuilds(updatedGuilds);
+    // Also refresh the GuildContext so other components (like GuildSwitcher) update
+    await refreshGuildContext();
   };
 
   const handleAddGuild = async (values: { name: string }) => {
