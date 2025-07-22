@@ -25,11 +25,6 @@ class Scenario(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
-    # Relationships
-    raids = relationship(
-        "Raid", back_populates="scenario", cascade="all, delete-orphan"
-    )
-
     # Table constraints
     __table_args__ = (
         CheckConstraint("TRIM(name) != ''", name="ck_scenario_name_not_empty"),

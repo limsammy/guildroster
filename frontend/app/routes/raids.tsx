@@ -59,10 +59,9 @@ export default function Raids() {
     return team ? team.name : `Team #${teamId}`;
   };
 
-  // Helper function to get scenario name by ID
-  const getScenarioName = (scenarioId: number) => {
-    const scenario = scenarios.find(s => s.id === scenarioId);
-    return scenario ? `${scenario.name} (${scenario.difficulty}, ${scenario.size})` : `Scenario #${scenarioId}`;
+  // Helper function to get scenario display name
+  const getScenarioDisplayName = (raid: Raid) => {
+    return `${raid.scenario_name} (${raid.scenario_difficulty}, ${raid.scenario_size}-man)`;
   };
 
   // Helper function to format date
@@ -129,14 +128,16 @@ export default function Raids() {
     }
   };
 
-  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number }) => {
+  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }) => {
     setFormLoading(true);
     setFormError(null);
     try {
       await RaidService.createRaid({
         scheduled_at: new Date().toISOString(), // Placeholder - backend will extract from WarcraftLogs
         team_id: values.team_id,
-        scenario_id: values.scenario_id,
+        scenario_name: values.scenario_name,
+        scenario_difficulty: values.scenario_difficulty,
+        scenario_size: values.scenario_size,
         warcraftlogs_url: values.warcraftlogs_url || undefined,
       });
       setShowAddForm(false);
@@ -148,14 +149,16 @@ export default function Raids() {
     }
   };
 
-  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_id: number }) => {
+  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }) => {
     if (!editingRaid) return;
     setFormLoading(true);
     setFormError(null);
     try {
       await RaidService.updateRaid(editingRaid.id, {
         team_id: values.team_id,
-        scenario_id: values.scenario_id,
+        scenario_name: values.scenario_name,
+        scenario_difficulty: values.scenario_difficulty,
+        scenario_size: values.scenario_size,
         warcraftlogs_url: values.warcraftlogs_url || undefined,
       });
       setEditingRaid(null);
@@ -188,7 +191,7 @@ export default function Raids() {
     const matchesSearch = searchTerm === '' || 
       raid.id.toString().includes(searchTerm) ||
       getTeamName(raid.team_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getScenarioName(raid.scenario_id).toLowerCase().includes(searchTerm.toLowerCase());
+      getScenarioDisplayName(raid).toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesDate = dateFilter === '' || 
       raid.scheduled_at.startsWith(dateFilter);
@@ -360,7 +363,7 @@ export default function Raids() {
                         <div>
                           <span className="font-medium text-slate-300">Scenario:</span>
                           <br />
-                          {getScenarioName(raid.scenario_id)}
+                          {getScenarioDisplayName(raid)}
                         </div>
                       </div>
                     </div>
@@ -402,7 +405,9 @@ export default function Raids() {
               isEditing={!!editingRaid}
               initialValues={editingRaid ? {
                 team_id: editingRaid.team_id,
-                scenario_id: editingRaid.scenario_id,
+                scenario_name: editingRaid.scenario_name,
+                scenario_difficulty: editingRaid.scenario_difficulty,
+                scenario_size: editingRaid.scenario_size,
                 warcraftlogs_url: editingRaid.warcraftlogs_url || '',
               } : {}}
             />

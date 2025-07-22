@@ -111,25 +111,35 @@ export interface ToonUpdate {
 export interface Scenario {
   id: number;
   name: string;
-  difficulty: string;
-  size: string;
   is_active: boolean;
+  mop: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface ScenarioCreate {
   name: string;
-  difficulty: string;
-  size: string;
   is_active?: boolean;
+  mop?: boolean;
 }
 
 export interface ScenarioUpdate {
   name?: string;
-  difficulty?: string;
-  size?: string;
   is_active?: boolean;
+  mop?: boolean;
+}
+
+// Scenario Variation Types (for the templating system)
+export interface ScenarioVariation {
+  name: string;
+  difficulty: string;
+  size: string;
+  display_name: string;
+  variation_id: string;
+}
+
+export interface ScenarioWithVariations extends Scenario {
+  variations: ScenarioVariation[];
 }
 
 // Raid Types
@@ -137,7 +147,9 @@ export interface Raid {
   id: number;
   scheduled_at: string;
   team_id: number;
-  scenario_id: number;
+  scenario_name: string;
+  scenario_difficulty: string;
+  scenario_size: string;
   warcraftlogs_url?: string;
   warcraftlogs_report_code?: string;
   warcraftlogs_metadata?: Record<string, any>;
@@ -150,14 +162,18 @@ export interface Raid {
 export interface RaidCreate {
   scheduled_at: string;
   team_id: number;
-  scenario_id: number;
+  scenario_name: string;
+  scenario_difficulty: string;
+  scenario_size: string;
   warcraftlogs_url?: string;
 }
 
 export interface RaidUpdate {
   scheduled_at?: string;
   team_id?: number;
-  scenario_id?: string;
+  scenario_name?: string;
+  scenario_difficulty?: string;
+  scenario_size?: string;
   warcraftlogs_url?: string;
 }
 

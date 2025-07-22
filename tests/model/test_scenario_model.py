@@ -8,8 +8,6 @@ from app.models.user import User
 from app.models.guild import Guild
 from app.models.team import Team
 
-from app.models.raid import Raid
-
 
 class TestScenarioModel:
     def setup_user(self, db_session: Session):
@@ -43,29 +41,43 @@ class TestScenarioModel:
         return team
 
     def test_create_scenario(self, db_session: Session):
-        """Test creating a scenario with valid data."""
+        """Test creating a scenario template with valid data."""
         scenario = Scenario(
             name="Blackrock Foundry",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
 
         assert scenario.id is not None
         assert scenario.name == "Blackrock Foundry"
-        assert scenario.difficulty == SCENARIO_DIFFICULTIES[0]
-        assert scenario.size == SCENARIO_SIZES[0]
         assert scenario.is_active is True
+        assert scenario.mop is False
         assert scenario.created_at is not None
         assert scenario.updated_at is not None
+
+    def test_create_mop_scenario(self, db_session: Session):
+        """Test creating a MoP scenario template."""
+        scenario = Scenario(
+            name="Mogu'shan Vaults",
+            is_active=True,
+            mop=True,
+        )
+        db_session.add(scenario)
+        db_session.commit()
+
+        assert scenario.id is not None
+        assert scenario.name == "Mogu'shan Vaults"
+        assert scenario.is_active is True
+        assert scenario.mop is True
 
     def test_scenario_name_not_empty_constraint(self, db_session: Session):
         """Test that scenario names cannot be empty."""
         scenario = Scenario(
             name="",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         with pytest.raises(IntegrityError):
@@ -77,8 +89,8 @@ class TestScenarioModel:
         """Test that scenario names cannot be whitespace only."""
         scenario = Scenario(
             name="   ",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         with pytest.raises(IntegrityError):
@@ -88,101 +100,101 @@ class TestScenarioModel:
         """Test that is_active defaults to True."""
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
 
         assert scenario.is_active is True
 
+    def test_scenario_mop_default(self, db_session: Session):
+        """Test that mop defaults to False."""
+        scenario = Scenario(
+            name="Test Scenario",
+            is_active=True,
+        )
+        db_session.add(scenario)
+        db_session.commit()
+
+        assert scenario.mop is False
+
     def test_scenario_is_active_can_be_false(self, db_session: Session):
         """Test that is_active can be set to False."""
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=False,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
 
         assert scenario.is_active is False
 
-    def test_scenario_relationship_to_raids(self, db_session: Session):
-        """Test relationship between scenario and raids."""
-        user = self.setup_user(db_session)
-        user_id = user.id  # Store ID before making API request
-        guild = self.setup_guild(db_session, user_id)
-        guild_id = guild.id  # Store ID before making API request
-        team = self.setup_team(db_session, guild_id, user_id)
-        team_id = team.id  # Store ID before making API request
-
+    def test_get_variations_non_mop(self, db_session: Session):
+        """Test that non-MoP scenarios generate 4 variations."""
         scenario = Scenario(
-            name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            name="Molten Core",
+            is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
-        scenario_id = scenario.id  # Store ID before making API request
 
-        from datetime import datetime, timedelta
+        variations = Scenario.get_variations(scenario.name, scenario.mop)
 
-        scheduled_at = datetime.now() + timedelta(days=1)
-        raid = Raid(
-            scheduled_at=scheduled_at,
-            team_id=team_id,
-            scenario_id=scenario_id,
-        )
-        db_session.add(raid)
-        db_session.commit()
+        assert len(variations) == 4
+        # Check that only Normal and Heroic difficulties are included
+        difficulties = {var["difficulty"] for var in variations}
+        assert difficulties == {"Normal", "Heroic"}
+        # Check that both sizes are included
+        sizes = {var["size"] for var in variations}
+        assert sizes == {"10", "25"}
 
-        assert raid in scenario.raids
-        assert raid.scenario == scenario
-
-    def test_cascade_delete_on_scenario(self, db_session: Session):
-        """Test that deleting a scenario cascades to raids."""
-        user = self.setup_user(db_session)
-        user_id = user.id  # Store ID before making API request
-        guild = self.setup_guild(db_session, user_id)
-        guild_id = guild.id  # Store ID before making API request
-        team = self.setup_team(db_session, guild_id, user_id)
-        team_id = team.id  # Store ID before making API request
-
+    def test_get_variations_mop(self, db_session: Session):
+        """Test that MoP scenarios generate 8 variations."""
         scenario = Scenario(
-            name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            name="Mogu'shan Vaults",
+            is_active=True,
+            mop=True,
         )
         db_session.add(scenario)
         db_session.commit()
-        scenario_id = scenario.id  # Store ID before making API request
 
-        from datetime import datetime, timedelta
+        variations = Scenario.get_variations(scenario.name, scenario.mop)
 
-        scheduled_at = datetime.now() + timedelta(days=1)
-        raid = Raid(
-            scheduled_at=scheduled_at,
-            team_id=team_id,
-            scenario_id=scenario_id,
-        )
-        db_session.add(raid)
-        db_session.commit()
+        assert len(variations) == 8
+        # Check that all difficulties are included
+        difficulties = {var["difficulty"] for var in variations}
+        assert difficulties == set(SCENARIO_DIFFICULTIES)
+        # Check that both sizes are included
+        sizes = {var["size"] for var in variations}
+        assert sizes == {"10", "25"}
 
-        raid_id = raid.id
-        db_session.delete(scenario)
-        db_session.commit()
+    def test_get_variation_id(self, db_session: Session):
+        """Test variation ID generation."""
+        variation_id = Scenario.get_variation_id("Molten Core", "Normal", "10")
+        assert variation_id == "Molten Core|Normal|10"
 
-        deleted_raid = db_session.query(Raid).filter(Raid.id == raid_id).first()
-        assert deleted_raid is None
+    def test_parse_variation_id(self, db_session: Session):
+        """Test variation ID parsing."""
+        parsed = Scenario.parse_variation_id("Molten Core|Normal|10")
+        assert parsed == {
+            "name": "Molten Core",
+            "difficulty": "Normal",
+            "size": "10",
+        }
+
+    def test_parse_variation_id_invalid(self, db_session: Session):
+        """Test that invalid variation IDs raise an error."""
+        with pytest.raises(ValueError, match="Invalid variation ID format"):
+            Scenario.parse_variation_id("invalid_format")
 
     def test_scenario_timestamps(self, db_session: Session):
         """Test that created_at and updated_at are set correctly."""
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
+            is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()

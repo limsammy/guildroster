@@ -1,5 +1,5 @@
 import apiClient from './config';
-import type { Raid, RaidCreate, RaidUpdate, WarcraftLogsProcessingResult } from './types';
+import type { Raid, RaidCreate, RaidUpdate, WarcraftLogsProcessingResult, ScenarioVariation } from './types';
 
 export class RaidService {
   // Get all raids
@@ -20,9 +20,9 @@ export class RaidService {
     return response.data;
   }
 
-  // Get raids by scenario ID
-  static async getRaidsByScenario(scenarioId: number): Promise<Raid[]> {
-    const response = await apiClient.get<Raid[]>(`/raids/scenario/${scenarioId}`);
+  // Get raids by scenario name
+  static async getRaidsByScenario(scenarioName: string): Promise<Raid[]> {
+    const response = await apiClient.get<Raid[]>(`/raids/scenario/${scenarioName}`);
     return response.data;
   }
 
@@ -49,6 +49,12 @@ export class RaidService {
       warcraftlogs_url: warcraftlogsUrl,
       team_id: teamId,
     });
+    return response.data;
+  }
+
+  // Get all scenario variations (for raid form)
+  static async getAllScenarioVariations(): Promise<ScenarioVariation[]> {
+    const response = await apiClient.get<ScenarioVariation[]>('/scenarios/variations/all');
     return response.data;
   }
 } 

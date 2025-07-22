@@ -45,31 +45,29 @@ export default function Scenarios() {
     setScenarios(updatedScenarios);
   };
 
-  const handleAddScenario = async (values: { name: string; difficulty: string; size: string; is_active: boolean }) => {
+  const handleAddScenario = async (values: { name: string; is_active: boolean; mop: boolean }) => {
+    setFormLoading(true);
+    setFormError(null);
     try {
-      setFormLoading(true);
-      setFormError(null);
       await ScenarioService.createScenario(values);
-      await reloadScenarios();
       setShowAddForm(false);
+      await reloadScenarios();
     } catch (err: any) {
-      console.error('Error creating scenario:', err);
-      setFormError(err.message || 'Failed to create scenario');
+      setFormError(err.message || 'Failed to add scenario');
     } finally {
       setFormLoading(false);
     }
   };
 
-  const handleEditScenario = async (values: { name: string; difficulty: string; size: string; is_active: boolean }) => {
+  const handleEditScenario = async (values: { name: string; is_active: boolean; mop: boolean }) => {
     if (!editingScenario) return;
+    setFormLoading(true);
+    setFormError(null);
     try {
-      setFormLoading(true);
-      setFormError(null);
       await ScenarioService.updateScenario(editingScenario.id, values);
-      await reloadScenarios();
       setEditingScenario(null);
+      await reloadScenarios();
     } catch (err: any) {
-      console.error('Error updating scenario:', err);
       setFormError(err.message || 'Failed to update scenario');
     } finally {
       setFormLoading(false);
@@ -244,11 +242,9 @@ export default function Scenarios() {
                         <span className="text-white font-medium">{scenario.name}</span>
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-slate-400">
-                        <span>{scenario.difficulty}</span>
-                        <span>•</span>
-                        <span>{scenario.size}</span>
-                        <span>•</span>
                         <span>{scenario.is_active ? 'Active' : 'Inactive'}</span>
+                        <span>•</span>
+                        <span>{scenario.mop ? 'MoP' : 'Regular'}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">

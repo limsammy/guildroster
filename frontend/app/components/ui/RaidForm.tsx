@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Card, WarcraftLogsResults } from './';
-import type { Team, Scenario, WarcraftLogsProcessingResult } from '../../api/types';
+import type { Team, Scenario, ScenarioVariation, WarcraftLogsProcessingResult } from '../../api/types';
 import { RaidService } from '../../api/raids';
 
 interface RaidFormProps {
@@ -8,9 +8,9 @@ interface RaidFormProps {
   scenarios: Scenario[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_id: number }) => void;
+  onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }) => void;
   onCancel: () => void;
-  initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_id: number }>;
+  initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }>;
   isEditing?: boolean;
 }
 
@@ -28,7 +28,9 @@ export const RaidForm: React.FC<RaidFormProps> = ({
 }) => {
   const [warcraftlogsUrl, setWarcraftlogsUrl] = useState(initialValues.warcraftlogs_url || '');
   const [teamId, setTeamId] = useState<number | ''>(initialValues.team_id ?? (teams.length > 0 ? teams[0].id : ''));
-  const [scenarioId, setScenarioId] = useState<number | ''>(initialValues.scenario_id ?? (scenarios.length > 0 ? scenarios[0].id : ''));
+  const [scenarioName, setScenarioName] = useState(initialValues.scenario_name || '');
+  const [scenarioDifficulty, setScenarioDifficulty] = useState(initialValues.scenario_difficulty || '');
+  const [scenarioSize, setScenarioSize] = useState(initialValues.scenario_size || '');
   const [showErrors, setShowErrors] = useState(false);
   
   // WarcraftLogs processing state
@@ -37,20 +39,45 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [processingLoading, setProcessingLoading] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
 
+  // Get all scenario variations
+  const [allVariations, setAllVariations] = useState<ScenarioVariation[]>([]);
+  const [variationsLoading, setVariationsLoading] = useState(false);
+
   const noTeams = teams.length === 0;
   const noScenarios = scenarios.length === 0;
+
+  // Load scenario variations when component mounts
+  useEffect(() => {
+    const loadVariations = async () => {
+      if (scenarios.length === 0) return;
+      
+      setVariationsLoading(true);
+      try {
+        const variations = await RaidService.getAllScenarioVariations();
+        setAllVariations(variations);
+      } catch (err) {
+        console.error('Failed to load scenario variations:', err);
+      } finally {
+        setVariationsLoading(false);
+      }
+    };
+
+    loadVariations();
+  }, [scenarios]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!teamId || !scenarioId) return;
+    if (!teamId || !scenarioName || !scenarioDifficulty || !scenarioSize) return;
 
     // If no WarcraftLogs URL, proceed with normal form submission
     if (!warcraftlogsUrl.trim()) {
       onSubmit({
         warcraftlogs_url: '',
         team_id: Number(teamId),
-        scenario_id: Number(scenarioId),
+        scenario_name: scenarioName,
+        scenario_difficulty: scenarioDifficulty,
+        scenario_size: scenarioSize,
       });
       return;
     }
@@ -96,20 +123,12 @@ export const RaidForm: React.FC<RaidFormProps> = ({
       onSubmit({
         warcraftlogs_url: warcraftlogsUrl.trim(),
         team_id: Number(teamId),
-        scenario_id: Number(scenarioId),
+        scenario_name: scenarioName,
+        scenario_difficulty: scenarioDifficulty,
+        scenario_size: scenarioSize,
       });
-    } catch (err: any) {
-      // Handle different types of error responses
-      let errorMessage = 'Failed to create raid';
-      if (err.response?.data?.detail) {
-        errorMessage = typeof err.response.data.detail === 'string' 
-          ? err.response.data.detail 
-          : 'Invalid request format';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      setProcessingError(errorMessage);
-      setCurrentStep('results');
+    } catch (err) {
+      console.error('Failed to create raid:', err);
     } finally {
       setProcessingLoading(false);
     }
@@ -121,18 +140,14 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     setProcessingError(null);
   };
 
-  const urlError = showErrors && warcraftlogsUrl.trim() && !warcraftlogsUrl.includes('warcraftlogs.com/reports/') ? 'Invalid WarcraftLogs URL format' : '';
-  const teamError = showErrors && !teamId ? 'Team is required' : '';
-  const scenarioError = showErrors && !scenarioId ? 'Scenario is required' : '';
-
   // Show processing step
   if (currentStep === 'processing') {
     return (
       <Card variant="elevated" className="max-w-md mx-auto p-6">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-bold text-white mb-2">Processing WarcraftLogs Report</h2>
-          <p className="text-slate-300">Fetching participant data and matching to team characters...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold text-white mb-2">Processing WarcraftLogs Report</h3>
+          <p className="text-slate-400 text-sm">Extracting participant data and fight information...</p>
         </div>
       </Card>
     );
@@ -167,7 +182,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         )}
         {(noTeams || noScenarios) && (
           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
-            <p className="text-yellow-400 text-sm">You must have at least one team and one scenario to create a raid.</p>
+            <p className="text-yellow-400 text-sm">You must have at least one team and one scenario template to create a raid.</p>
           </div>
         )}
         <div className="mb-4">
@@ -183,7 +198,6 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             placeholder="Paste WarcraftLogs report URL here (optional)"
             disabled={loading || noTeams || noScenarios}
           />
-          {urlError && <div className="text-red-400 text-xs mt-1">{urlError}</div>}
           {warcraftlogsUrl.trim() && (
             <div className="text-amber-400 text-xs mt-1">
               ⚡ This will automatically process attendance from the WarcraftLogs report
@@ -204,29 +218,42 @@ export const RaidForm: React.FC<RaidFormProps> = ({
               <option key={team.id} value={team.id}>{team.name}</option>
             ))}
           </select>
-          {teamError && <div className="text-red-400 text-xs mt-1">{teamError}</div>}
         </div>
         <div className="mb-6">
-          <label htmlFor="raid-scenario" className="block text-sm font-medium text-slate-300 mb-2">Scenario</label>
+          <label htmlFor="raid-scenario" className="block text-sm font-medium text-slate-300 mb-2">Scenario Variation</label>
           <select
             id="raid-scenario"
-            value={scenarioId}
-            onChange={e => setScenarioId(e.target.value ? Number(e.target.value) : '')}
+            value={`${scenarioName}|${scenarioDifficulty}|${scenarioSize}`}
+            onChange={e => {
+              const [name, difficulty, size] = e.target.value.split('|');
+              setScenarioName(name || '');
+              setScenarioDifficulty(difficulty || '');
+              setScenarioSize(size || '');
+            }}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            disabled={loading || noScenarios}
+            disabled={loading || noScenarios || variationsLoading}
           >
-            <option value="">Select a scenario</option>
-            {scenarios.map(scenario => (
-              <option key={scenario.id} value={scenario.id}>{scenario.name} ({scenario.difficulty}, {scenario.size})</option>
+            <option value="">Select a scenario variation</option>
+            {allVariations.map(variation => (
+              <option key={variation.variation_id} value={variation.variation_id}>
+                {variation.display_name}
+              </option>
             ))}
           </select>
-          {scenarioError && <div className="text-red-400 text-xs mt-1">{scenarioError}</div>}
+          {variationsLoading && (
+            <div className="text-slate-400 text-xs mt-1">Loading scenario variations...</div>
+          )}
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={loading || !teamId || !scenarioId || noTeams || noScenarios} data-testid="raid-form-submit">
+          <Button 
+            type="submit" 
+            variant="primary" 
+            disabled={loading || !teamId || !scenarioName || !scenarioDifficulty || !scenarioSize || noTeams || noScenarios} 
+            data-testid="raid-form-submit"
+          >
             {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Raid' : 'Add Raid')}
           </Button>
         </div>
