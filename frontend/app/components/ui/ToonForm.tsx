@@ -8,7 +8,7 @@ interface ToonFormProps {
   teams: Team[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { username: string; class: string; role: string; is_main: boolean; team_ids?: number[] }) => void;
+  onSubmit: (values: { username: string; class: string; role: string; team_ids?: number[] }) => void;
   onCancel: () => void;
 }
 
@@ -41,7 +41,6 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   const [username, setUsername] = useState(initialValues.username || '');
   const [class_, setClass] = useState(initialValues.class || '');
   const [role, setRole] = useState(initialValues.role || '');
-  const [isMain, setIsMain] = useState(initialValues.is_main ?? false);
   const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>(initialValues.team_ids || []);
   const [showErrors, setShowErrors] = useState(false);
 
@@ -53,7 +52,6 @@ export const ToonForm: React.FC<ToonFormProps> = ({
       username: username.trim(),
       class: class_,
       role,
-      is_main: isMain,
       team_ids: selectedTeamIds.length > 0 ? selectedTeamIds : undefined,
     });
   };
@@ -74,9 +72,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           </div>
         )}
         <div className="mb-4">
-          <label htmlFor="toon-username" className="block text-sm font-medium text-slate-300 mb-2">
-            Username
-          </label>
+          <label htmlFor="toon-username" className="block text-sm font-medium text-slate-300 mb-2">Username</label>
           <input
             id="toon-username"
             type="text"
@@ -89,9 +85,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           {usernameError && <div className="text-red-400 text-xs mt-1">{usernameError}</div>}
         </div>
         <div className="mb-4">
-          <label htmlFor="toon-class" className="block text-sm font-medium text-slate-300 mb-2">
-            Class
-          </label>
+          <label htmlFor="toon-class" className="block text-sm font-medium text-slate-300 mb-2">Class</label>
           <select
             id="toon-class"
             value={class_}
@@ -99,7 +93,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading}
           >
-            <option value="">Select a class</option>
+            <option value="">Select class</option>
             {WOW_CLASSES.map(wowClass => (
               <option key={wowClass} value={wowClass}>{wowClass}</option>
             ))}
@@ -107,9 +101,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           {classError && <div className="text-red-400 text-xs mt-1">{classError}</div>}
         </div>
         <div className="mb-4">
-          <label htmlFor="toon-role" className="block text-sm font-medium text-slate-300 mb-2">
-            Role
-          </label>
+          <label htmlFor="toon-role" className="block text-sm font-medium text-slate-300 mb-2">Role</label>
           <select
             id="toon-role"
             value={role}
@@ -117,52 +109,30 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading}
           >
-            <option value="">Select a role</option>
+            <option value="">Select role</option>
             {WOW_ROLES.map(wowRole => (
               <option key={wowRole} value={wowRole}>{wowRole}</option>
             ))}
           </select>
           {roleError && <div className="text-red-400 text-xs mt-1">{roleError}</div>}
         </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Teams (Optional)
-          </label>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            {teams.map(team => (
-              <label key={team.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedTeamIds.includes(team.id)}
-                  onChange={e => {
-                    if (e.target.checked) {
-                      setSelectedTeamIds(prev => [...prev, team.id]);
-                    } else {
-                      setSelectedTeamIds(prev => prev.filter(id => id !== team.id));
-                    }
-                  }}
-                  className="w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-2"
-                  disabled={loading}
-                />
-                <span className="ml-2 text-sm text-slate-300">{team.name}</span>
-              </label>
-            ))}
-          </div>
-          {teams.length === 0 && (
-            <p className="text-slate-400 text-xs">No teams available</p>
-          )}
-        </div>
         <div className="mb-6">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={isMain}
-              onChange={e => setIsMain(e.target.checked)}
-              className="w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-2"
-              disabled={loading}
-            />
-            <span className="ml-2 text-sm text-slate-300">Main character</span>
-          </label>
+          <label htmlFor="toon-teams" className="block text-sm font-medium text-slate-300 mb-2">Teams</label>
+          <select
+            id="toon-teams"
+            multiple
+            value={selectedTeamIds.map(String)}
+            onChange={e => {
+              const options = Array.from(e.target.selectedOptions).map(opt => Number(opt.value));
+              setSelectedTeamIds(options);
+            }}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={loading}
+          >
+            {teams.map(team => (
+              <option key={team.id} value={team.id}>{team.name}</option>
+            ))}
+          </select>
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>

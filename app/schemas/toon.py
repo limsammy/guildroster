@@ -22,7 +22,6 @@ class ToonBase(BaseModel):
     username: str = Field(..., max_length=50)
     class_: str = Field(..., alias="class", max_length=20)
     role: str = Field(..., max_length=20)
-    is_main: bool = False
 
     @field_validator("class_")
     @classmethod
@@ -39,16 +38,10 @@ class ToonBase(BaseModel):
         return v
 
 
-class ToonCreate(ToonBase):
-    member_id: int
-    team_ids: Optional[List[int]] = None
-
-
 class ToonUpdate(BaseModel):
     username: Optional[str] = Field(None, max_length=50)
     class_: Optional[str] = Field(None, alias="class", max_length=20)
     role: Optional[str] = Field(None, max_length=20)
-    is_main: Optional[bool] = None
     team_ids: Optional[List[int]] = None
 
     @field_validator("class_")
@@ -66,7 +59,7 @@ class ToonUpdate(BaseModel):
         return v
 
 
-class ToonResponse(ToonBase):
+class ToonResponse(BaseModel):
     id: int
     member_id: int
     created_at: datetime
@@ -77,3 +70,7 @@ class ToonResponse(ToonBase):
         from_attributes=True,
         populate_by_name=True,
     )
+
+
+class ToonCreate(ToonBase):
+    team_ids: Optional[List[int]] = None

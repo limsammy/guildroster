@@ -38,7 +38,6 @@ class Toon(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     username = Column(String(50), nullable=False)
-    is_main = Column(Boolean, default=False, nullable=False)
     class_ = Column("class", String(20), nullable=False)
     role = Column(String(20), nullable=False)
     created_at = Column(DateTime, default=datetime.now)
@@ -72,5 +71,4 @@ class Toon(Base):
             f"role IN ({', '.join([repr(r) for r in WOW_ROLES])})",
             name="ck_toon_role_valid",
         ),
-        # Only one main toon per member (enforced in code, not DB)
     )

@@ -91,7 +91,6 @@ def get_team_toons(db: Session, team_id: int) -> List[dict]:
             "username": toon.username,
             "class": toon.class_,
             "role": toon.role,
-            "is_main": toon.is_main,
         }
         for toon in toons
     ]

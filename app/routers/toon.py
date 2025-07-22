@@ -67,7 +67,6 @@ def create_toon(
         username=toon_in.username,
         class_=toon_in.class_,
         role=toon_in.role,
-        is_main=toon_in.is_main,
     )
     db.add(toon)
     db.commit()
@@ -124,8 +123,6 @@ def update_toon(
         toon.class_ = toon_in.class_  # type: ignore[assignment]
     if toon_in.role:
         toon.role = toon_in.role  # type: ignore[assignment]
-    if toon_in.is_main is not None:
-        toon.is_main = toon_in.is_main  # type: ignore[assignment]
 
     # Handle team assignments
     if toon_in.team_ids is not None:

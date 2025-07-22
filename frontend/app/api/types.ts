@@ -85,7 +85,6 @@ export interface Toon {
   username: string;
   class: string;
   role: string;
-  is_main: boolean;
   team_ids: number[];
   created_at: string;
   updated_at: string;
@@ -95,7 +94,6 @@ export interface ToonCreate {
   username: string;
   class: string;
   role: string;
-  is_main: boolean;
   team_ids?: number[];
 }
 
@@ -103,7 +101,6 @@ export interface ToonUpdate {
   username?: string;
   class?: string;
   role?: string;
-  is_main?: boolean;
   team_ids?: number[];
 }
 
@@ -201,7 +198,6 @@ export interface MatchedParticipant {
     username: string;
     class: string;
     role: string;
-    is_main: boolean;
   };
   participant: WarcraftLogsParticipant;
   is_present: boolean;
