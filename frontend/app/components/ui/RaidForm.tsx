@@ -157,11 +157,11 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     setProcessingError(null);
   };
 
-  const handleAddMissingCharacter = (matched: any) => {
+  const handleAddUnknownParticipant = (unknown: any) => {
     setToonFormInitialValues({
-      username: matched.participant.name,
-      class: matched.participant.class,
-      role: matched.participant.role,
+      username: unknown.participant.name,
+      class: unknown.participant.class,
+      role: unknown.participant.role,
       team_ids: teamId ? [Number(teamId)] : [],
     });
     setShowToonForm(true);
@@ -215,13 +215,17 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             </div>
           </div>
         )}
-        <WarcraftLogsResults
-          result={processingResult}
-          onProceed={handleProceedWithRaid}
-          onCancel={handleBackToForm}
-          loading={processingLoading}
-          onAddMissingCharacter={handleAddMissingCharacter}
-        />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-[1200px] flex justify-center items-center">
+            <WarcraftLogsResults
+              result={processingResult}
+              onProceed={handleProceedWithRaid}
+              onCancel={handleBackToForm}
+              loading={processingLoading}
+              onAddUnknownParticipant={handleAddUnknownParticipant}
+            />
+          </div>
+        </div>
         {showToonForm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="w-full max-w-md">

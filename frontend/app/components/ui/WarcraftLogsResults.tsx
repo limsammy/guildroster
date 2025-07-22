@@ -7,7 +7,7 @@ interface WarcraftLogsResultsProps {
   onProceed: () => void;
   onCancel: () => void;
   loading?: boolean;
-  onAddMissingCharacter?: (matched: any) => void;
+  onAddUnknownParticipant?: (participant: any) => void;
 }
 
 export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
@@ -15,7 +15,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   onProceed,
   onCancel,
   loading = false,
-  onAddMissingCharacter,
+  onAddUnknownParticipant,
 }) => {
   const getClassColor = (className: string) => {
     const colors: Record<string, string> = {
@@ -44,8 +44,15 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   const absentCount = result.matched_participants.filter(p => !p.is_present).length;
 
   return (
-    <Card variant="elevated" className="max-w-5xl w-full mx-auto max-h-[90vh] flex flex-col">
+    <Card variant="elevated" className="w-full max-w-[1200px] min-w-[900px] mx-auto max-h-[90vh] flex flex-col">
       <div className="p-6 flex-1 overflow-hidden flex flex-col">
+        {/* Info Blurb at the Top */}
+        <div className="mb-4 flex items-center gap-2 bg-blue-500/10 border border-blue-400/30 text-blue-200 rounded-lg px-4 py-2">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-400 text-white font-bold text-xs">i</span>
+          <span>
+            Scroll down to add any participants from the report who aren't recognized as existing characters. If a name doesn't match but should, you can link it to an existing character.
+          </span>
+        </div>
         <h2 className="text-xl font-bold text-white mb-4">
           WarcraftLogs Report Analysis
         </h2>
@@ -117,18 +124,6 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
                       {matched.toon.class} - {matched.toon.role}
                     </div>
                   </div>
-                  {/* Add button for absent characters */}
-                  {!matched.is_present && onAddMissingCharacter && (
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      className="ml-2"
-                      onClick={() => onAddMissingCharacter(matched)}
-                    >
-                      Add
-                    </Button>
-                  )}
                 </div>
                 <div className="text-right">
                   <div className={`font-medium ${matched.is_present ? 'text-green-400' : 'text-red-400'}`}>
@@ -150,18 +145,48 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
             <h3 className="text-lg font-semibold text-white mb-3">
               Unknown Participants ({result.unknown_participants.length})
             </h3>
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-              <p className="text-yellow-300 text-sm">
-                {result.unknown_participants.length} participants were found in the report but are not in your team. 
-                These will be skipped during attendance processing. You can add them as characters later if needed.
-              </p>
+            <div className="mb-2 text-xs text-slate-300">
+              Scroll down to add any participants from the report who aren't recognized as existing characters. If a name doesn't match but should, you can link it to an existing character.
+            </div>
+            <div className="space-y-2">
+              {result.unknown_participants.map((unknown, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-yellow-500/10 border-yellow-500/20">
+                  <div>
+                    <div className="text-white font-medium">{unknown.participant.name}</div>
+                    <div className={`text-sm ${getClassColor(unknown.participant.class)}`}>{unknown.participant.class} - {unknown.participant.role}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    {onAddUnknownParticipant && (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        className="ml-2"
+                        onClick={() => onAddUnknownParticipant(unknown)}
+                      >
+                        Add
+                      </Button>
+                    )}
+                    {/* Link button for name mismatch handling (UI only) */}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="ml-2"
+                      // onClick: open link modal (to be implemented)
+                    >
+                      Link
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-2 flex-shrink-0 p-6 pt-0">
+      <div className="flex justify-end gap-2 flex-shrink-0 p-6 pt-0 mt-6">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
