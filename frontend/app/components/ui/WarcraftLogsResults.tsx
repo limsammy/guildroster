@@ -42,7 +42,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   const absentCount = result.matched_participants.filter(p => !p.is_present).length;
 
   return (
-    <Card variant="elevated" className="max-w-4xl mx-auto max-h-[90vh] flex flex-col">
+    <Card variant="elevated" className="max-w-5xl w-full mx-auto max-h-[90vh] flex flex-col">
       <div className="p-6 flex-1 overflow-hidden flex flex-col">
         <h2 className="text-xl font-bold text-white mb-4">
           WarcraftLogs Report Analysis
