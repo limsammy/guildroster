@@ -21,12 +21,7 @@ class Scenario(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(100), nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    mop = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-        description="Whether this is a Mists of Pandaria scenario",
-    )
+    mop = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
