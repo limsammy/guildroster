@@ -68,19 +68,7 @@ class ScenarioVariation(BaseModel):
     display_name: str = Field(..., description="Display name for the variation")
     variation_id: str = Field(..., description="Unique variation identifier")
 
-    @field_validator("difficulty")
-    @classmethod
-    def validate_difficulty(cls, v):
-        if v not in SCENARIO_DIFFICULTIES:
-            raise ValueError(f"Invalid difficulty: {v}")
-        return v
-
-    @field_validator("size")
-    @classmethod
-    def validate_size(cls, v):
-        if v not in SCENARIO_SIZES:
-            raise ValueError(f"Invalid size: {v}")
-        return v
+    # Note: difficulty and size are validated in the backend using the scenario template system.
 
 
 class ScenarioWithVariations(ScenarioResponse):
@@ -96,16 +84,4 @@ class RaidScenarioInfo(BaseModel):
     size: str = Field(..., description="Scenario size")
     display_name: str = Field(..., description="Display name for the variation")
 
-    @field_validator("difficulty")
-    @classmethod
-    def validate_difficulty(cls, v):
-        if v not in SCENARIO_DIFFICULTIES:
-            raise ValueError(f"Invalid difficulty: {v}")
-        return v
-
-    @field_validator("size")
-    @classmethod
-    def validate_size(cls, v):
-        if v not in SCENARIO_SIZES:
-            raise ValueError(f"Invalid size: {v}")
-        return v
+    # Note: difficulty and size are validated in the backend using the scenario template system.

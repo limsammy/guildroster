@@ -25,19 +25,7 @@ class RaidBase(BaseModel):
                 raise ValueError("Invalid WarcraftLogs URL format")
         return v
 
-    @field_validator("scenario_difficulty")
-    @classmethod
-    def validate_scenario_difficulty(cls, v):
-        if v not in SCENARIO_DIFFICULTIES:
-            raise ValueError(f"Invalid difficulty: {v}")
-        return v
-
-    @field_validator("scenario_size")
-    @classmethod
-    def validate_scenario_size(cls, v):
-        if v not in SCENARIO_SIZES:
-            raise ValueError(f"Invalid size: {v}")
-        return v
+    # Note: scenario_difficulty and scenario_size are validated in the backend using the scenario template system.
 
 
 class RaidCreate(RaidBase):
@@ -62,19 +50,7 @@ class RaidUpdate(BaseModel):
         None, description="Optional WarcraftLogs report URL for this raid"
     )
 
-    @field_validator("scenario_difficulty")
-    @classmethod
-    def validate_scenario_difficulty(cls, v):
-        if v is not None and v not in SCENARIO_DIFFICULTIES:
-            raise ValueError(f"Invalid difficulty: {v}")
-        return v
-
-    @field_validator("scenario_size")
-    @classmethod
-    def validate_scenario_size(cls, v):
-        if v is not None and v not in SCENARIO_SIZES:
-            raise ValueError(f"Invalid size: {v}")
-        return v
+    # Note: scenario_difficulty and scenario_size are validated in the backend using the scenario template system.
 
 
 class RaidResponse(RaidBase):

@@ -55,28 +55,26 @@ def validate_scenario_variation(
     scenario_name: str, difficulty: str, size: str
 ) -> bool:
     """
-    Validate that a scenario variation is valid.
+    Validate that a scenario variation is valid using the scenario template system.
     """
-    if size not in Scenario.SCENARIO_SIZES:
-        return False
-
-    # Check if the scenario template exists
     from app.database import get_db
+    from app.models.scenario import Scenario
 
     db = next(get_db())
     scenario = db.query(Scenario).filter(Scenario.name == scenario_name).first()
     if not scenario or not scenario.is_active:
         return False
 
-    # Validate difficulty based on MoP flag
-    if scenario.mop:
-        # MoP scenarios have all difficulties
-        valid_difficulties = Scenario.SCENARIO_DIFFICULTIES
-    else:
-        # Non-MoP scenarios only have Normal and Heroic
-        valid_difficulties = ["Normal", "Heroic"]
-
-    return difficulty in valid_difficulties
+    # Get all valid variations for this scenario
+    valid_variations = Scenario.get_variations(scenario.name, scenario.mop)
+    for var in valid_variations:
+        if (
+            var["name"] == scenario_name
+            and var["difficulty"] == difficulty
+            and var["size"] == size
+        ):
+            return True
+    return False
 
 
 def get_team_toons(db: Session, team_id: int) -> List[dict]:

@@ -19,7 +19,7 @@ from app.schemas.attendance import (
     AttendanceReport,
 )
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser
+from app.utils.auth import require_any_token, require_superuser, require_user
 from app.models.user import User
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
@@ -167,7 +167,7 @@ def create_attendance_bulk(
 @router.get(
     "/",
     response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def list_attendance(
     raid_id: Optional[int] = None,
@@ -177,10 +177,10 @@ def list_attendance(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
-    List attendance records with filtering options. Any valid token required.
+    List attendance records with filtering options. Any valid user session or token required.
     """
     query = db.query(Attendance)
 

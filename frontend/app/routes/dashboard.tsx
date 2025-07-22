@@ -229,9 +229,11 @@ export default function Dashboard() {
             <Card variant="elevated" className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">Recent Raids</h2>
-                <Button size="sm" variant="primary">
-                  View All
-                </Button>
+                <Link to="/raids">
+                  <Button size="sm" variant="primary">
+                    View All
+                  </Button>
+                </Link>
               </div>
               
               {recentRaids.length === 0 ? (
@@ -243,17 +245,18 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {recentRaids.slice(0, 5).map((raid) => {
                     const team = teams.find(t => t.id === raid.team_id);
-                    const scenario = scenarios.find(s => s.id === raid.scenario_id);
                     const raidDate = new Date(raid.scheduled_at);
-                    
+                    const scenarioDisplay = raid.scenario_name
+                      ? `${raid.scenario_name} (${raid.scenario_difficulty}, ${raid.scenario_size}-man)`
+                      : 'Unknown Scenario';
                     return (
                       <div key={raid.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-600/30">
                         <div>
                           <div className="font-semibold text-white">
-                            {scenario?.name || 'Unknown Scenario'}
+                            {scenarioDisplay}
                           </div>
                           <div className="text-sm text-slate-300">
-                            {team?.name || 'Unknown Team'} • {scenario?.difficulty || 'Unknown'} • {scenario?.size || 'Unknown'}
+                            {team?.name || 'Unknown Team'}
                           </div>
                         </div>
                         <div className="text-right">
@@ -297,6 +300,12 @@ export default function Dashboard() {
                   <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
                     <div className="text-3xl mb-2">⚔️</div>
                     <div className="text-sm font-medium">Manage Characters</div>
+                  </Button>
+                </Link>
+                <Link to="/attendance" className="block">
+                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                    <div className="text-3xl mb-2">📊</div>
+                    <div className="text-sm font-medium">Attendance</div>
                   </Button>
                 </Link>
                 {user?.is_superuser && (

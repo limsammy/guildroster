@@ -22,7 +22,8 @@ export class AttendanceService {
       });
     }
     
-    const response = await apiClient.get<Attendance[]>(`/attendance/?${params.toString()}`);
+    const url = params.toString() ? `/attendance/?${params.toString()}` : '/attendance/';
+    const response = await apiClient.get<Attendance[]>(url);
     return response.data;
   }
 
