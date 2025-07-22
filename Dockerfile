@@ -28,6 +28,9 @@ COPY alembic.ini .
 COPY migrations/ ./migrations/
 COPY scripts/ ./scripts/
 
+# Ensure logs directory exists and is owned by appuser
+RUN mkdir -p /app/logs
+
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
 USER appuser
