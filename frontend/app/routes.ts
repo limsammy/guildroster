@@ -9,6 +9,7 @@ export default [
   route("scenarios", "routes/scenarios.tsx"),
   route("settings", "routes/settings.tsx"),
   route("teams", "routes/teams.tsx"),
+  route("teams/:id", "routes/team.tsx"),
   route("toons", "routes/toons.tsx"),
   route("raids", "routes/raids.tsx"),
   route("attendance", "routes/attendance.tsx")

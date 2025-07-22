@@ -117,22 +117,35 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           {roleError && <div className="text-red-400 text-xs mt-1">{roleError}</div>}
         </div>
         <div className="mb-6">
-          <label htmlFor="toon-teams" className="block text-sm font-medium text-slate-300 mb-2">Teams</label>
-          <select
-            id="toon-teams"
-            multiple
-            value={selectedTeamIds.map(String)}
-            onChange={e => {
-              const options = Array.from(e.target.selectedOptions).map(opt => Number(opt.value));
-              setSelectedTeamIds(options);
-            }}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            disabled={loading}
-          >
-            {teams.map(team => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Teams</label>
+          <div className="flex flex-col gap-2">
+            {teams.map(team => {
+              const selected = selectedTeamIds.includes(team.id);
+              return (
+                <button
+                  key={team.id}
+                  type="button"
+                  className="flex items-center gap-2 group"
+                  onClick={() => {
+                    setSelectedTeamIds(selected
+                      ? selectedTeamIds.filter(id => id !== team.id)
+                      : [...selectedTeamIds, team.id]
+                    );
+                  }}
+                >
+                  <span
+                    className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition
+                      ${selected ? 'bg-amber-500 border-amber-500 text-white' : 'bg-slate-800 border-slate-600 text-slate-300'}
+                      group-focus:ring-2 group-focus:ring-amber-500`}
+                    style={{ fontSize: '0.9rem' }}
+                  >
+                    {selected ? '✓' : ''}
+                  </span>
+                  <span className="text-xs text-slate-200">{team.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>

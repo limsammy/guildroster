@@ -353,9 +353,11 @@ export default function Dashboard() {
                                   {teamToons.length} characters • {teamRaids.length} raids
                                 </div>
                               </div>
-                              <Button size="sm" variant="ghost">
-                                View
-                              </Button>
+                              <Link to={`/teams/${team.id}`}>
+                                <Button size="sm" variant="ghost">
+                                  View
+                                </Button>
+                              </Link>
                             </div>
                           );
                         })}
