@@ -244,7 +244,7 @@ export default function Scenarios() {
                       <div className="flex items-center space-x-4 text-sm text-slate-400">
                         <span>{scenario.is_active ? 'Active' : 'Inactive'}</span>
                         <span>•</span>
-                        <span>{scenario.mop ? 'MoP' : 'Regular'}</span>
+                        <span>{scenario.mop ? 'MoP (4 difficulties)' : 'Non-MoP (2 difficulties)'}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
