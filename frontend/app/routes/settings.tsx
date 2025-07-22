@@ -2,6 +2,12 @@ import React from 'react';
 import { Link } from 'react-router';
 import { Button, Card, Container, GuildSwitcher } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
+import { exportResourcesAsZip } from '../utils/exportZip';
+import { RaidService } from '../api/raids';
+import { TeamService } from '../api/teams';
+import { ToonService } from '../api/toons';
+import { GuildService } from '../api/guilds';
+import { ScenarioService } from '../api/scenarios';
 
 export function meta() {
   return [
@@ -12,6 +18,38 @@ export function meta() {
 
 export default function Settings() {
   const { user } = useAuth();
+
+  // Export section state
+  const [selectedResources, setSelectedResources] = React.useState<string[]>([]);
+  const allResources = [
+    { key: 'raids', label: 'Raids' },
+    { key: 'teams', label: 'Teams' },
+    { key: 'toons', label: 'Characters' },
+    { key: 'guilds', label: 'Guilds' },
+    { key: 'scenarios', label: 'Scenarios' },
+  ];
+  const allKeys = allResources.map(r => r.key);
+  const allSelected = selectedResources.length === allResources.length;
+
+  const handleSelect = (key: string) => {
+    setSelectedResources(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+  const handleSelectAll = () => {
+    setSelectedResources(allSelected ? [] : allKeys);
+  };
+
+  const handleExport = async () => {
+    const resourceFetchers: { [key: string]: () => Promise<any> } = {
+      raids: RaidService.getRaids,
+      teams: TeamService.getTeams,
+      toons: ToonService.getToons,
+      guilds: GuildService.getGuilds,
+      scenarios: ScenarioService.getScenarios,
+    };
+    await exportResourcesAsZip(resourceFetchers, selectedResources);
+  };
 
   // Only show settings for superusers
   if (!user?.is_superuser) {
@@ -145,6 +183,45 @@ export default function Settings() {
                   </Button>
                 </Link>
               </div>
+            </div>
+          </Card>
+
+          {/* Export Data Section */}
+          <Card variant="elevated" className="p-6 mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Export Data</h2>
+              <p className="text-slate-300 mb-4">Select one or more resources to export as a zip file.</p>
+              <div className="mb-4">
+                <label className="flex items-center mb-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-2 mr-2"
+                  />
+                  <span className="text-slate-200 font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {allResources.map(resource => (
+                    <label key={resource.key} className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedResources.includes(resource.key)}
+                        onChange={() => handleSelect(resource.key)}
+                        className="w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-2 mr-2"
+                      />
+                      <span className="text-slate-200">{resource.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button
+                variant="primary"
+                onClick={handleExport}
+                disabled={selectedResources.length === 0}
+              >
+                Export Selected
+              </Button>
             </div>
           </Card>
 
