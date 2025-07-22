@@ -4,7 +4,8 @@ import { Button, Card, Container } from '../components/ui';
 import { ToonForm } from '../components/ui/ToonForm';
 import { TeamService } from '../api/teams';
 import { ToonService } from '../api/toons';
-import type { Team, Toon, ToonCreate } from '../api/types';
+import type { Team, Toon, ToonCreate, ToonUpdate } from '../api/types';
+import { getClassColor } from '../utils/classColors';
 
 export default function TeamView() {
   const { id } = useParams();
@@ -16,6 +17,9 @@ export default function TeamView() {
   const [showToonForm, setShowToonForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
+  const [editingToon, setEditingToon] = useState<Toon | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -27,6 +31,9 @@ export default function TeamView() {
         setTeam(teamData);
         const allToons = await ToonService.getToons();
         setToons(allToons.filter(t => t.team_ids.includes(Number(id))));
+        // Fetch all teams for the selector
+        const teamsData = await TeamService.getTeams();
+        setAllTeams(teamsData);
       } catch (err: any) {
         setError(err.message || 'Failed to load team');
       } finally {
@@ -50,6 +57,48 @@ export default function TeamView() {
       setFormError(err.message || 'Failed to create character');
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleUpdateToon = async (values: ToonUpdate) => {
+    if (!editingToon) return;
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      await ToonService.updateToon(editingToon.id, values);
+      const allToons = await ToonService.getToons();
+      setToons(allToons.filter(t => t.team_ids.includes(Number(id))));
+      setEditingToon(null);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to update character');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteToon = async (toonId: number) => {
+    if (!confirm('Are you sure you want to delete this character?')) return;
+    setDeleteLoading(true);
+    try {
+      await ToonService.deleteToon(toonId);
+      const allToons = await ToonService.getToons();
+      setToons(allToons.filter(t => t.team_ids.includes(Number(id))));
+    } catch (err: any) {
+      alert('Failed to delete character');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const getRoleBadgeClass = (role: string) => {
+    switch (role) {
+      case 'Tank':
+        return 'bg-blue-600 text-white';
+      case 'Healer':
+        return 'bg-green-500 text-white';
+      case 'DPS':
+      default:
+        return 'bg-amber-500 text-white';
     }
   };
 
@@ -100,25 +149,28 @@ export default function TeamView() {
             {toons.length === 0 ? (
               <div className="text-slate-400 text-center py-8">No characters assigned to this team yet.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-slate-200">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2 text-left">Name</th>
-                      <th className="px-4 py-2 text-left">Class</th>
-                      <th className="px-4 py-2 text-left">Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {toons.map(toon => (
-                      <tr key={toon.id} className="border-b border-slate-700/50">
-                        <td className="px-4 py-2">{toon.username}</td>
-                        <td className="px-4 py-2">{toon.class}</td>
-                        <td className="px-4 py-2">{toon.role}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-4">
+                {toons.map(toon => (
+                  <div key={toon.id} className="flex flex-col md:flex-row md:items-center justify-between bg-slate-800 rounded-lg border border-slate-700/50 p-4">
+                    <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4">
+                      <div>
+                        <div className={`text-lg font-bold ${getClassColor(toon.class)}`}>{toon.username}</div>
+                        <div className="text-slate-300 text-sm">Class: {toon.class}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClass(toon.role)}`}>{toon.role}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 md:mt-0">
+                      <Button size="sm" variant="secondary" onClick={() => setEditingToon(toon)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => handleDeleteToon(toon.id)} disabled={deleteLoading}>
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
@@ -129,12 +181,29 @@ export default function TeamView() {
               <div className="w-full max-w-md">
                 <ToonForm
                   mode="add"
-                  teams={[team]}
+                  teams={allTeams}
                   initialValues={{ team_ids: [team.id] }}
                   loading={formLoading}
                   error={formError}
                   onSubmit={handleAddToon}
                   onCancel={() => setShowToonForm(false)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Edit Character Modal */}
+          {editingToon && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="w-full max-w-md">
+                <ToonForm
+                  mode="edit"
+                  teams={allTeams}
+                  initialValues={editingToon}
+                  loading={formLoading}
+                  error={formError}
+                  onSubmit={handleUpdateToon}
+                  onCancel={() => setEditingToon(null)}
                 />
               </div>
             </div>

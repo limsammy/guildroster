@@ -324,8 +324,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </div>
-
-              {Object.keys(teamsByGuild).length === 0 ? (
+              {filteredTeams.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">🏰</div>
                   <p className="text-slate-300">
@@ -334,36 +333,26 @@ export default function Dashboard() {
                   <p className="text-slate-400 text-sm mt-2">Create your first team to get started</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Object.entries(teamsByGuild).map(([guildName, guildTeams]) => (
-                    <div key={guildName} className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4">
-                      {!selectedGuild && (
-                        <h3 className="font-semibold text-white mb-3">{guildName}</h3>
-                      )}
-                      <div className="space-y-2">
-                        {guildTeams.map((team) => {
-                          const teamToons = filteredToons.filter(toon => toon.team_ids.includes(team.id));
-                          const teamRaids = filteredRaids.filter(r => r.team_id === team.id);
-                          
-                          return (
-                            <div key={team.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded border border-slate-600/20">
-                              <div>
-                                <div className="font-medium text-amber-400">{team.name}</div>
-                                <div className="text-sm text-slate-300">
-                                  {teamToons.length} characters • {teamRaids.length} raids
-                                </div>
-                              </div>
-                              <Link to={`/teams/${team.id}`}>
-                                <Button size="sm" variant="ghost">
-                                  View
-                                </Button>
-                              </Link>
-                            </div>
-                          );
-                        })}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredTeams.map(team => {
+                    const teamToons = filteredToons.filter(toon => toon.team_ids.includes(team.id));
+                    const teamRaids = filteredRaids.filter(r => r.team_id === team.id);
+                    return (
+                      <div key={team.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded border border-slate-600/20">
+                        <div>
+                          <div className="font-medium text-amber-400">{team.name}</div>
+                          <div className="text-sm text-slate-300">
+                            {teamToons.length} characters • {teamRaids.length} raids
+                          </div>
+                        </div>
+                        <Link to={`/teams/${team.id}`}>
+                          <Button size="sm" variant="ghost">
+                            View
+                          </Button>
+                        </Link>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </Card>

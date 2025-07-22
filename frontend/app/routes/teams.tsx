@@ -319,7 +319,7 @@ export default function Teams() {
           <div className="w-full max-w-md">
             <TeamForm
               mode={editingTeam ? 'edit' : 'add'}
-              initialValues={editingTeam || {}}
+              initialValues={editingTeam ? editingTeam : { guild_id: selectedGuild ? Number(selectedGuild) : (guilds[0]?.id ?? '') }}
               guilds={guilds}
               loading={formLoading}
               error={formError}

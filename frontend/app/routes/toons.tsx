@@ -5,6 +5,7 @@ import { ToonForm } from '../components/ui/ToonForm';
 import { ToonService, TeamService } from '../api';
 import type { Toon, ToonCreate, ToonUpdate, Team } from '../api/types';
 import { exportJson } from '../utils/exportJson';
+import { getClassColor } from '../utils/classColors';
 
 export default function Toons() {
   const [toons, setToons] = useState<Toon[]>([]);
@@ -224,7 +225,7 @@ export default function Toons() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-white">{toon.username}</h3>
+                        <div className={`font-semibold text-lg ${getClassColor(toon.class)}`}>{toon.username}</div>
                         {toon.is_main && (
                           <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded-full">
                             Main
