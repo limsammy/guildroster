@@ -5,10 +5,10 @@ import { useAuth } from "../contexts/AuthContext";
 import { useGuild } from "../contexts/GuildContext";
 import { GuildService } from "../api/guilds";
 import { TeamService } from "../api/teams";
-import { MemberService } from "../api/members";
+import { ToonService } from "../api/toons";
 import { RaidService } from "../api/raids";
 import { ScenarioService } from "../api/scenarios";
-import type { Guild, Team, Member, Raid, Scenario } from "../api/types";
+import type { Guild, Team, Toon, Raid, Scenario } from "../api/types";
 
 export function meta() {
   return [
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const { selectedGuild } = useGuild();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [toons, setToons] = useState<Toon[]>([]);
   const [raids, setRaids] = useState<Raid[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,17 +40,17 @@ export default function Dashboard() {
         setError(null);
 
         // Fetch all data in parallel
-        const [guildsData, teamsData, membersData, raidsData, scenariosData] = await Promise.all([
+        const [guildsData, teamsData, toonsData, raidsData, scenariosData] = await Promise.all([
           GuildService.getGuilds(),
           TeamService.getTeams(),
-          MemberService.getMembers(),
+          ToonService.getToons(),
           RaidService.getRaids(),
           ScenarioService.getScenarios(),
         ]);
 
         setGuilds(guildsData);
         setTeams(teamsData);
-        setMembers(membersData);
+        setToons(toonsData);
         setRaids(raidsData);
         setScenarios(scenariosData);
       } catch (err: any) {
@@ -62,7 +62,7 @@ export default function Dashboard() {
           // For 401, just set empty data - user will be redirected to login by navigation
           setGuilds([]);
           setTeams([]);
-          setMembers([]);
+          setToons([]);
           setRaids([]);
           setScenarios([]);
         }
@@ -78,9 +78,15 @@ export default function Dashboard() {
   const filteredTeams = selectedGuild 
     ? teams.filter(team => team.guild_id === selectedGuild.id)
     : teams;
-  const filteredMembers = selectedGuild
-    ? members.filter(member => member.guild_id === selectedGuild.id)
-    : members;
+  const filteredToons = selectedGuild
+    ? toons.filter(toon => {
+        // Filter toons that belong to teams in the selected guild
+        return toon.team_ids.some(teamId => {
+          const team = teams.find(t => t.id === teamId);
+          return team && team.guild_id === selectedGuild.id;
+        });
+      })
+    : toons;
   const filteredRaids = selectedGuild
     ? raids.filter(raid => {
         const team = teams.find(t => t.id === raid.team_id);
@@ -89,7 +95,7 @@ export default function Dashboard() {
     : raids;
 
   const totalTeams = filteredTeams.length;
-  const totalMembers = filteredMembers.length;
+  const totalToons = filteredToons.length;
   const totalRaids = filteredRaids.length;
   const activeScenarios = scenarios.filter(s => s.is_active).length;
 
@@ -201,9 +207,9 @@ export default function Dashboard() {
               </div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
-              <div className="text-3xl font-bold text-green-400 mb-2">{totalMembers}</div>
+              <div className="text-3xl font-bold text-green-400 mb-2">{totalToons}</div>
               <div className="text-slate-300">
-                {selectedGuild ? 'Members' : 'Members'}
+                {selectedGuild ? 'Characters' : 'Characters'}
               </div>
             </Card>
             <Card variant="elevated" className="text-center p-6">
@@ -287,16 +293,10 @@ export default function Dashboard() {
                     <div className="text-sm font-medium">Manage Teams</div>
                   </Button>
                 </Link>
-                <Link to="/members" className="block">
-                  <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
-                    <div className="text-3xl mb-2">🧑‍🤝‍🧑</div>
-                    <div className="text-sm font-medium">Manage Members</div>
-                  </Button>
-                </Link>
                 <Link to="/toons" className="block">
                   <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
                     <div className="text-3xl mb-2">⚔️</div>
-                    <div className="text-sm font-medium">Manage Toons</div>
+                    <div className="text-sm font-medium">Manage Characters</div>
                   </Button>
                 </Link>
                 {user?.is_superuser && (
@@ -342,7 +342,7 @@ export default function Dashboard() {
                       )}
                       <div className="space-y-2">
                         {guildTeams.map((team) => {
-                          const teamMembers = filteredMembers.filter(m => m.team_id === team.id);
+                          const teamToons = filteredToons.filter(toon => toon.team_ids.includes(team.id));
                           const teamRaids = filteredRaids.filter(r => r.team_id === team.id);
                           
                           return (
@@ -350,7 +350,7 @@ export default function Dashboard() {
                               <div>
                                 <div className="font-medium text-amber-400">{team.name}</div>
                                 <div className="text-sm text-slate-300">
-                                  {teamMembers.length} members • {teamRaids.length} raids
+                                  {teamToons.length} characters • {teamRaids.length} raids
                                 </div>
                               </div>
                               <Button size="sm" variant="ghost">

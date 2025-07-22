@@ -10,7 +10,7 @@ const features = [
   },
   {
     title: 'Guild Management',
-    description: 'Full CRUD operations for guilds, teams, and members with role-based access control.',
+            description: 'Full CRUD operations for guilds, teams, and characters with role-based access control.',
     icon: '⚔️',
     gradient: 'from-purple-500 to-pink-500'
   },

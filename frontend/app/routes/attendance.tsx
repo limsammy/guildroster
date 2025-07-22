@@ -76,7 +76,7 @@ export default function Attendance() {
       username: toon.username,
       class: toon.class,
       role: toon.role,
-      member_id: toon.member_id,
+      
     } : null;
   };
 

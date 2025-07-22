@@ -79,25 +79,6 @@ export interface TeamUpdate {
   guild_id?: number;
 }
 
-// Member Types
-export interface Member {
-  id: number;
-  display_name: string;
-  guild_id: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MemberCreate {
-  display_name: string;
-  guild_id: number;
-}
-
-export interface MemberUpdate {
-  display_name?: string;
-  guild_id?: number;
-}
-
 // Toon Types
 export interface Toon {
   id: number;
@@ -105,7 +86,6 @@ export interface Toon {
   class: string;
   role: string;
   is_main: boolean;
-  member_id: number;
   team_ids: number[];
   created_at: string;
   updated_at: string;
@@ -116,7 +96,6 @@ export interface ToonCreate {
   class: string;
   role: string;
   is_main: boolean;
-  member_id: number;
   team_ids?: number[];
 }
 
@@ -125,7 +104,6 @@ export interface ToonUpdate {
   class?: string;
   role?: string;
   is_main?: boolean;
-  member_id?: number;
   team_ids?: number[];
 }
 
@@ -179,7 +157,7 @@ export interface RaidCreate {
 export interface RaidUpdate {
   scheduled_at?: string;
   team_id?: number;
-  scenario_id?: number;
+  scenario_id?: string;
   warcraftlogs_url?: string;
 }
 
@@ -208,8 +186,6 @@ export interface MatchedParticipant {
     class: string;
     role: string;
     is_main: boolean;
-    member_id: number;
-    member_name?: string;
   };
   participant: WarcraftLogsParticipant;
   is_present: boolean;
@@ -218,7 +194,6 @@ export interface MatchedParticipant {
 
 export interface UnknownParticipant {
   participant: WarcraftLogsParticipant;
-  suggested_member?: Member | null;
   notes: string;
 }
 
@@ -241,8 +216,6 @@ export interface WarcraftLogsProcessingResult {
     class: string;
     role: string;
     is_main: boolean;
-    member_id: number;
-    member_name?: string;
   }>;
   error?: string;
 }
@@ -304,7 +277,6 @@ export interface PaginatedResponse<T> {
 export interface AttendanceFilters {
   raid_id?: number;
   toon_id?: number;
-  member_id?: number;
   team_id?: number;
   is_present?: boolean;
   start_date?: string;

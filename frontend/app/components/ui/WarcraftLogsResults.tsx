@@ -93,12 +93,12 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
           {/* Matched Participants */}
           <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-3">
-            Team Members ({result.matched_participants.length})
+            Team Characters ({result.matched_participants.length})
           </h3>
           {result.matched_participants.length === 0 ? (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
               <p className="text-blue-300 text-sm">
-                No existing team members found. All participants from the report will need to be assigned to new or existing members.
+                No existing team characters found. All participants from the report will need to be assigned to new or existing characters.
               </p>
             </div>
           ) : (
@@ -116,9 +116,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
                   <div className="flex-1">
                     <div className="text-white font-medium">
                       {matched.toon.username}
-                      {matched.toon.member_name && (
-                        <span className="text-slate-400 ml-2">({matched.toon.member_name})</span>
-                      )}
+                      
                     </div>
                     <div className={`text-sm ${getClassColor(matched.toon.class)}`}>
                       {matched.toon.class} - {matched.toon.role}
@@ -148,7 +146,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
               <p className="text-yellow-300 text-sm">
                 These participants were found in the report but are not in your team. 
-                You can assign them to existing members or create new members.
+                You can assign them to existing characters or create new characters.
               </p>
             </div>
             <div className="space-y-2">

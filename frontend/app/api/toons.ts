@@ -14,11 +14,7 @@ export class ToonService {
     return response.data;
   }
 
-  // Get toons by member ID
-  static async getToonsByMember(memberId: number): Promise<Toon[]> {
-    const response = await apiClient.get<Toon[]>(`/toons/member/${memberId}`);
-    return response.data;
-  }
+
 
   // Create new toon
   static async createToon(toonData: ToonCreate): Promise<Toon> {

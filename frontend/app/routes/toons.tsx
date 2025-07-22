@@ -2,28 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Container, Button, Card } from '../components/ui';
 import { ToonForm } from '../components/ui/ToonForm';
-import { MemberSelector } from '../components/ui/MemberSelector';
-import { ToonService, MemberService, TeamService } from '../api';
-import type { Toon, ToonCreate, ToonUpdate, Member, Team } from '../api/types';
+import { ToonService, TeamService } from '../api';
+import type { Toon, ToonCreate, ToonUpdate, Team } from '../api/types';
 
 export default function Toons() {
   const [toons, setToons] = useState<Toon[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [showMemberSelector, setShowMemberSelector] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [editingToon, setEditingToon] = useState<Toon | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [memberFilter, setMemberFilter] = useState<number | ''>('');
 
   useEffect(() => {
     loadToons();
-    loadMembers();
     loadTeams();
   }, []);
 
@@ -38,15 +32,6 @@ export default function Toons() {
       console.error('Error loading toons:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadMembers = async () => {
-    try {
-      const data = await MemberService.getMembers();
-      setMembers(data);
-    } catch (err) {
-      console.error('Error loading members:', err);
     }
   };
 
@@ -72,7 +57,6 @@ export default function Toons() {
       await ToonService.createToon(values);
       await reloadToons();
       setShowForm(false);
-      setSelectedMember(null);
     } catch (err: any) {
       setFormError(err.response?.data?.detail || 'Failed to create toon');
     } finally {
@@ -111,43 +95,16 @@ export default function Toons() {
 
   const handleCancel = () => {
     setShowForm(false);
-    setShowMemberSelector(false);
-    setSelectedMember(null);
     setEditingToon(null);
     setFormError(null);
-  };
-
-  const handleMemberSelect = (member: Member) => {
-    setSelectedMember(member);
-    setShowMemberSelector(false);
-    setShowForm(true);
-  };
-
-  const handleStartCreateToon = () => {
-    setShowMemberSelector(true);
-  };
-
-  const getMemberName = (memberId: number) => {
-    const member = members.find(m => m.id === memberId);
-    return member?.display_name || 'Unknown Member';
   };
 
   const filteredToons = toons.filter(toon => {
     const matchesSearch = toon.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          toon.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          toon.role.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesMember = memberFilter === '' || toon.member_id === memberFilter;
-    return matchesSearch && matchesMember;
+    return matchesSearch;
   });
-
-  if (showMemberSelector) {
-    return (
-      <MemberSelector
-        onMemberSelect={handleMemberSelect}
-        onCancel={handleCancel}
-      />
-    );
-  }
 
   if (showForm || editingToon) {
     return (
@@ -155,14 +112,12 @@ export default function Toons() {
         <div className="py-8">
           <ToonForm
             mode={editingToon ? 'edit' : 'add'}
-            initialValues={editingToon || (selectedMember ? { member_id: selectedMember.id } : undefined)}
-            members={editingToon ? members : (selectedMember ? [selectedMember] : members)}
+            initialValues={editingToon || undefined}
             teams={teams}
             loading={formLoading}
             error={formError}
             onSubmit={editingToon ? handleUpdateToon : handleCreateToon}
             onCancel={handleCancel}
-            hideMemberSelect={!editingToon && selectedMember !== null}
           />
         </div>
       </Container>
@@ -193,7 +148,7 @@ export default function Toons() {
             <Link to="/dashboard">
               <Button variant="secondary">Back to Dashboard</Button>
             </Link>
-            <Button onClick={handleStartCreateToon}>
+            <Button onClick={() => setShowForm(true)}>
               Add Toon
             </Button>
           </div>
@@ -206,9 +161,9 @@ export default function Toons() {
           </div>
         )}
 
-        {/* Search and Filters */}
+        {/* Search */}
         <div className="bg-slate-800/60 border border-slate-600/50 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Search
@@ -221,31 +176,13 @@ export default function Toons() {
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Filter by Member
-              </label>
-              <select
-                value={memberFilter}
-                onChange={(e) => setMemberFilter(e.target.value ? Number(e.target.value) : '')}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              >
-                <option value="">All Members</option>
-                {members.map(member => (
-                  <option key={member.id} value={member.id}>{member.display_name}</option>
-                ))}
-              </select>
-            </div>
             <div className="flex items-end">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setSearchTerm('');
-                  setMemberFilter('');
-                }}
+                onClick={() => setSearchTerm('')}
                 className="w-full"
               >
-                Clear Filters
+                Clear Search
               </Button>
             </div>
           </div>
@@ -290,17 +227,29 @@ export default function Toons() {
                           </span>
                         )}
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-300">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-300">
                         <div>
                           <span className="text-slate-400">Class:</span> {toon.class}
                         </div>
                         <div>
                           <span className="text-slate-400">Role:</span> {toon.role}
                         </div>
-                        <div>
-                          <span className="text-slate-400">Member:</span> {getMemberName(toon.member_id)}
-                        </div>
                       </div>
+                      {toon.team_ids && toon.team_ids.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-slate-400 text-sm">Teams:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {toon.team_ids.map(teamId => {
+                              const team = teams.find(t => t.id === teamId);
+                              return team ? (
+                                <span key={teamId} className="bg-blue-500/20 text-blue-300 text-xs px-2 py-1 rounded-full">
+                                  {team.name}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button

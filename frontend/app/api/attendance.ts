@@ -44,11 +44,7 @@ export class AttendanceService {
     return response.data;
   }
 
-  // Get attendance by member ID
-  static async getAttendanceByMember(memberId: number): Promise<Attendance[]> {
-    const response = await apiClient.get<Attendance[]>(`/attendance/member/${memberId}`);
-    return response.data;
-  }
+
 
   // Get attendance by team ID
   static async getAttendanceByTeam(teamId: number): Promise<Attendance[]> {
@@ -97,11 +93,7 @@ export class AttendanceService {
     return response.data;
   }
 
-  // Get attendance statistics for member
-  static async getMemberStats(memberId: number): Promise<AttendanceStats> {
-    const response = await apiClient.get<AttendanceStats>(`/attendance/stats/member/${memberId}`);
-    return response.data;
-  }
+
 
   // Get attendance statistics for team
   static async getTeamStats(teamId: number): Promise<AttendanceStats> {

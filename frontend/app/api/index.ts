@@ -2,7 +2,6 @@
 export { AuthService } from './auth';
 export { GuildService } from './guilds';
 export { TeamService } from './teams';
-export { MemberService } from './members';
 export { ToonService } from './toons';
 export { RaidService } from './raids';
 export { ScenarioService } from './scenarios';

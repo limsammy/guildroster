@@ -130,18 +130,18 @@ export default function Settings() {
                 </Link>
               </div>
 
-              {/* Members */}
+              {/* Characters */}
               <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4 flex flex-col justify-between">
                 <div>
-                  <div className="text-3xl mb-3">👤</div>
-                  <h3 className="font-semibold text-white mb-2">Members</h3>
+                  <div className="text-3xl mb-3">⚔️</div>
+                  <h3 className="font-semibold text-white mb-2">Characters</h3>
                   <p className="text-slate-300 text-sm">
-                    Manage guild members and their information.
+                    Manage character profiles and their team assignments.
                   </p>
                 </div>
-                <Link to="/members" className="mt-4">
+                <Link to="/toons" className="mt-4">
                   <Button variant="primary" className="w-full">
-                    Manage Members
+                    Manage Characters
                   </Button>
                 </Link>
               </div>

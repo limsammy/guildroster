@@ -180,7 +180,7 @@ describe('Settings', () => {
     expect(screen.getByText('Manage scenarios and game content')).toBeInTheDocument();
     expect(screen.getByText('Scenarios')).toBeInTheDocument();
     expect(screen.getByText('Teams')).toBeInTheDocument();
-    expect(screen.getByText('Members')).toBeInTheDocument();
+            expect(screen.getByText('Characters')).toBeInTheDocument();
   });
 
   it('should display system information section', () => {
@@ -279,7 +279,7 @@ describe('Settings', () => {
     expect(screen.getByText('Manage Guilds')).toBeInTheDocument();
     expect(screen.getByText('Manage Scenarios')).toBeInTheDocument();
     expect(screen.getByText('Manage Teams')).toBeInTheDocument();
-    expect(screen.getByText('Manage Members')).toBeInTheDocument();
+            expect(screen.getByText('Manage Characters')).toBeInTheDocument();
     expect(screen.getByText('Manage Toons')).toBeInTheDocument();
   });
 

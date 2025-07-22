@@ -38,7 +38,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [processingLoading, setProcessingLoading] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showUnknownParticipantsModal, setShowUnknownParticipantsModal] = useState(false);
-  const [toonAssignments, setToonAssignments] = useState<Array<{ participant: UnknownParticipant; memberId: number; toonData: ToonCreate }>>([]);
+  const [toonAssignments, setToonAssignments] = useState<Array<{ participant: UnknownParticipant; toonData: ToonCreate }>>([]);
 
   const noTeams = teams.length === 0;
   const noScenarios = scenarios.length === 0;
@@ -125,7 +125,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     }
   };
 
-  const handleUnknownParticipantsComplete = (assignments: Array<{ participant: UnknownParticipant; memberId: number; toonData: ToonCreate }>) => {
+  const handleUnknownParticipantsComplete = (assignments: Array<{ participant: UnknownParticipant; toonData: ToonCreate }>) => {
     setToonAssignments(assignments);
     setShowUnknownParticipantsModal(false);
     // Return to results step
@@ -150,7 +150,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
           <h2 className="text-xl font-bold text-white mb-2">Processing WarcraftLogs Report</h2>
-          <p className="text-slate-300">Fetching participant data and matching to team members...</p>
+          <p className="text-slate-300">Fetching participant data and matching to team characters...</p>
         </div>
       </Card>
     );

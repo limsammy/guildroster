@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { Button, Card } from './';
-import type { Toon, Member, Team } from '../../api/types';
+import type { Toon, Team } from '../../api/types';
 
 interface ToonFormProps {
   mode: 'add' | 'edit';
   initialValues?: Partial<Toon>;
-  members: Member[];
   teams: Team[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { username: string; class: string; role: string; is_main: boolean; member_id: number; team_ids?: number[] }) => void;
+  onSubmit: (values: { username: string; class: string; role: string; is_main: boolean; team_ids?: number[] }) => void;
   onCancel: () => void;
-  hideMemberSelect?: boolean; // New prop to hide member selection
 }
 
 // WoW classes and roles from backend
@@ -34,32 +32,28 @@ const WOW_ROLES = ['DPS', 'Healer', 'Tank'];
 export const ToonForm: React.FC<ToonFormProps> = ({
   mode,
   initialValues = {},
-  members,
   teams,
   loading = false,
   error = null,
   onSubmit,
   onCancel,
-  hideMemberSelect = false,
 }) => {
   const [username, setUsername] = useState(initialValues.username || '');
   const [class_, setClass] = useState(initialValues.class || '');
   const [role, setRole] = useState(initialValues.role || '');
   const [isMain, setIsMain] = useState(initialValues.is_main ?? false);
-  const [memberId, setMemberId] = useState<number | ''>(initialValues.member_id ?? '');
   const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>(initialValues.team_ids || []);
   const [showErrors, setShowErrors] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!username.trim() || !class_ || !role || (!hideMemberSelect && !memberId)) return;
+    if (!username.trim() || !class_ || !role) return;
     onSubmit({
       username: username.trim(),
       class: class_,
       role,
       is_main: isMain,
-      member_id: Number(memberId),
       team_ids: selectedTeamIds.length > 0 ? selectedTeamIds : undefined,
     });
   };
@@ -67,7 +61,6 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   const usernameError = showErrors && !username.trim() ? 'Username is required' : '';
   const classError = showErrors && !class_ ? 'Class is required' : '';
   const roleError = showErrors && !role ? 'Role is required' : '';
-  const memberError = showErrors && !hideMemberSelect && !memberId ? 'Member is required' : '';
 
   return (
     <Card variant="elevated" className="max-w-md mx-auto p-6">
@@ -131,26 +124,6 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           </select>
           {roleError && <div className="text-red-400 text-xs mt-1">{roleError}</div>}
         </div>
-        {!hideMemberSelect && (
-          <div className="mb-4">
-            <label htmlFor="toon-member" className="block text-sm font-medium text-slate-300 mb-2">
-              Member
-            </label>
-            <select
-              id="toon-member"
-              value={memberId}
-              onChange={e => setMemberId(e.target.value ? Number(e.target.value) : '')}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              disabled={loading}
-            >
-              <option value="">Select a member</option>
-              {members.map(member => (
-                <option key={member.id} value={member.id}>{member.display_name}</option>
-              ))}
-            </select>
-            {memberError && <div className="text-red-400 text-xs mt-1">{memberError}</div>}
-          </div>
-        )}
         <div className="mb-4">
           <label className="block text-sm font-medium text-slate-300 mb-2">
             Teams (Optional)
@@ -198,7 +171,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
           <Button 
             type="submit" 
             variant="primary" 
-            disabled={loading || !username.trim() || !class_ || !role || (!hideMemberSelect && memberId === '')} 
+            disabled={loading || !username.trim() || !class_ || !role} 
             data-testid="toon-form-submit"
           >
             {loading ? (mode === 'add' ? 'Adding...' : 'Saving...') : (mode === 'add' ? 'Add Toon' : 'Save Changes')}
