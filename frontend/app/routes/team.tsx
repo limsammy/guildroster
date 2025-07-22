@@ -96,7 +96,10 @@ export default function TeamView() {
         return 'bg-blue-600 text-white';
       case 'Healer':
         return 'bg-green-500 text-white';
-      case 'DPS':
+      case 'Melee DPS':
+        return 'bg-red-500 text-white';
+      case 'Ranged DPS':
+        return 'bg-purple-500 text-white';
       default:
         return 'bg-amber-500 text-white';
     }
@@ -129,43 +132,62 @@ export default function TeamView() {
   return (
     <div className="min-h-screen bg-slate-900">
       <Container>
-        <div className="py-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="py-4">
+          {/* Compact Header */}
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">{team.name}</h1>
-              <p className="text-slate-400">Team ID: {team.id}</p>
+              <h1 className="text-2xl font-bold text-white">{team.name}</h1>
+              <p className="text-slate-400 text-sm">Team ID: {team.id}</p>
               {typeof (team as any).description === 'string' && (team as any).description && (
-                <p className="text-slate-300 mt-2">{(team as any).description}</p>
+                <p className="text-slate-300 text-sm mt-1">{(team as any).description}</p>
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => navigate(-1)}>Back to Teams</Button>
-              <Button variant="primary" onClick={() => setShowToonForm(true)}>Add Character</Button>
+              <Button size="sm" variant="secondary" onClick={() => navigate(-1)}>Back</Button>
+              <Button size="sm" variant="primary" onClick={() => setShowToonForm(true)}>Add Character</Button>
             </div>
           </div>
 
-          <Card variant="elevated" className="p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">Characters in this Team</h2>
+          {/* Compact Character List */}
+          <Card variant="elevated" className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-white">Characters ({toons.length})</h2>
+            </div>
             {toons.length === 0 ? (
-              <div className="text-slate-400 text-center py-8">No characters assigned to this team yet.</div>
+              <div className="text-slate-400 text-center py-6">No characters assigned to this team yet.</div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {toons.map(toon => (
-                  <div key={toon.id} className="flex flex-col md:flex-row md:items-center justify-between bg-slate-800 rounded-lg border border-slate-700/50 p-4">
-                    <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4">
-                      <div>
-                        <div className={`text-lg font-bold ${getClassColor(toon.class)}`}>{toon.username}</div>
-                        <div className="text-slate-300 text-sm">Class: {toon.class}</div>
+                  <div key={toon.id} className="bg-slate-800 rounded-lg border border-slate-700/50 p-3 hover:bg-slate-750 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-base font-bold truncate ${getClassColor(toon.class)}`} title={toon.username}>
+                          {toon.username}
+                        </div>
+                        <div className="text-slate-300 text-xs">Class: {toon.class}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClass(toon.role)}`}>{toon.role}</span>
+                      <div className="flex items-center gap-1 ml-2">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getRoleBadgeClass(toon.role)}`}>
+                          {toon.role}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-4 md:mt-0">
-                      <Button size="sm" variant="secondary" onClick={() => setEditingToon(toon)}>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        onClick={() => setEditingToon(toon)}
+                        className="text-xs px-2 py-1"
+                      >
                         Edit
                       </Button>
-                      <Button size="sm" variant="danger" onClick={() => handleDeleteToon(toon.id)} disabled={deleteLoading}>
+                      <Button 
+                        size="sm" 
+                        variant="danger" 
+                        onClick={() => handleDeleteToon(toon.id)} 
+                        disabled={deleteLoading}
+                        className="text-xs px-2 py-1"
+                      >
                         Delete
                       </Button>
                     </div>
