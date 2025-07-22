@@ -32,6 +32,8 @@ export default function Attendance() {
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [raidFilter, setRaidFilter] = useState<number[]>([]);
+  const [raidFilterExpanded, setRaidFilterExpanded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,7 +66,8 @@ export default function Attendance() {
       id: raid.id,
       scheduled_at: raid.scheduled_at,
       team_id: raid.team_id,
-      scenario_id: raid.scenario_id,
+      // scenario_id: raid.scenario_id, // Remove this line, not present in Raid type
+      // Optionally add scenario_name, scenario_difficulty, scenario_size if needed
     } : null;
   };
 
@@ -221,8 +224,10 @@ export default function Attendance() {
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'present' && record.is_present) ||
       (statusFilter === 'absent' && !record.is_present);
+
+    const matchesRaid = raidFilter.length === 0 || raidFilter.includes(record.raid_id);
     
-    return matchesSearch && matchesDate && matchesTeam && matchesStatus;
+    return matchesSearch && matchesDate && matchesTeam && matchesStatus && matchesRaid;
   });
 
   // Sort attendance by raid date (newest first)
@@ -231,6 +236,13 @@ export default function Attendance() {
     const raidB = getRaidInfo(b.raid_id);
     if (!raidA || !raidB) return 0;
     return new Date(raidB.scheduled_at).getTime() - new Date(raidA.scheduled_at).getTime();
+  });
+
+  // Group attendance records by raid
+  const attendanceByRaid: Record<number, Attendance[]> = {};
+  sortedAttendance.forEach(record => {
+    if (!attendanceByRaid[record.raid_id]) attendanceByRaid[record.raid_id] = [];
+    attendanceByRaid[record.raid_id].push(record);
   });
 
   // Calculate quick statistics
@@ -313,41 +325,40 @@ export default function Attendance() {
 
           {/* Search and Filter Controls */}
           <Card variant="elevated" className="p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div>
-                <label htmlFor="search" className="block text-sm font-medium text-slate-300 mb-2">
-                  Search
-                </label>
+            <div className="hidden md:grid md:grid-cols-7 gap-4 mb-1">
+              <div><label htmlFor="search" className="block text-sm font-medium text-slate-300">Search</label></div>
+              <div><label htmlFor="date-filter" className="block text-sm font-medium text-slate-300">Date</label></div>
+              <div><label htmlFor="team-filter" className="block text-sm font-medium text-slate-300">Team</label></div>
+              <div><label htmlFor="status-filter" className="block text-sm font-medium text-slate-300">Status</label></div>
+              <div className="col-span-2"><label htmlFor="raid-filter" className="block text-sm font-medium text-slate-300">Raids</label></div>
+              <div></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-start">
+              <div className="flex flex-col">
                 <input
                   id="search"
                   type="text"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full px-3 py-2 min-h-[40px] bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Search by ID, toon, or class..."
                 />
               </div>
-              <div>
-                <label htmlFor="date-filter" className="block text-sm font-medium text-slate-300 mb-2">
-                  Date
-                </label>
+              <div className="flex flex-col">
                 <input
                   id="date-filter"
                   type="date"
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full px-2 py-2 min-h-[40px] bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label htmlFor="team-filter" className="block text-sm font-medium text-slate-300 mb-2">
-                  Team
-                </label>
+              <div className="flex flex-col">
                 <select
                   id="team-filter"
                   value={teamFilter}
                   onChange={e => setTeamFilter(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full px-2 py-2 min-h-[40px] bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
                   <option value="">All Teams</option>
                   {teams.map(team => (
@@ -355,31 +366,67 @@ export default function Attendance() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="status-filter" className="block text-sm font-medium text-slate-300 mb-2">
-                  Status
-                </label>
+              <div className="flex flex-col">
                 <select
                   id="status-filter"
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value as 'all' | 'present' | 'absent')}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full px-2 py-2 min-h-[40px] bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
                   <option value="all">All</option>
                   <option value="present">Present</option>
                   <option value="absent">Absent</option>
                 </select>
               </div>
-              <div className="flex items-end">
+              <div className="col-span-2 flex flex-col">
+                <div className="flex flex-row gap-2">
+                  <select
+                    id="raid-filter"
+                    multiple
+                    value={raidFilter.map(String)}
+                    onChange={e => {
+                      const selected = Array.from(e.target.selectedOptions, option => Number(option.value));
+                      setRaidFilter(selected);
+                    }}
+                    className={`w-full px-3 py-2 min-h-[40px] bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${raidFilterExpanded ? 'h-32' : 'h-10'} ${raidFilterExpanded ? 'whitespace-normal' : 'overflow-hidden whitespace-nowrap text-ellipsis'}`}
+                    style={raidFilterExpanded ? {} : { minHeight: '2.5rem' }}
+                  >
+                    {raids.map(raid => (
+                      <option key={raid.id} value={raid.id}
+                        className={raidFilterExpanded ? '' : 'truncate'}
+                        style={raidFilterExpanded ? {} : { maxWidth: '100%' }}
+                      >
+                        Raid #{raid.id} - {new Date(raid.scheduled_at).toLocaleString()} ({raid.scenario_name})
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="shrink-0 min-h-[40px] ml-2"
+                    onClick={() => setRaidFilterExpanded(expanded => !expanded)}
+                    aria-label={raidFilterExpanded ? 'Collapse raid filter' : 'Expand raid filter'}
+                  >
+                    {raidFilterExpanded ? 'Collapse' : 'Expand'}
+                  </Button>
+                </div>
+                <div className="text-xs text-slate-400 mt-1 text-left">
+                  Hold Ctrl/Cmd to select multiple
+                </div>
+              </div>
+              <div className="flex items-center h-full">
                 <Button 
-                  variant="secondary" 
+                  variant="danger" 
+                  size="sm"
                   onClick={() => {
                     setSearchTerm('');
                     setDateFilter('');
                     setTeamFilter('');
                     setStatusFilter('all');
+                    setRaidFilter([]);
                   }}
-                  className="w-full"
+                  className="w-full px-2 py-1 text-xs min-h-[40px]"
                 >
                   Clear Filters
                 </Button>
@@ -400,88 +447,92 @@ export default function Attendance() {
               <div className="text-center py-12">
                 <div className="text-slate-400 text-6xl mb-4">📊</div>
                 <h3 className="text-xl font-semibold text-white mb-2">
-                  {searchTerm || dateFilter || teamFilter !== '' || statusFilter !== 'all' ? 'No records found' : 'No attendance records yet'}
+                  {searchTerm || dateFilter || teamFilter !== '' || statusFilter !== 'all' || raidFilter.length > 0 ? 'No records found' : 'No attendance records yet'}
                 </h3>
                 <p className="text-slate-400 mb-6">
-                  {searchTerm || dateFilter || teamFilter !== '' || statusFilter !== 'all' 
+                  {searchTerm || dateFilter || teamFilter !== '' || statusFilter !== 'all' || raidFilter.length > 0 
                     ? 'Try adjusting your search terms or filters' 
                     : 'Get started by adding your first attendance record'
                   }
                 </p>
-                {!searchTerm && !dateFilter && teamFilter === '' && statusFilter === 'all' && (
+                {!searchTerm && !dateFilter && teamFilter === '' && statusFilter === 'all' && raidFilter.length === 0 && (
                   <Button variant="primary" onClick={openAddForm}>
                     Add First Record
                   </Button>
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
-                {sortedAttendance.map(record => {
-                  const raidInfo = getRaidInfo(record.raid_id);
-                  const toonInfo = getToonInfo(record.toon_id);
-                  
-                  if (!raidInfo || !toonInfo) return null;
-
+              <div className="space-y-8">
+                {Object.entries(attendanceByRaid).map(([raidId, records]) => {
+                  const raidInfo = getRaidInfo(Number(raidId));
                   return (
-                    <div
-                      key={record.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                        record.is_present
-                          ? 'bg-slate-800/50 border-green-600/30'
-                          : 'bg-slate-800/30 border-red-600/30'
-                      }`}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4 mb-2">
-                          <span className="text-white font-medium">Record #{record.id}</span>
-                          <span className={`px-2 py-1 text-xs rounded ${
-                            record.is_present 
-                              ? 'bg-green-600/20 text-green-400' 
-                              : 'bg-red-600/20 text-red-400'
-                          }`}>
-                            {record.is_present ? 'Present' : 'Absent'}
-                          </span>
+                    <Card key={raidId} variant="bordered" className="p-4">
+                      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div className="font-semibold text-lg text-amber-400">
+                          Raid #{raidInfo?.id} - {raidInfo ? formatDate(raidInfo.scheduled_at) : ''}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-slate-400">
-                          <div>
-                            <span className="font-medium text-slate-300">Raid:</span>
-                            <br />
-                            Raid #{raidInfo.id} - {formatDate(raidInfo.scheduled_at)}
-                          </div>
-                          <div>
-                            <span className="font-medium text-slate-300">Toon:</span>
-                            <br />
-                            {toonInfo.username} ({toonInfo.class} - {toonInfo.role})
-                          </div>
-                          <div>
-                            <span className="font-medium text-slate-300">Team:</span>
-                            <br />
-                            {getTeamName(raidInfo.team_id)}
-                          </div>
-                          <div>
-                            <span className="font-medium text-slate-300">Notes:</span>
-                            <br />
-                            {record.notes || 'No notes'}
-                          </div>
+                        <div className="text-sm text-slate-400 mt-1 md:mt-0">
+                          Team: {getTeamName(raidInfo?.team_id ?? 0)}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openEditForm(record)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDeleteAttendance(record.id)}
-                        >
-                          Delete
-                        </Button>
+                      <div className="space-y-4">
+                        {records.map(record => {
+                          const toonInfo = getToonInfo(record.toon_id);
+                          if (!raidInfo || !toonInfo) return null;
+                          return (
+                            <div
+                              key={record.id}
+                              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                                record.is_present
+                                  ? 'bg-slate-800/50 border-green-600/30'
+                                  : 'bg-slate-800/30 border-red-600/30'
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-4 mb-2">
+                                  <span className="text-white font-medium">Record #{record.id}</span>
+                                  <span className={`px-2 py-1 text-xs rounded ${
+                                    record.is_present 
+                                      ? 'bg-green-600/20 text-green-400' 
+                                      : 'bg-red-600/20 text-red-400'
+                                  }`}>
+                                    {record.is_present ? 'Present' : 'Absent'}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-400">
+                                  <div>
+                                    <span className="font-medium text-slate-300">Toon:</span>
+                                    <br />
+                                    {toonInfo.username} ({toonInfo.class} - {toonInfo.role})
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-slate-300">Notes:</span>
+                                    <br />
+                                    {record.notes || 'No notes'}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2 ml-4">
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => openEditForm(record)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="danger"
+                                  size="sm"
+                                  onClick={() => handleDeleteAttendance(record.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
