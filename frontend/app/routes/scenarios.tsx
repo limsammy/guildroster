@@ -4,6 +4,7 @@ import { Button, Card, Container, ScenarioForm } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { ScenarioService } from '../api/scenarios';
 import type { Scenario } from '../api/types';
+import { exportJson } from '../utils/exportJson';
 
 export function meta() {
   return [
@@ -144,6 +145,9 @@ export default function Scenarios() {
                 <p className="text-slate-300 mt-1">Manage your scenarios and their settings</p>
               </div>
               <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => exportJson(scenarios, 'scenarios.json')}>
+                  Export as JSON
+                </Button>
                 <Link to="/dashboard">
                   <Button variant="secondary">Dashboard</Button>
                 </Link>

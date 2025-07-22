@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGuild } from '../contexts/GuildContext';
 import { GuildService } from '../api/guilds';
 import type { Guild } from '../api/types';
+import { exportJson } from '../utils/exportJson';
 
 export function meta() {
   return [
@@ -153,6 +154,9 @@ export default function Guilds() {
                 <p className="text-slate-300 mt-1">Manage your guilds and their settings</p>
               </div>
               <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => exportJson(guilds, 'guilds.json')}>
+                  Export as JSON
+                </Button>
                 <Link to="/dashboard">
                   <Button variant="secondary">Dashboard</Button>
                 </Link>

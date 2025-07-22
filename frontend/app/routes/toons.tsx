@@ -4,6 +4,7 @@ import { Container, Button, Card } from '../components/ui';
 import { ToonForm } from '../components/ui/ToonForm';
 import { ToonService, TeamService } from '../api';
 import type { Toon, ToonCreate, ToonUpdate, Team } from '../api/types';
+import { exportJson } from '../utils/exportJson';
 
 export default function Toons() {
   const [toons, setToons] = useState<Toon[]>([]);
@@ -145,6 +146,9 @@ export default function Toons() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button variant="secondary" onClick={() => exportJson(toons, 'toons.json')}>
+              Export as JSON
+            </Button>
             <Link to="/dashboard">
               <Button variant="secondary">Back to Dashboard</Button>
             </Link>

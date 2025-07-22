@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { TeamService } from '../api/teams';
 import { GuildService } from '../api/guilds';
 import type { Team, Guild } from '../api/types';
+import { exportJson } from '../utils/exportJson';
 
 export function meta() {
   return [
@@ -165,6 +166,9 @@ export default function Teams() {
                 <p className="text-slate-300 mt-1">Manage your teams and their assignments</p>
               </div>
               <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => exportJson(teams, 'teams.json')}>
+                  Export as JSON
+                </Button>
                 <Link to="/dashboard">
                   <Button variant="secondary">Dashboard</Button>
                 </Link>

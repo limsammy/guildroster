@@ -9,6 +9,7 @@ import { TeamService } from '../api/teams';
 import { ScenarioService } from '../api/scenarios';
 import type { Team } from '../api/types';
 import type { Scenario } from '../api/types';
+import { exportJson } from '../utils/exportJson';
 
 export function meta() {
   return [
@@ -245,6 +246,9 @@ export default function Raids() {
                 <p className="text-slate-300 mt-1">Manage your raids and their scheduling</p>
               </div>
               <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => exportJson(raids, 'raids.json')}>
+                  Export as JSON
+                </Button>
                 <Link to="/dashboard">
                   <Button variant="secondary">Dashboard</Button>
                 </Link>
