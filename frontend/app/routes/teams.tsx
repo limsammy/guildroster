@@ -284,6 +284,11 @@ export default function Teams() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <Link to={`/teams/${team.id}`}>
+                          <Button size="sm" variant="ghost">
+                            View
+                          </Button>
+                        </Link>
                         <Button 
                           size="sm" 
                           variant="secondary"
