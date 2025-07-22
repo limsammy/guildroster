@@ -7,6 +7,7 @@ interface WarcraftLogsResultsProps {
   onProceed: () => void;
   onCancel: () => void;
   loading?: boolean;
+  onAddMissingCharacter?: (matched: any) => void;
 }
 
 export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
@@ -14,6 +15,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   onProceed,
   onCancel,
   loading = false,
+  onAddMissingCharacter,
 }) => {
   const getClassColor = (className: string) => {
     const colors: Record<string, string> = {
@@ -110,12 +112,23 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
                   <div className="flex-1">
                     <div className="text-white font-medium">
                       {matched.toon.username}
-                      
                     </div>
                     <div className={`text-sm ${getClassColor(matched.toon.class)}`}>
                       {matched.toon.class} - {matched.toon.role}
                     </div>
                   </div>
+                  {/* Add button for absent characters */}
+                  {!matched.is_present && onAddMissingCharacter && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      className="ml-2"
+                      onClick={() => onAddMissingCharacter(matched)}
+                    >
+                      Add
+                    </Button>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className={`font-medium ${matched.is_present ? 'text-green-400' : 'text-red-400'}`}>

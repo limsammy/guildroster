@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Button, Card, WarcraftLogsResults } from './';
 import type { Team, Scenario, ScenarioVariation, WarcraftLogsProcessingResult } from '../../api/types';
 import { RaidService } from '../../api/raids';
+import { ToonForm } from './ToonForm';
+import { TeamService } from '../../api/teams';
+import { ToonService } from '../../api/toons';
 
 interface RaidFormProps {
   teams: Team[];
@@ -43,6 +46,13 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [allVariations, setAllVariations] = useState<ScenarioVariation[]>([]);
   const [variationsLoading, setVariationsLoading] = useState(false);
 
+  const [showToonForm, setShowToonForm] = useState(false);
+  const [toonFormLoading, setToonFormLoading] = useState(false);
+  const [toonFormError, setToonFormError] = useState<string | null>(null);
+  const [toonFormInitialValues, setToonFormInitialValues] = useState<any>(null);
+  const [allTeams, setAllTeams] = useState<Team[]>(teams);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const noTeams = teams.length === 0;
   const noScenarios = scenarios.length === 0;
 
@@ -64,6 +74,13 @@ export const RaidForm: React.FC<RaidFormProps> = ({
 
     loadVariations();
   }, [scenarios]);
+
+  // Fetch all teams if not already loaded
+  useEffect(() => {
+    if (allTeams.length === 0) {
+      TeamService.getTeams().then(setAllTeams);
+    }
+  }, [allTeams.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +157,40 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     setProcessingError(null);
   };
 
+  const handleAddMissingCharacter = (matched: any) => {
+    setToonFormInitialValues({
+      username: matched.participant.name,
+      class: matched.participant.class,
+      role: matched.participant.role,
+      team_ids: teamId ? [Number(teamId)] : [],
+    });
+    setShowToonForm(true);
+  };
+
+  const handleToonFormSubmit = async (values: any) => {
+    setToonFormLoading(true);
+    setToonFormError(null);
+    try {
+      await ToonService.createToon(values);
+      setShowToonForm(false);
+      setSuccessMessage('Character added!');
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+      // Re-run WarcraftLogs processing to refresh results
+      await processWarcraftLogs();
+    } catch (err: any) {
+      setToonFormError(err.response?.data?.detail || 'Failed to create toon');
+    } finally {
+      setToonFormLoading(false);
+    }
+  };
+
+  const handleToonFormCancel = () => {
+    setShowToonForm(false);
+    setToonFormInitialValues(null);
+    setToonFormError(null);
+  };
+
   // Show processing step
   if (currentStep === 'processing') {
     return (
@@ -156,12 +207,37 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   // Show results step
   if (currentStep === 'results' && processingResult) {
     return (
-      <WarcraftLogsResults
-        result={processingResult}
-        onProceed={handleProceedWithRaid}
-        onCancel={handleBackToForm}
-        loading={processingLoading}
-      />
+      <>
+        {successMessage && (
+          <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+              {successMessage}
+            </div>
+          </div>
+        )}
+        <WarcraftLogsResults
+          result={processingResult}
+          onProceed={handleProceedWithRaid}
+          onCancel={handleBackToForm}
+          loading={processingLoading}
+          onAddMissingCharacter={handleAddMissingCharacter}
+        />
+        {showToonForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="w-full max-w-md">
+              <ToonForm
+                mode="add"
+                teams={allTeams}
+                initialValues={toonFormInitialValues}
+                loading={toonFormLoading}
+                error={toonFormError}
+                onSubmit={handleToonFormSubmit}
+                onCancel={handleToonFormCancel}
+              />
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
