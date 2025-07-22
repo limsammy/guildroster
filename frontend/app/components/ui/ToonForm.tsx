@@ -27,7 +27,7 @@ const WOW_CLASSES = [
   'Shaman',
 ];
 
-const WOW_ROLES = ['DPS', 'Healer', 'Tank'];
+const WOW_ROLES = ['Melee DPS', 'Ranged DPS', 'Healer', 'Tank'];
 
 export const ToonForm: React.FC<ToonFormProps> = ({
   mode,

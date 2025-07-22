@@ -30,7 +30,7 @@ WOW_CLASSES = [
 ]
 
 # Allowed roles
-WOW_ROLES = ["DPS", "Healer", "Tank"]
+WOW_ROLES = ["Melee DPS", "Ranged DPS", "Healer", "Tank"]
 
 
 class Toon(Base):

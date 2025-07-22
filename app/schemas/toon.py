@@ -15,7 +15,7 @@ WOW_CLASSES = [
     "Priest",
     "Shaman",
 ]
-WOW_ROLES = ["DPS", "Healer", "Tank"]
+WOW_ROLES = ["Melee DPS", "Ranged DPS", "Healer", "Tank"]
 
 
 class ToonBase(BaseModel):
@@ -61,10 +61,12 @@ class ToonUpdate(BaseModel):
 
 class ToonResponse(BaseModel):
     id: int
-    member_id: int
+    username: str
+    class_: str = Field(..., alias="class")
+    role: str
+    team_ids: List[int]
     created_at: datetime
     updated_at: datetime
-    team_ids: List[int] = []
 
     model_config = ConfigDict(
         from_attributes=True,
