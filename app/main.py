@@ -54,6 +54,12 @@ def create_app() -> FastAPI:
             "http://127.0.0.1:3000",  # Alternative localhost
             "http://localhost",  # Port 80 (default HTTP)
             "http://127.0.0.1",  # Port 80 (default HTTP)
+            "http://159.223.132.130",  # Production IP (HTTP)
+            "http://guildroster.io",  # Production domain (root, HTTP)
+            "http://www.guildroster.io",  # Production domain (www, HTTP)
+            "https://159.223.132.130",  # Production IP (HTTPS)
+            "https://guildroster.io",  # Production domain (root, HTTPS)
+            "https://www.guildroster.io",  # Production domain (www, HTTPS)
         ],
         allow_credentials=True,
         allow_methods=["*"],
