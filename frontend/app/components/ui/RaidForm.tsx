@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, WarcraftLogsResults, UnknownParticipantsModal } from './';
-import type { Team, Scenario, WarcraftLogsProcessingResult, UnknownParticipant, ToonCreate } from '../../api/types';
+import { Button, Card, WarcraftLogsResults } from './';
+import type { Team, Scenario, WarcraftLogsProcessingResult } from '../../api/types';
 import { RaidService } from '../../api/raids';
-import { ToonService } from '../../api/toons';
 
 interface RaidFormProps {
   teams: Team[];
@@ -15,7 +14,7 @@ interface RaidFormProps {
   isEditing?: boolean;
 }
 
-type FormStep = 'form' | 'processing' | 'results' | 'unknown-participants';
+type FormStep = 'form' | 'processing' | 'results';
 
 export const RaidForm: React.FC<RaidFormProps> = ({
   teams,
@@ -37,8 +36,6 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [processingResult, setProcessingResult] = useState<WarcraftLogsProcessingResult | null>(null);
   const [processingLoading, setProcessingLoading] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
-  const [showUnknownParticipantsModal, setShowUnknownParticipantsModal] = useState(false);
-  const [toonAssignments, setToonAssignments] = useState<Array<{ participant: UnknownParticipant; toonData: ToonCreate }>>([]);
 
   const noTeams = teams.length === 0;
   const noScenarios = scenarios.length === 0;
@@ -95,13 +92,6 @@ export const RaidForm: React.FC<RaidFormProps> = ({
 
     setProcessingLoading(true);
     try {
-      // Create toons for unknown participants if any were assigned
-      if (toonAssignments.length > 0) {
-        for (const assignment of toonAssignments) {
-          await ToonService.createToon(assignment.toonData);
-        }
-      }
-
       // Submit the raid creation
       onSubmit({
         warcraftlogs_url: warcraftlogsUrl.trim(),
@@ -125,18 +115,10 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     }
   };
 
-  const handleUnknownParticipantsComplete = (assignments: Array<{ participant: UnknownParticipant; toonData: ToonCreate }>) => {
-    setToonAssignments(assignments);
-    setShowUnknownParticipantsModal(false);
-    // Return to results step
-    setCurrentStep('results');
-  };
-
   const handleBackToForm = () => {
     setCurrentStep('form');
     setProcessingResult(null);
     setProcessingError(null);
-    setToonAssignments([]);
   };
 
   const urlError = showErrors && warcraftlogsUrl.trim() && !warcraftlogsUrl.includes('warcraftlogs.com/reports/') ? 'Invalid WarcraftLogs URL format' : '';
@@ -161,24 +143,9 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     return (
       <WarcraftLogsResults
         result={processingResult}
-        onHandleUnknownParticipants={() => setShowUnknownParticipantsModal(true)}
         onProceed={handleProceedWithRaid}
         onCancel={handleBackToForm}
         loading={processingLoading}
-      />
-    );
-  }
-
-  // Show unknown participants modal
-  if (showUnknownParticipantsModal && processingResult) {
-    return (
-      <UnknownParticipantsModal
-        unknownParticipants={processingResult.unknown_participants}
-        teamId={Number(teamId)}
-        guildId={teams.find(t => t.id === teamId)?.guild_id || 0}
-        onComplete={handleUnknownParticipantsComplete}
-        onCancel={() => setShowUnknownParticipantsModal(false)}
-        isOpen={showUnknownParticipantsModal}
       />
     );
   }

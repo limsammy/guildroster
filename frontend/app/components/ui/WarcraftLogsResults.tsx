@@ -1,10 +1,9 @@
 import React from 'react';
 import { Button, Card } from './';
-import type { WarcraftLogsProcessingResult, UnknownParticipant } from '../../api/types';
+import type { WarcraftLogsProcessingResult } from '../../api/types';
 
 interface WarcraftLogsResultsProps {
   result: WarcraftLogsProcessingResult;
-  onHandleUnknownParticipants: () => void;
   onProceed: () => void;
   onCancel: () => void;
   loading?: boolean;
@@ -12,7 +11,6 @@ interface WarcraftLogsResultsProps {
 
 export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   result,
-  onHandleUnknownParticipants,
   onProceed,
   onCancel,
   loading = false,
@@ -69,7 +67,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 flex-shrink-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 flex-shrink-0">
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-green-400">{presentCount}</div>
             <div className="text-sm text-green-300">Present</div>
@@ -77,10 +75,6 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-red-400">{absentCount}</div>
             <div className="text-sm text-red-300">Absent</div>
-          </div>
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-            <div className="text-2xl font-bold text-blue-400">{result.unknown_participants.length}</div>
-            <div className="text-sm text-blue-300">Unknown</div>
           </div>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-amber-400">{result.participants.length}</div>
@@ -137,36 +131,17 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
           )}
         </div>
 
-        {/* Unknown Participants */}
+        {/* Unknown Participants Notice */}
         {result.unknown_participants.length > 0 && (
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-white mb-3">
               Unknown Participants ({result.unknown_participants.length})
             </h3>
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
               <p className="text-yellow-300 text-sm">
-                These participants were found in the report but are not in your team. 
-                You can assign them to existing characters or create new characters.
+                {result.unknown_participants.length} participants were found in the report but are not in your team. 
+                These will be skipped during attendance processing. You can add them as characters later if needed.
               </p>
-            </div>
-            <div className="space-y-2">
-              {result.unknown_participants.map((unknown, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-600">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <div className="text-white font-medium">
-                        {unknown.participant.name}
-                      </div>
-                      <div className={`text-sm ${getClassColor(unknown.participant.class)}`}>
-                        {unknown.participant.class}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-yellow-400 text-sm">
-                    Needs assignment
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -177,11 +152,6 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        {result.unknown_participants.length > 0 && (
-          <Button type="button" variant="secondary" onClick={onHandleUnknownParticipants} disabled={loading}>
-            Handle Unknown Participants
-          </Button>
-        )}
         <Button type="button" variant="primary" onClick={onProceed} disabled={loading}>
           {loading ? 'Creating Raid...' : 'Create Raid with Attendance'}
         </Button>
