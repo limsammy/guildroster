@@ -65,11 +65,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://159.223.132.130:8000"
     container_name: guildroster-frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=production
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
+      - VITE_API_URL=http://159.223.132.130:8000
     ports:
       - "80:3000"
     depends_on:

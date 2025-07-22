@@ -60,6 +60,7 @@ def create_app() -> FastAPI:
             "https://159.223.132.130",  # Production IP (HTTPS)
             "https://guildroster.io",  # Production domain (root, HTTPS)
             "https://www.guildroster.io",  # Production domain (www, HTTPS)
+            "http://159.223.132.130:3000",
         ],
         allow_credentials=True,
         allow_methods=["*"],
