@@ -83,8 +83,7 @@ pytest
 - User management with authentication-ready structure
 - **Guild management** - Full CRUD operations with role-based access control
 - **Team management** - Full CRUD operations with role-based access control
-- **Member management** - Guild member profiles with team assignments
-- **Toon management** - Character profiles for members with class, role, main/alt, and team assignment
+- **Character management** - Character profiles with class, role, and team assignments
 - **Raid management** - Raid scheduling and tracking with difficulty, size, and team assignments
 - **Scenario management** - Raid instance definitions with active/inactive status control
 - **Attendance tracking** - Comprehensive raid attendance system with individual and bulk operations, filtering, statistics, and streak tracking
@@ -93,7 +92,8 @@ pytest
 ## Tech Stack
 
 - **Backend:** FastAPI, SQLAlchemy, PostgreSQL
-- **Testing:** Pytest, TestClient
+- **Frontend:** React, TypeScript, Tailwind CSS
+- **Testing:** Pytest, TestClient, Vitest, Cypress
 - **Migrations:** Alembic
 - **Python:** 3.13.5
 
@@ -120,6 +120,14 @@ app/
 ├── schemas/         # Pydantic schemas
 ├── routers/         # API endpoints
 └── utils/           # Utilities
+
+frontend/
+├── app/             # React application
+│   ├── api/         # API services and types
+│   ├── components/  # React components
+│   └── routes/      # Page components
+├── test/            # Frontend tests
+└── public/          # Static assets
 
 scripts/
 └── create_token.py  # Token creation utility
@@ -216,22 +224,12 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /teams/{team_id}` - Update team (superuser only)
 - `DELETE /teams/{team_id}` - Delete team (superuser only)
 
-### Members
-- `POST /members/` - Create new member (superuser only)
-- `GET /members/` - List all members (any valid token)
-- `GET /members/{member_id}` - Get member by ID (any valid token)
-- `GET /members/guild/{guild_id}` - Get all members for a guild (any valid token)
-- `GET /members/team/{team_id}` - Get all members for a team (any valid token)
-- `PUT /members/{member_id}` - Update member (superuser only)
-- `DELETE /members/{member_id}` - Delete member (superuser only)
-
-### Toons
-- `POST /toons/` - Create new toon (superuser only)
-- `GET /toons/` - List all toons (any valid token)
-- `GET /toons/{toon_id}` - Get toon by ID (any valid token)
-- `GET /toons/member/{member_id}` - Get all toons for a member (any valid token)
-- `PUT /toons/{toon_id}` - Update toon (superuser only)
-- `DELETE /toons/{toon_id}` - Delete toon (superuser only)
+### Characters (Toons)
+- `POST /toons/` - Create new character (superuser only)
+- `GET /toons/` - List all characters (any valid token)
+- `GET /toons/{toon_id}` - Get character by ID (any valid token)
+- `PUT /toons/{toon_id}` - Update character (superuser only)
+- `DELETE /toons/{toon_id}` - Delete character (superuser only)
 
 ### Raids
 - `POST /raids/` - Create new raid (superuser only)
@@ -256,15 +254,13 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /attendance/` - List attendance records with filtering (any valid token)
 - `GET /attendance/{attendance_id}` - Get specific attendance record (any valid token)
 - `GET /attendance/raid/{raid_id}` - Get all attendance for a raid (any valid token)
-- `GET /attendance/toon/{toon_id}` - Get all attendance for a toon (any valid token)
-- `GET /attendance/member/{member_id}` - Get all attendance for a member's toons (any valid token)
+- `GET /attendance/toon/{toon_id}` - Get all attendance for a character (any valid token)
 - `GET /attendance/team/{team_id}` - Get all attendance for a team (any valid token)
 - `PUT /attendance/{attendance_id}` - Update attendance record (superuser only)
 - `PUT /attendance/bulk` - Update multiple attendance records (superuser only)
 - `DELETE /attendance/{attendance_id}` - Delete attendance record (superuser only)
 - `GET /attendance/stats/raid/{raid_id}` - Get attendance statistics for a raid (any valid token)
-- `GET /attendance/stats/toon/{toon_id}` - Get attendance statistics for a toon (any valid token)
-- `GET /attendance/stats/member/{member_id}` - Get attendance statistics for a member (any valid token)
+- `GET /attendance/stats/toon/{toon_id}` - Get attendance statistics for a character (any valid token)
 - `GET /attendance/stats/team/{team_id}` - Get attendance statistics for a team (any valid token)
 - `GET /attendance/report/date-range` - Get attendance report for date range (any valid token)
 
@@ -280,14 +276,13 @@ The attendance system provides comprehensive tracking of raid participation with
 - Bulk operations support up to 100 records per request
 
 **Flexible Filtering**
-- Filter by raid, toon, member, team, or attendance status
+- Filter by raid, character, team, or attendance status
 - Date range filtering for historical analysis
 - Multiple filter combinations supported
 
 **Comprehensive Statistics**
 - **Raid Stats**: Present/absent counts, attendance percentage
-- **Toon Stats**: Individual character attendance tracking with streaks
-- **Member Stats**: Combined attendance across all member's toons
+- **Character Stats**: Individual character attendance tracking with streaks
 - **Team Stats**: Team-wide attendance analysis
 
 **Advanced Analytics**
@@ -333,7 +328,7 @@ curl -X POST http://localhost:8000/attendance/bulk \
   }'
 ```
 
-**Get Toon Statistics**
+**Get Character Statistics**
 ```bash
 curl -X GET http://localhost:8000/attendance/stats/toon/2 \
   -H "Authorization: Bearer YOUR_TOKEN"
@@ -364,7 +359,7 @@ curl -X GET "http://localhost:8000/attendance/?team_id=1&is_present=true&start_d
 - `id` - Unique identifier
 - `raid_id` - Associated raid
 - `toon_id` - Character who attended
-- `is_present` - Whether the toon was present (true/false)
+- `is_present` - Whether the character was present (true/false)
 - `notes` - Optional notes about attendance
 - `created_at` - Record creation timestamp
 - `updated_at` - Last update timestamp
@@ -451,7 +446,7 @@ This returns:
 
 ## Database Schema
 
-The application uses a relational database with the following core tables and relationships:
+The application uses a simplified character-focused relational database with the following core tables and relationships:
 
 ![Database Schema](schema.png)
 
@@ -460,8 +455,7 @@ The application uses a relational database with the following core tables and re
 - **Tokens** - API authentication for both users and frontend applications (supports user, system, and API token types)
 - **Guilds** - Guild information and settings
 - **Teams** - Team organization within guilds
-- **Members** - Guild member profiles
-- **Toons** - Character information for guild members (username, class, role, is_main, member_id, created_at, updated_at)
+- **Characters (Toons)** - Character profiles with class, role, and team assignments
 - **Raids** - Raid scheduling and tracking (scheduled_at, difficulty, size, team_id, scenario_id, created_at, updated_at)
 - **Scenarios** - Raid instance definitions (name, is_active, created_at, updated_at)
 - **Attendance** - Raid attendance records with presence tracking, notes, and statistics
@@ -470,9 +464,8 @@ The application uses a relational database with the following core tables and re
 **Key Relationships:**
 - Users can belong to multiple guilds and have multiple tokens
 - Tokens support user authentication, system operations, and frontend API access (with expiration and naming)
-- Guilds are created by users and contain multiple teams and members
-- Members can be assigned to teams and have guild-specific profiles
-- Members can have multiple characters (toons)
+- Guilds are created by users and contain multiple teams
+- Characters can be assigned to teams and have guild-specific profiles
 - Teams can have multiple scheduled raids with different difficulties and sizes
 - Raids are associated with specific scenarios for content tracking
 - Scenarios can be active or inactive to control availability
@@ -483,6 +476,7 @@ The application uses a relational database with the following core tables and re
 ### Prerequisites
 - Python 3.13.5
 - PostgreSQL
+- Node.js 18+ (for frontend)
 - pyenv (recommended)
 
 ### Environment Setup
@@ -533,7 +527,7 @@ GuildRoster integrates with the [WarcraftLogs API](https://www.warcraftlogs.com/
 **What this enables:**
 - ✅ Automatic participant extraction from WarcraftLogs reports
 - ✅ Character name, class, spec, and role detection
-- ✅ Integration with your existing toon/member system
+- ✅ Integration with your existing character system
 - ✅ Public report access (no user authorization required)
 
 **Note:** This uses the Client Credentials Flow, which provides access to all public WarcraftLogs data. No redirect URLs or user authorization are required.

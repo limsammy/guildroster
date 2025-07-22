@@ -6,6 +6,11 @@ A React-based frontend for the GuildRoster application with WoW-themed design an
 
 - **WoW-themed UI** - Dark theme with amber/orange accents
 - **Authentication System** - Complete login/logout functionality
+- **Guild Management** - Create and manage guilds
+- **Team Management** - Organize raid teams within guilds
+- **Character Management** - Manage character profiles and team assignments
+- **Raid Management** - Schedule and manage raids with WarcraftLogs integration
+- **Attendance Tracking** - Track character attendance and statistics
 - **Responsive Design** - Works on desktop, tablet, and mobile
 - **TypeScript** - Full type safety
 - **Testing** - Unit tests with Vitest and E2E tests with Cypress
@@ -171,11 +176,24 @@ The frontend uses a centralized API service layer:
 - **AuthService** - Handles login, logout, and token management
 - **GuildService** - Guild management operations
 - **TeamService** - Team management operations
-- **MemberService** - Member management operations
 - **ToonService** - Character management operations
+- **RaidService** - Raid scheduling and management
+- **ScenarioService** - Game scenario management
+- **AttendanceService** - Attendance tracking and statistics
 - **Axios interceptors** - Automatically add auth tokens to requests
 - **Error handling** - Graceful error handling for API failures
 - **Token storage** - Secure localStorage management
+
+## Data Model
+
+The application uses a simplified character-focused data model:
+
+- **Guilds** - Top-level organization units
+- **Teams** - Raid teams within guilds
+- **Characters (Toons)** - Individual character profiles with class, role, and team assignments
+- **Raids** - Scheduled raid events with team assignments
+- **Scenarios** - Game content (dungeons, raids) with difficulty and size
+- **Attendance** - Character attendance records for raids
 
 ## Testing
 
