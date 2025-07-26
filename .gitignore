@@ -1,5 +1,7 @@
 # Ignore user notes
 # notes/
+# Ignore credentials
+credentials
 
 # Ignore vite
 .vite/
