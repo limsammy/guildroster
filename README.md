@@ -296,6 +296,25 @@ Generates self-signed SSL certificates for testing.
 - Sets proper file permissions
 - Provides testing instructions
 
+#### `scripts/deploy-subdomain.sh`
+Deploys the application with subdomain architecture (frontend on main domain, API on subdomain).
+
+```bash
+./scripts/deploy-subdomain.sh
+```
+
+**What it does:**
+- Stops existing containers
+- Builds and starts services with subdomain configuration
+- Checks service status
+- Provides Cloudflare setup instructions for subdomains
+
+**Architecture:**
+- **Frontend:** `guildroster.io` (main domain)
+- **Backend API:** `api.guildroster.io` (subdomain)
+- **Clean separation** of frontend and backend services
+- **Better scalability** and maintenance
+
 ### Configuration Files
 
 #### `docker-compose.cloudflare.yml`
@@ -333,6 +352,27 @@ Nginx configuration for HTTPS deployment.
 - HTTP to HTTPS redirects
 - Security headers
 - Rate limiting
+
+#### `docker-compose.subdomain.yml`
+Docker Compose configuration for subdomain deployment.
+
+**Features:**
+- Frontend on main domain (`guildroster.io`)
+- Backend API on subdomain (`api.guildroster.io`)
+- Nginx routing based on subdomain
+- HTTP-only backend (Cloudflare handles HTTPS)
+- Rate limiting for API endpoints
+
+#### `nginx.subdomain.conf`
+Nginx configuration for subdomain routing.
+
+**Features:**
+- Subdomain-based routing
+- Frontend served on main domain
+- API served on `api` subdomain
+- Rate limiting (API: 10r/s, Frontend: 30r/s)
+- Security headers and compression
+- Cloudflare IP range support
 
 ### Deployment Documentation
 
@@ -404,6 +444,7 @@ This script provides options to:
 - Generate CORS origins for a domain
 - Set up CORS for Cloudflare deployment
 - Set up CORS for Let's Encrypt deployment
+- Set up CORS for subdomain deployment (frontend + API separation)
 - Set up CORS for development
 
 ### Quick Deployment Commands
@@ -425,6 +466,21 @@ chmod +x scripts/*.sh
 ```bash
 docker-compose up -d --build
 ```
+
+**For Subdomain Deployment (Recommended for Production):**
+```bash
+chmod +x scripts/*.sh
+./scripts/configure-cors.sh  # Choose option 7 for subdomain setup
+./scripts/deploy-subdomain.sh
+```
+
+### Deployment Options Comparison
+
+| Option | Frontend URL | API URL | DNS Records | Use Case |
+|--------|-------------|---------|-------------|----------|
+| **Cloudflare** | `https://guildroster.io` | `https://guildroster.io/api/` | 2 A records | Simple setup, same domain |
+| **Subdomain** | `https://guildroster.io` | `https://api.guildroster.io` | 3 A records | Clean separation, better scaling |
+| **Let's Encrypt** | `https://guildroster.io` | `https://guildroster.io/api/` | 2 A records | Direct SSL, no CDN |
 
 ## Features
 
@@ -449,6 +505,7 @@ docker-compose up -d --build
 - **Production-Ready Deployment** - Multiple deployment options with HTTPS support
   - Cloudflare proxy deployment (recommended)
   - Let's Encrypt SSL certificates
+  - Subdomain deployment (frontend + API separation)
   - Automated deployment scripts
   - Comprehensive monitoring and logging
 - **CORS Support** - Properly configured for production environments
