@@ -27,18 +27,21 @@ add_domain_to_cors() {
             # Check if this is a single domain or comma-separated list
             if [[ "$domain" == *","* ]]; then
                 # It's a comma-separated list, replace the entire value
-                # Escape dots and other special characters for sed
-                escaped_domain=$(echo "$domain" | sed 's/\./\\./g')
-                sed -i "s/^CORS_ORIGINS=.*/CORS_ORIGINS=$escaped_domain/" "$env_file"
+                # Use awk for safer replacement
+                awk -v new_value="$domain" '
+                    /^CORS_ORIGINS=/ { print "CORS_ORIGINS=" new_value; next }
+                    { print }
+                ' "$env_file" > "$env_file.tmp" && mv "$env_file.tmp" "$env_file"
                 echo -e "${GREEN}✓ Updated CORS_ORIGINS with new list in $env_file${NC}"
             else
                 # It's a single domain, append to existing
                 current_origins=$(grep "^CORS_ORIGINS=" "$env_file" | cut -d'=' -f2-)
                 new_origins="$current_origins,$domain"
-                # Escape dots in domain for sed replacement
-                escaped_current=$(echo "$current_origins" | sed 's/\./\\./g')
-                escaped_new=$(echo "$new_origins" | sed 's/\./\\./g')
-                sed -i "s/^CORS_ORIGINS=$escaped_current/CORS_ORIGINS=$escaped_new/" "$env_file"
+                # Use awk for safer replacement
+                awk -v new_value="$new_origins" '
+                    /^CORS_ORIGINS=/ { print "CORS_ORIGINS=" new_value; next }
+                    { print }
+                ' "$env_file" > "$env_file.tmp" && mv "$env_file.tmp" "$env_file"
                 echo -e "${GREEN}✓ Added $domain to existing CORS_ORIGINS in $env_file${NC}"
             fi
         else
