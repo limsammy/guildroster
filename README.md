@@ -11,6 +11,13 @@ A FastAPI-based web and API application to manage and track your guild's roster 
   - [Development Mode](#docker-development-mode)
   - [Production Deployment](#docker-production-deployment)
   - [Docker Commands](#docker-commands)
+- [Deployment Infrastructure](#deployment-infrastructure)
+  - [Deployment Scripts](#deployment-scripts)
+  - [Configuration Files](#configuration-files)
+  - [Deployment Documentation](#deployment-documentation)
+  - [Making Scripts Executable](#making-scripts-executable)
+  - [Environment Variables](#environment-variables)
+  - [Quick Deployment Commands](#quick-deployment-commands)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Password Authentication](#password-authentication)
@@ -39,6 +46,10 @@ A FastAPI-based web and API application to manage and track your guild's roster 
   - [Type Checking and Linting](#type-checking-and-linting)
   - [Database Migrations](#database-migrations)
   - [Logging](#logging)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [Performance Optimization](#performance-optimization)
+  - [Security Best Practices](#security-best-practices)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -130,17 +141,60 @@ docker-compose -f docker-compose.dev.yml up -d --build
 
 ### Production Deployment
 
-For production deployment with enhanced security and performance:
+GuildRoster supports multiple production deployment options with HTTPS support:
+
+#### Option A: Cloudflare Proxy (Recommended)
+
+For production deployment with Cloudflare handling SSL termination:
 
 ```bash
-# Start with Nginx reverse proxy
-docker-compose --profile proxy up -d --build
-
-# Or use the automated script
-./scripts/docker-setup.sh prod
+# Deploy with Cloudflare configuration
+./scripts/deploy-cloudflare.sh
 ```
 
-**Production features:**
+**Features:**
+- 🔒 **Automatic HTTPS** - Cloudflare handles SSL certificates
+- 🛡️ **DDoS Protection** - Cloudflare's global CDN protection
+- ⚡ **Performance** - Global caching and optimization
+- 🔧 **Easy Setup** - No SSL certificate management on server
+
+**Cloudflare Setup:**
+1. Add your domain to Cloudflare
+2. Set DNS records with orange cloud (proxied)
+3. Configure SSL/TLS to "Full"
+4. Enable "Always Use HTTPS"
+
+#### Option B: Let's Encrypt (Direct SSL)
+
+For production deployment with server-side SSL certificates:
+
+```bash
+# Set up SSL certificates
+./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
+
+# Deploy with HTTPS configuration
+./scripts/deploy-https.sh
+```
+
+**Features:**
+- 🔒 **Direct SSL** - Server handles SSL termination
+- 🔐 **Let's Encrypt** - Free, automated SSL certificates
+- 🔄 **Auto-renewal** - Certificates renew automatically
+- 📊 **Full Control** - Complete control over SSL configuration
+
+#### Option C: Basic HTTP (Development/Testing)
+
+For simple deployment without HTTPS:
+
+```bash
+# Start with basic configuration
+docker-compose up -d --build
+
+# Or with Nginx reverse proxy
+docker-compose --profile proxy up -d --build
+```
+
+**Production features (all options):**
 - 🔒 **Security headers** - XSS protection, CSRF prevention
 - ⚡ **Rate limiting** - API and frontend request throttling
 - 🗜️ **Gzip compression** - Optimized response sizes
@@ -183,6 +237,169 @@ docker-compose exec db pg_dump -U guildroster guildroster > backup.sql
 
 **For detailed Docker documentation, see [DOCKER.md](DOCKER.md)**
 
+## Deployment Infrastructure
+
+GuildRoster includes comprehensive deployment infrastructure with multiple configuration options for different environments.
+
+### Deployment Scripts
+
+The project includes several automated deployment scripts:
+
+#### `scripts/deploy-cloudflare.sh`
+Deploys the application with Cloudflare proxy configuration (recommended for production).
+
+```bash
+./scripts/deploy-cloudflare.sh
+```
+
+**What it does:**
+- Stops existing containers
+- Builds and starts services with Cloudflare configuration
+- Checks service status
+- Provides Cloudflare setup instructions
+
+#### `scripts/deploy-https.sh`
+Deploys the application with Let's Encrypt SSL certificates.
+
+```bash
+./scripts/deploy-https.sh
+```
+
+**What it does:**
+- Generates self-signed certificates if needed
+- Stops existing containers
+- Builds and starts services with HTTPS configuration
+- Checks service status
+
+#### `scripts/setup-letsencrypt.sh`
+Sets up Let's Encrypt SSL certificates for production.
+
+```bash
+./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
+```
+
+**What it does:**
+- Installs certbot if needed
+- Obtains SSL certificates from Let's Encrypt
+- Sets up automatic renewal
+- Configures proper file permissions
+
+#### `scripts/generate-ssl-certs.sh`
+Generates self-signed SSL certificates for testing.
+
+```bash
+./scripts/generate-ssl-certs.sh
+```
+
+**What it does:**
+- Creates self-signed certificates for testing
+- Sets proper file permissions
+- Provides testing instructions
+
+### Configuration Files
+
+#### `docker-compose.cloudflare.yml`
+Docker Compose configuration for Cloudflare proxy deployment.
+
+**Features:**
+- HTTP-only backend (Cloudflare handles HTTPS)
+- Nginx reverse proxy configuration
+- Cloudflare IP range support
+- Optimized for Cloudflare proxy
+
+#### `docker-compose.https.yml`
+Docker Compose configuration for Let's Encrypt deployment.
+
+**Features:**
+- HTTPS with SSL certificates
+- Nginx SSL termination
+- Automatic certificate renewal support
+- Full SSL configuration
+
+#### `nginx.cloudflare.conf`
+Nginx configuration optimized for Cloudflare proxy.
+
+**Features:**
+- HTTP-only server (port 80)
+- Cloudflare IP range detection
+- Proper header forwarding
+- Security headers
+
+#### `nginx.https.conf`
+Nginx configuration for HTTPS deployment.
+
+**Features:**
+- SSL/TLS configuration
+- HTTP to HTTPS redirects
+- Security headers
+- Rate limiting
+
+### Deployment Documentation
+
+#### `DEPLOYMENT.md`
+Comprehensive deployment guide covering:
+- Server setup and prerequisites
+- Environment configuration
+- Step-by-step deployment instructions
+- Troubleshooting guide
+- Security considerations
+- Monitoring and maintenance
+
+#### `DEPLOYMENT_CHECKLIST.md`
+Quick reference checklist for deployment:
+- Pre-deployment tasks
+- Deployment method selection
+- Post-deployment verification
+- Security checklist
+- Monitoring setup
+
+### Making Scripts Executable
+
+Before using the deployment scripts, make them executable:
+
+```bash
+chmod +x scripts/*.sh
+```
+
+### Environment Variables
+
+Create a `.env` file for production deployment:
+
+```bash
+# Database
+DB_NAME=guildroster
+DB_USER=guildroster
+DB_PASSWORD=your_secure_password_here
+
+# Application
+SECRET_KEY=your_very_secure_secret_key_here
+ENV=production
+
+# WarcraftLogs (optional)
+WARCRAFTLOGS_CLIENT_ID=your_client_id
+WARCRAFTLOGS_CLIENT_SECRET=your_client_secret
+```
+
+### Quick Deployment Commands
+
+**For Cloudflare (Recommended):**
+```bash
+chmod +x scripts/*.sh
+./scripts/deploy-cloudflare.sh
+```
+
+**For Let's Encrypt:**
+```bash
+chmod +x scripts/*.sh
+./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
+./scripts/deploy-https.sh
+```
+
+**For Development:**
+```bash
+docker-compose up -d --build
+```
+
 ## Features
 
 - **FastAPI REST API with automatic documentation**
@@ -203,6 +420,13 @@ docker-compose exec db pg_dump -U guildroster guildroster > backup.sql
 - **Scenario management** - Raid instance definitions with active/inactive status control
 - **Attendance tracking** - Comprehensive raid attendance system with individual and bulk operations, filtering, statistics, and streak tracking
 - **WarcraftLogs Integration** - Automatic participant extraction from WarcraftLogs reports with character name, class, spec, and role detection
+- **Production-Ready Deployment** - Multiple deployment options with HTTPS support
+  - Cloudflare proxy deployment (recommended)
+  - Let's Encrypt SSL certificates
+  - Automated deployment scripts
+  - Comprehensive monitoring and logging
+- **CORS Support** - Properly configured for production environments
+- **Security Headers** - XSS protection, CSRF prevention, and rate limiting
 
 ## Tech Stack
 
@@ -828,6 +1052,97 @@ INFO     | 2024-01-15 10:30:45 | app.main | Starting GuildRoster v0.1.0 in dev e
 WARNING  | 2024-01-15 10:30:46 | app.routers.user | User not found: unknown_user
 ERROR    | 2024-01-15 10:30:47 | app.database | Database connection failed
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+#### CORS Errors
+If you encounter CORS errors in production:
+
+1. **Check deployment method**:
+   - For Cloudflare: Ensure DNS records use orange cloud (proxied)
+   - For Let's Encrypt: Verify SSL certificates are valid
+   - For development: Check `app/main.py` CORS configuration
+
+2. **Verify API configuration**:
+   - Frontend should use relative URLs (`/api`) in production
+   - Check browser console for API URL being used
+
+3. **Check nginx configuration**:
+   - Verify nginx is running: `docker-compose ps`
+   - Check nginx logs: `docker-compose logs nginx`
+
+#### SSL Certificate Issues
+For Let's Encrypt deployments:
+
+```bash
+# Check certificate validity
+openssl x509 -in ssl/cert.pem -text -noout
+
+# Test SSL connection
+openssl s_client -connect yourdomain.com:443
+
+# Renew certificates manually
+sudo certbot renew
+```
+
+#### Database Connection Issues
+```bash
+# Check database container
+docker logs guildroster-db
+
+# Check backend logs
+docker logs guildroster-backend
+
+# Test database connection
+docker exec -it guildroster-db psql -U guildroster -d guildroster
+```
+
+#### Service Not Starting
+```bash
+# Check all container status
+docker-compose ps
+
+# View detailed logs
+docker-compose logs -f
+
+# Restart specific service
+docker-compose restart backend
+```
+
+### Performance Optimization
+
+#### Enable Gzip Compression
+Already configured in nginx, but verify:
+```bash
+# Check if gzip is working
+curl -H "Accept-Encoding: gzip" -I http://yourdomain.com
+```
+
+#### Database Optimization
+```bash
+# Check database performance
+docker exec -it guildroster-db psql -U guildroster -d guildroster -c "SELECT * FROM pg_stat_activity;"
+```
+
+#### Monitoring Resources
+```bash
+# Check container resource usage
+docker stats
+
+# Monitor logs in real-time
+docker-compose logs -f
+```
+
+### Security Best Practices
+
+1. **Use strong passwords** in `.env` file
+2. **Rotate secrets regularly**
+3. **Keep system updated**
+4. **Monitor logs for suspicious activity**
+5. **Use HTTPS in production**
+6. **Enable firewall rules**
 
 ## Contributing
 
