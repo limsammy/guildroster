@@ -44,6 +44,9 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
+    # Add request logging middleware FIRST (before CORS)
+    app.add_middleware(RequestLoggingMiddleware)
+
     # Configure CORS middleware
     logger.info(f"CORS Origins: {settings.CORS_ORIGINS_LIST}")
     logger.info(f"CORS Allow Credentials: {settings.CORS_ALLOW_CREDENTIALS}")
@@ -57,9 +60,6 @@ def create_app() -> FastAPI:
         allow_methods=settings.CORS_ALLOW_METHODS_LIST,
         allow_headers=settings.CORS_ALLOW_HEADERS_LIST,
     )
-
-    # Add request logging middleware
-    app.add_middleware(RequestLoggingMiddleware)
 
     # Include routers
     from app.routers import (
