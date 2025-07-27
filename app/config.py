@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     WARCRAFTLOGS_API_URL: str = "https://www.warcraftlogs.com/api/v2/client"
     WARCRAFTLOGS_TOKEN_URL: str = "https://www.warcraftlogs.com/oauth/token"
 
+    # CORS settings
+    CORS_ORIGINS: str = (
+        "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000"
+    )
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_METHODS: str = "*"
+    CORS_ALLOW_HEADERS: str = "*"
+
     def __init__(self, **values):
         super().__init__(**values)
         # Load environment variables from .env file
@@ -59,6 +67,49 @@ class Settings(BaseSettings):
             f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
+
+    @property
+    def CORS_ORIGINS_LIST(self) -> list[str]:
+        """
+        Parse CORS origins from comma-separated string to list.
+        """
+        if not self.CORS_ORIGINS:
+            return []
+        return [
+            origin.strip()
+            for origin in self.CORS_ORIGINS.split(",")
+            if origin.strip()
+        ]
+
+    @property
+    def CORS_ALLOW_METHODS_LIST(self) -> list[str]:
+        """
+        Parse CORS methods from comma-separated string to list.
+        """
+        if self.CORS_ALLOW_METHODS == "*":
+            return ["*"]
+        if not self.CORS_ALLOW_METHODS:
+            return ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        return [
+            method.strip()
+            for method in self.CORS_ALLOW_METHODS.split(",")
+            if method.strip()
+        ]
+
+    @property
+    def CORS_ALLOW_HEADERS_LIST(self) -> list[str]:
+        """
+        Parse CORS headers from comma-separated string to list.
+        """
+        if self.CORS_ALLOW_HEADERS == "*":
+            return ["*"]
+        if not self.CORS_ALLOW_HEADERS:
+            return ["*"]
+        return [
+            header.strip()
+            for header in self.CORS_ALLOW_HEADERS.split(",")
+            if header.strip()
+        ]
 
 
 settings = Settings()

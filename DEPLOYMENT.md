@@ -53,6 +53,15 @@ cd guildroster
 
 ### 2.2 Set Environment Variables
 Create a `.env` file in the root directory:
+
+**Option A: Copy from example file (Recommended)**
+```bash
+cp env.docker.example .env
+# Edit the file with your specific values
+nano .env
+```
+
+**Option B: Create manually**
 ```bash
 # Database
 DB_NAME=guildroster
@@ -66,9 +75,35 @@ ENV=production
 # WarcraftLogs (optional)
 WARCRAFTLOGS_CLIENT_ID=your_client_id
 WARCRAFTLOGS_CLIENT_SECRET=your_client_secret
+
+# CORS Configuration
+# Comma-separated list of allowed origins (domains/IPs that can access the API)
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://yourdomain.com,https://yourdomain.com
+
+# CORS Security Settings
+CORS_ALLOW_CREDENTIALS=true
+CORS_ALLOW_METHODS=*
+CORS_ALLOW_HEADERS=*
 ```
 
-### 2.3 Make Scripts Executable
+### 2.3 Configure CORS Settings
+Use the interactive CORS configuration helper to set up CORS for your domain:
+
+```bash
+# Make scripts executable
+chmod +x scripts/*.sh
+
+# Run CORS configuration helper
+./scripts/configure-cors.sh
+```
+
+This script will help you:
+- Set up CORS for your specific domain
+- Generate proper CORS origins for different deployment methods
+- Configure security settings
+- Test your configuration
+
+### 2.4 Make Scripts Executable
 ```bash
 chmod +x scripts/*.sh
 ```
@@ -77,12 +112,21 @@ chmod +x scripts/*.sh
 
 ### Option A: Cloudflare Proxy (Recommended)
 
-#### 3A.1 Deploy with Cloudflare Configuration
+#### 3A.1 Configure CORS for Cloudflare
+```bash
+# Run the CORS configuration helper
+./scripts/configure-cors.sh
+
+# Choose option 4: "Set up CORS for Cloudflare deployment"
+# Enter your domain when prompted
+```
+
+#### 3A.2 Deploy with Cloudflare Configuration
 ```bash
 ./scripts/deploy-cloudflare.sh
 ```
 
-#### 3A.2 Configure Cloudflare
+#### 3A.3 Configure Cloudflare
 1. **Add Domain to Cloudflare**:
    - Go to [cloudflare.com](https://cloudflare.com)
    - Add your domain
@@ -110,7 +154,16 @@ chmod +x scripts/*.sh
 
 ### Option B: Let's Encrypt (Direct SSL)
 
-#### 3B.1 Set Up SSL Certificates
+#### 3B.1 Configure CORS for Let's Encrypt
+```bash
+# Run the CORS configuration helper
+./scripts/configure-cors.sh
+
+# Choose option 5: "Set up CORS for Let's Encrypt deployment"
+# Enter your domain when prompted
+```
+
+#### 3B.2 Set Up SSL Certificates
 ```bash
 # For testing with self-signed certificates
 ./scripts/generate-ssl-certs.sh
@@ -119,12 +172,12 @@ chmod +x scripts/*.sh
 ./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
 ```
 
-#### 3B.2 Deploy with HTTPS Configuration
+#### 3B.3 Deploy with HTTPS Configuration
 ```bash
 ./scripts/deploy-https.sh
 ```
 
-#### 3B.3 Configure Cloudflare (if using)
+#### 3B.4 Configure Cloudflare (if using)
 1. **DNS Records** (Gray cloud - DNS only):
    - Type: `A`
    - Name: `@`
@@ -211,9 +264,34 @@ chmod +x scripts/backup-db.sh
 ### 6.1 Common Issues
 
 **CORS Errors**:
-- Check nginx configuration
-- Verify CORS settings in `app/main.py`
-- Check browser console for specific errors
+1. **Check CORS configuration**:
+   ```bash
+   # Verify your domain is in CORS_ORIGINS
+   grep CORS_ORIGINS .env
+   
+   # Use the CORS configuration helper
+   ./scripts/configure-cors.sh
+   ```
+
+2. **Check application logs**:
+   ```bash
+   # View CORS origins being used
+   docker-compose logs backend | grep "CORS Origins"
+   
+   # Check for CORS-related errors
+   docker-compose logs backend | grep -i cors
+   ```
+
+3. **Verify environment variables**:
+   - Ensure `CORS_ORIGINS` includes your domain
+   - Include both HTTP and HTTPS versions
+   - Include www and non-www versions if needed
+   - Format: `http://domain1.com,https://domain2.com`
+
+4. **Check deployment method**:
+   - For Cloudflare: Ensure DNS records use orange cloud (proxied)
+   - For Let's Encrypt: Verify SSL certificates are valid
+   - For development: Check browser console for API URL being used
 
 **Database Connection Issues**:
 ```bash
@@ -253,18 +331,93 @@ docker stats
 docker image prune -f
 ```
 
-## Step 7: Security Considerations
+## Step 7: CORS Configuration Best Practices
 
-### 7.1 Environment Variables
+### 7.1 CORS Security Guidelines
+
+**Production CORS Settings**:
+- Only include domains you actually use
+- Include both HTTP and HTTPS versions
+- Include www and non-www versions if needed
+- Remove localhost origins in production
+
+**Example Production CORS_ORIGINS**:
+```bash
+# For a single domain
+CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+
+# For multiple domains
+CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com,https://api.yourdomain.com
+```
+
+**Development CORS Settings**:
+```bash
+# For local development
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000
+```
+
+### 7.2 CORS Configuration Scripts
+
+**Quick CORS Setup**:
+```bash
+# For Cloudflare deployment
+./scripts/configure-cors.sh
+# Choose option 4 and enter your domain
+
+# For Let's Encrypt deployment
+./scripts/configure-cors.sh
+# Choose option 5 and enter your domain
+
+# For development
+./scripts/configure-cors.sh
+# Choose option 6
+```
+
+**Manual CORS Configuration**:
+```bash
+# Show current CORS settings
+./scripts/configure-cors.sh
+# Choose option 1
+
+# Add a specific domain
+./scripts/configure-cors.sh
+# Choose option 2 and enter domain
+```
+
+### 7.3 CORS Troubleshooting
+
+**Common CORS Issues**:
+1. **Domain not in CORS_ORIGINS**: Add your domain to the environment variable
+2. **Protocol mismatch**: Include both HTTP and HTTPS versions
+3. **Subdomain issues**: Include www and non-www versions
+4. **Port issues**: Include specific ports if using non-standard ports
+
+**Debugging CORS**:
+```bash
+# Check what CORS origins are being used
+docker-compose logs backend | grep "CORS Origins"
+
+# Test CORS from command line
+curl -H "Origin: https://yourdomain.com" \
+     -H "Access-Control-Request-Method: GET" \
+     -H "Access-Control-Request-Headers: X-Requested-With" \
+     -X OPTIONS \
+     http://yourdomain.com/api/
+```
+
+## Step 8: Security Considerations
+
+### 8.1 Environment Variables
 - Use strong, unique passwords
 - Rotate secrets regularly
 - Never commit `.env` files to version control
+- Keep CORS_ORIGINS minimal and specific
 
-### 7.2 Firewall
+### 8.2 Firewall
 - Only open necessary ports (22, 80, 443)
 - Consider using fail2ban for SSH protection
 
-### 7.3 Updates
+### 8.3 Updates
 - Keep system packages updated
 - Regularly update Docker images
 - Monitor for security advisories
@@ -277,9 +430,55 @@ If you encounter issues:
 3. Test individual services
 4. Check firewall and network settings
 
-## URLs After Deployment
+## Quick Reference
 
+### URLs After Deployment
 - **Frontend**: `https://yourdomain.com` (or `http://159.223.132.130`)
 - **API Documentation**: `https://yourdomain.com/docs`
 - **Health Check**: `https://yourdomain.com/health`
-- **API Endpoints**: `https://yourdomain.com/api/` 
+- **API Endpoints**: `https://yourdomain.com/api/`
+
+### Common Commands
+```bash
+# Check CORS configuration
+grep CORS_ORIGINS .env
+
+# View CORS origins being used
+docker-compose logs backend | grep "CORS Origins"
+
+# Configure CORS for your domain
+./scripts/configure-cors.sh
+
+# Deploy with Cloudflare
+./scripts/deploy-cloudflare.sh
+
+# Deploy with Let's Encrypt
+./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
+./scripts/deploy-https.sh
+
+# Check service status
+docker-compose -f docker-compose.cloudflare.yml ps
+
+# View logs
+docker-compose -f docker-compose.cloudflare.yml logs -f
+```
+
+### Environment Variables Reference
+```bash
+# Required
+DB_NAME=guildroster
+DB_USER=guildroster
+DB_PASSWORD=your_secure_password
+SECRET_KEY=your_very_secure_secret_key
+ENV=production
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://yourdomain.com,https://yourdomain.com
+CORS_ALLOW_CREDENTIALS=true
+CORS_ALLOW_METHODS=*
+CORS_ALLOW_HEADERS=*
+
+# Optional
+WARCRAFTLOGS_CLIENT_ID=your_client_id
+WARCRAFTLOGS_CLIENT_SECRET=your_client_secret
+``` 

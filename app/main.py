@@ -45,29 +45,17 @@ def create_app() -> FastAPI:
     )
 
     # Configure CORS middleware
+    logger.info(f"CORS Origins: {settings.CORS_ORIGINS_LIST}")
+    logger.info(f"CORS Allow Credentials: {settings.CORS_ALLOW_CREDENTIALS}")
+    logger.info(f"CORS Allow Methods: {settings.CORS_ALLOW_METHODS_LIST}")
+    logger.info(f"CORS Allow Headers: {settings.CORS_ALLOW_HEADERS_LIST}")
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",  # Vite dev server
-            "http://localhost:3000",  # Alternative dev port
-            "http://127.0.0.1:5173",  # Alternative localhost
-            "http://127.0.0.1:3000",  # Alternative localhost
-            "http://localhost",  # Port 80 (default HTTP)
-            "http://127.0.0.1",  # Port 80 (default HTTP)
-            "http://159.223.132.130",  # Production IP (HTTP)
-            "http://guildroster.io",  # Production domain (root, HTTP)
-            "http://www.guildroster.io",  # Production domain (www, HTTP)
-            "https://159.223.132.130",  # Production IP (HTTPS)
-            "https://guildroster.io",  # Production domain (root, HTTPS)
-            "https://www.guildroster.io",  # Production domain (www, HTTPS)
-            "http://159.223.132.130:3000",
-            "https://159.223.132.130:3000",  # HTTPS version of frontend
-            "https://159.223.132.130:80",  # HTTPS on port 80
-            "http://159.223.132.130:80",  # HTTP on port 80
-        ],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=settings.CORS_ORIGINS_LIST,
+        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+        allow_methods=settings.CORS_ALLOW_METHODS_LIST,
+        allow_headers=settings.CORS_ALLOW_HEADERS_LIST,
     )
 
     # Add request logging middleware

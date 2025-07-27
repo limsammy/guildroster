@@ -39,6 +39,10 @@ services:
       - ENV=${ENV:-production}
       - WARCRAFTLOGS_CLIENT_ID=${WARCRAFTLOGS_CLIENT_ID:-}
       - WARCRAFTLOGS_CLIENT_SECRET=${WARCRAFTLOGS_CLIENT_SECRET:-}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://159.223.132.130,https://159.223.132.130,http://guildroster.io,https://guildroster.io,http://www.guildroster.io,https://www.guildroster.io}
+      - CORS_ALLOW_CREDENTIALS=${CORS_ALLOW_CREDENTIALS:-true}
+      - CORS_ALLOW_METHODS=${CORS_ALLOW_METHODS:-*}
+      - CORS_ALLOW_HEADERS=${CORS_ALLOW_HEADERS:-*}
     volumes:
       - ./logs:/app/logs
     # No external ports - only accessible through nginx

@@ -378,7 +378,33 @@ ENV=production
 # WarcraftLogs (optional)
 WARCRAFTLOGS_CLIENT_ID=your_client_id
 WARCRAFTLOGS_CLIENT_SECRET=your_client_secret
+
+# CORS Configuration
+# Comma-separated list of allowed origins (domains/IPs that can access the API)
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://yourdomain.com,https://yourdomain.com
+
+# CORS Security Settings
+CORS_ALLOW_CREDENTIALS=true
+CORS_ALLOW_METHODS=*
+CORS_ALLOW_HEADERS=*
 ```
+
+#### CORS Configuration Helper
+
+Use the interactive CORS configuration script to easily set up CORS for your domain:
+
+```bash
+chmod +x scripts/configure-cors.sh
+./scripts/configure-cors.sh
+```
+
+This script provides options to:
+- Show current CORS configuration
+- Add domains to CORS origins
+- Generate CORS origins for a domain
+- Set up CORS for Cloudflare deployment
+- Set up CORS for Let's Encrypt deployment
+- Set up CORS for development
 
 ### Quick Deployment Commands
 
@@ -1060,18 +1086,28 @@ ERROR    | 2024-01-15 10:30:47 | app.database | Database connection failed
 #### CORS Errors
 If you encounter CORS errors in production:
 
-1. **Check deployment method**:
+1. **Check CORS configuration**:
+   - Verify your domain is in the `CORS_ORIGINS` environment variable
+   - Use the CORS configuration helper: `./scripts/configure-cors.sh`
+   - Check application logs for CORS origins being used
+
+2. **Check deployment method**:
    - For Cloudflare: Ensure DNS records use orange cloud (proxied)
    - For Let's Encrypt: Verify SSL certificates are valid
    - For development: Check `app/main.py` CORS configuration
 
-2. **Verify API configuration**:
+3. **Verify API configuration**:
    - Frontend should use relative URLs (`/api`) in production
    - Check browser console for API URL being used
 
-3. **Check nginx configuration**:
+4. **Check nginx configuration**:
    - Verify nginx is running: `docker-compose ps`
    - Check nginx logs: `docker-compose logs nginx`
+
+5. **Environment variable format**:
+   - CORS_ORIGINS should be comma-separated: `http://domain1.com,https://domain2.com`
+   - Include both HTTP and HTTPS versions of your domain
+   - Include www and non-www versions if needed
 
 #### SSL Certificate Issues
 For Let's Encrypt deployments:
