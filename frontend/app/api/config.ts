@@ -2,9 +2,9 @@ import axios from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API Configuration
-// Use relative URL for production (same domain) or fallback to environment variable
+// Use API subdomain for production or fallback to environment variable
 const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // Relative URL for production (same domain)
+  ? 'https://api.guildroster.io'  // API subdomain for production
   : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
 
 // Log the API URL for debugging

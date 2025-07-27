@@ -108,9 +108,10 @@ while true; do
     echo "4) Set up CORS for Cloudflare deployment"
     echo "5) Set up CORS for Let's Encrypt deployment"
     echo "6) Set up CORS for development"
-    echo "7) Exit"
+    echo "7) Set up CORS for subdomain deployment (frontend + api subdomain)"
+    echo "8) Exit"
     echo ""
-    read -p "Enter your choice (1-7): " choice
+    read -p "Enter your choice (1-8): " choice
     
     case $choice in
         1)
@@ -182,11 +183,34 @@ while true; do
             echo ""
             ;;
         7)
+            echo ""
+            echo -e "${YELLOW}Setting up CORS for subdomain deployment...${NC}"
+            read -p "Enter your main domain (e.g., guildroster.io): " domain
+            if [ -n "$domain" ]; then
+                # Generate origins for both main domain and api subdomain
+                main_origins=$(generate_cors_origins "$domain")
+                api_origins=$(generate_cors_origins "api.$domain")
+                all_origins="$main_origins,$api_origins"
+                add_domain_to_cors "$all_origins"
+                echo -e "${GREEN}✓ CORS configured for subdomain deployment${NC}"
+                echo -e "${BLUE}Frontend: $domain${NC}"
+                echo -e "${BLUE}Backend API: api.$domain${NC}"
+                echo -e "${BLUE}Remember to:${NC}"
+                echo "  - Add your domain to Cloudflare"
+                echo "  - Set DNS records with orange cloud (proxied)"
+                echo "  - Add A record for 'api' subdomain"
+                echo "  - Configure SSL/TLS to 'Full'"
+            else
+                echo -e "${RED}Domain cannot be empty${NC}"
+            fi
+            echo ""
+            ;;
+        8)
             echo -e "${GREEN}Goodbye!${NC}"
             exit 0
             ;;
         *)
-            echo -e "${RED}Invalid choice. Please enter a number between 1 and 7.${NC}"
+            echo -e "${RED}Invalid choice. Please enter a number between 1 and 8.${NC}"
             echo ""
             ;;
     esac
