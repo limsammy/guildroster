@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from './config';
 
 // Types for authentication
 export interface LoginCredentials {
@@ -22,55 +22,6 @@ export interface AuthError {
   message: string;
   status?: number;
 }
-
-// API base URL - adjust this to match your backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// Environment token for development/testing (only for API calls, not user sessions)
-const ENV_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
-
-// Check if we're in development mode
-const isDevelopment = import.meta.env.DEV;
-
-// Create axios instance with base configuration
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // Enable cookies for both development and production
-});
-
-// Request interceptor to add auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    // Add API token only for system/admin endpoints (not user authentication)
-    // This is for backend-to-backend communication, not user sessions
-    if (ENV_TOKEN && config.url && (
-      config.url.includes('/tokens/') || 
-      config.url.includes('/admin/') ||
-      config.url.includes('/system/')
-    )) {
-      if (config.headers && !config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${ENV_TOKEN}`;
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle auth errors
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Let individual components handle authentication errors
-    // Don't automatically redirect - let the UI handle it gracefully
-    return Promise.reject(error);
-  }
-);
 
 export class AuthService {
   /**
@@ -153,7 +104,7 @@ export class AuthService {
    * Get auth token (only for API tokens, not user sessions)
    */
   static getToken(): string | null {
-    return ENV_TOKEN || null;
+    return import.meta.env.VITE_AUTH_TOKEN || null;
   }
 
   /**

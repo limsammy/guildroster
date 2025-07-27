@@ -2,7 +2,14 @@ import axios from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Use relative URL for production (same domain) or fallback to environment variable
+const API_BASE_URL = import.meta.env.PROD 
+  ? '/api'  // Relative URL for production (same domain)
+  : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
+
+// Log the API URL for debugging
+console.log('API_BASE_URL:', API_BASE_URL);
+console.log('Environment:', import.meta.env.MODE);
 
 // Environment token for development/testing (only for API calls, not user sessions)
 const ENV_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
