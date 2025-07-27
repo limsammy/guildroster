@@ -24,9 +24,23 @@ add_domain_to_cors() {
     if [ -f "$env_file" ]; then
         # Check if CORS_ORIGINS already exists
         if grep -q "^CORS_ORIGINS=" "$env_file"; then
-            # Add domain to existing CORS_ORIGINS
-            sed -i "s/^CORS_ORIGINS=/CORS_ORIGINS=$domain,/" "$env_file"
-            echo -e "${GREEN}✓ Added $domain to existing CORS_ORIGINS in $env_file${NC}"
+            # Check if this is a single domain or comma-separated list
+            if [[ "$domain" == *","* ]]; then
+                # It's a comma-separated list, replace the entire value
+                # Escape dots and other special characters for sed
+                escaped_domain=$(echo "$domain" | sed 's/\./\\./g')
+                sed -i "s/^CORS_ORIGINS=.*/CORS_ORIGINS=$escaped_domain/" "$env_file"
+                echo -e "${GREEN}✓ Updated CORS_ORIGINS with new list in $env_file${NC}"
+            else
+                # It's a single domain, append to existing
+                current_origins=$(grep "^CORS_ORIGINS=" "$env_file" | cut -d'=' -f2-)
+                new_origins="$current_origins,$domain"
+                # Escape dots in domain for sed replacement
+                escaped_current=$(echo "$current_origins" | sed 's/\./\\./g')
+                escaped_new=$(echo "$new_origins" | sed 's/\./\\./g')
+                sed -i "s/^CORS_ORIGINS=$escaped_current/CORS_ORIGINS=$escaped_new/" "$env_file"
+                echo -e "${GREEN}✓ Added $domain to existing CORS_ORIGINS in $env_file${NC}"
+            fi
         else
             # Add new CORS_ORIGINS line
             echo "" >> "$env_file"
