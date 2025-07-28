@@ -1,6 +1,13 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
+
+
+class AttendanceStatus(str, Enum):
+    PRESENT = "present"
+    ABSENT = "absent"
+    BENCHED = "benched"
 
 
 class AttendanceBase(BaseModel):
@@ -10,11 +17,15 @@ class AttendanceBase(BaseModel):
     toon_id: int = Field(
         ..., description="Toon ID this attendance record is for"
     )
-    is_present: bool = Field(
-        True, description="Whether the toon was present at the raid"
+    status: AttendanceStatus = Field(
+        AttendanceStatus.PRESENT,
+        description="Attendance status: present, absent, or benched",
     )
     notes: Optional[str] = Field(
         None, max_length=500, description="Optional notes about attendance"
+    )
+    benched_note: Optional[str] = Field(
+        None, max_length=500, description="Optional note when status is benched"
     )
 
     @field_validator("notes")
@@ -22,6 +33,13 @@ class AttendanceBase(BaseModel):
     def validate_notes(cls, v):
         if v is not None and v.strip() == "":
             raise ValueError("Notes cannot be empty or whitespace only")
+        return v
+
+    @field_validator("benched_note")
+    @classmethod
+    def validate_benched_note(cls, v):
+        if v is not None and v.strip() == "":
+            raise ValueError("Benched note cannot be empty or whitespace only")
         return v
 
 
@@ -30,11 +48,14 @@ class AttendanceCreate(AttendanceBase):
 
 
 class AttendanceUpdate(BaseModel):
-    is_present: Optional[bool] = Field(
-        None, description="Whether the toon was present at the raid"
+    status: Optional[AttendanceStatus] = Field(
+        None, description="Attendance status: present, absent, or benched"
     )
     notes: Optional[str] = Field(
         None, max_length=500, description="Optional notes about attendance"
+    )
+    benched_note: Optional[str] = Field(
+        None, max_length=500, description="Optional note when status is benched"
     )
 
     @field_validator("notes")
@@ -44,14 +65,24 @@ class AttendanceUpdate(BaseModel):
             raise ValueError("Notes cannot be empty or whitespace only")
         return v
 
+    @field_validator("benched_note")
+    @classmethod
+    def validate_benched_note(cls, v):
+        if v is not None and v.strip() == "":
+            raise ValueError("Benched note cannot be empty or whitespace only")
+        return v
+
 
 class AttendanceBulkUpdateItem(BaseModel):
     id: int = Field(..., description="Attendance record ID to update")
-    is_present: Optional[bool] = Field(
-        None, description="Whether the toon was present at the raid"
+    status: Optional[AttendanceStatus] = Field(
+        None, description="Attendance status: present, absent, or benched"
     )
     notes: Optional[str] = Field(
         None, max_length=500, description="Optional notes about attendance"
+    )
+    benched_note: Optional[str] = Field(
+        None, max_length=500, description="Optional note when status is benched"
     )
 
     @field_validator("notes")
@@ -59,6 +90,13 @@ class AttendanceBulkUpdateItem(BaseModel):
     def validate_notes(cls, v):
         if v is not None and v.strip() == "":
             raise ValueError("Notes cannot be empty or whitespace only")
+        return v
+
+    @field_validator("benched_note")
+    @classmethod
+    def validate_benched_note(cls, v):
+        if v is not None and v.strip() == "":
+            raise ValueError("Benched note cannot be empty or whitespace only")
         return v
 
 
@@ -85,7 +123,7 @@ class AttendanceBulkCreate(BaseModel):
 class AttendanceBulkUpdate(BaseModel):
     attendance_records: List[AttendanceBulkUpdateItem] = Field(
         ...,
-        description="List of attendance records to update. Each record should have 'id' and optional 'is_present' and 'notes' fields",
+        description="List of attendance records to update. Each record should have 'id' and optional 'status', 'notes', and 'benched_note' fields",
         min_length=1,
         max_length=100,  # Limit bulk operations to prevent abuse
     )
@@ -95,6 +133,7 @@ class AttendanceStats(BaseModel):
     total_raids: int = Field(..., description="Total number of raids")
     raids_attended: int = Field(..., description="Number of raids attended")
     raids_missed: int = Field(..., description="Number of raids missed")
+    raids_benched: int = Field(..., description="Number of raids benched")
     attendance_percentage: float = Field(
         ..., description="Attendance percentage (0.0 to 100.0)"
     )
@@ -107,6 +146,17 @@ class AttendanceStats(BaseModel):
     last_attendance: Optional[datetime] = Field(
         None, description="Date of last attendance"
     )
+
+
+class BenchedPlayer(BaseModel):
+    toon_id: int = Field(..., description="Toon ID")
+    toon_name: str = Field(..., description="Toon name")
+    class_name: str = Field(..., description="Toon class")
+    spec_name: str = Field(..., description="Toon spec")
+    raid_id: int = Field(..., description="Raid ID where they were benched")
+    raid_name: str = Field(..., description="Raid name")
+    raid_date: datetime = Field(..., description="Raid date")
+    benched_note: Optional[str] = Field(None, description="Benched note")
 
 
 class AttendanceReport(BaseModel):
@@ -124,6 +174,7 @@ class AttendanceReport(BaseModel):
     )
     present_count: int = Field(..., description="Number of present records")
     absent_count: int = Field(..., description="Number of absent records")
+    benched_count: int = Field(..., description="Number of benched records")
     overall_attendance_rate: float = Field(
         ..., description="Overall attendance rate for the period"
     )
