@@ -123,12 +123,10 @@ while true; do
     echo "2) Add a domain to CORS origins"
     echo "3) Generate CORS origins for a domain"
     echo "4) Set up CORS for Cloudflare deployment"
-    echo "5) Set up CORS for Let's Encrypt deployment"
-    echo "6) Set up CORS for development"
-    echo "7) Set up CORS for subdomain deployment (frontend + api subdomain)"
-    echo "8) Exit"
+    echo "5) Set up CORS for development"
+    echo "6) Exit"
     echo ""
-    read -p "Enter your choice (1-8): " choice
+    read -p "Enter your choice (1-6): " choice
     
     case $choice in
         1)
@@ -178,56 +176,17 @@ while true; do
             ;;
         5)
             echo ""
-            echo -e "${YELLOW}Setting up CORS for Let's Encrypt deployment...${NC}"
-            read -p "Enter your domain (e.g., guildroster.io): " domain
-            if [ -n "$domain" ]; then
-                origins=$(generate_cors_origins "$domain")
-                add_domain_to_cors "$origins"
-                echo -e "${GREEN}✓ CORS configured for Let's Encrypt deployment${NC}"
-                echo -e "${BLUE}Remember to:${NC}"
-                echo "  - Set DNS records with gray cloud (DNS only)"
-                echo "  - Run: ./scripts/setup-letsencrypt.sh $domain your-email@example.com"
-            else
-                echo -e "${RED}Domain cannot be empty${NC}"
-            fi
-            echo ""
-            ;;
-        6)
-            echo ""
             echo -e "${YELLOW}Setting up CORS for development...${NC}"
             add_domain_to_cors "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000"
             echo -e "${GREEN}✓ CORS configured for development${NC}"
             echo ""
             ;;
-        7)
-            echo ""
-            echo -e "${YELLOW}Setting up CORS for subdomain deployment...${NC}"
-            read -p "Enter your main domain (e.g., guildroster.io): " domain
-            if [ -n "$domain" ]; then
-                # Generate origins for both main domain and api subdomain
-                main_origins=$(generate_cors_origins "$domain")
-                api_origins=$(generate_cors_origins "api.$domain")
-                all_origins="$main_origins,$api_origins"
-                add_domain_to_cors "$all_origins"
-                echo -e "${GREEN}✓ CORS configured for subdomain deployment${NC}"
-                echo -e "${BLUE}Frontend: $domain${NC}"
-                echo -e "${BLUE}Backend API: api.$domain${NC}"
-                echo -e "${BLUE}Remember to:${NC}"
-                echo "  - Add your domain to Cloudflare"
-                echo "  - Set DNS records with orange cloud (proxied)"
-                echo "  - Add A record for 'api' subdomain"
-                echo "  - Configure SSL/TLS to 'Full'"
-            else
-                echo -e "${RED}Domain cannot be empty${NC}"
-            fi
-            echo ""
-            ;;
-        8)
+        6)
             echo -e "${GREEN}Goodbye!${NC}"
             exit 0
             ;;
         *)
-            echo -e "${RED}Invalid choice. Please enter a number between 1 and 8.${NC}"
+            echo -e "${RED}Invalid choice. Please enter a number between 1 and 6.${NC}"
             echo ""
             ;;
     esac

@@ -18,7 +18,7 @@ docker-compose down || true
 
 # Build and start containers with Cloudflare configuration
 echo -e "${YELLOW}Building and starting containers with Cloudflare proxy...${NC}"
-docker-compose -f docker-compose.cloudflare.yml up -d --build
+docker-compose up -d --build
 
 # Wait for services to be ready
 echo -e "${YELLOW}Waiting for services to be ready...${NC}"
@@ -26,7 +26,7 @@ sleep 10
 
 # Check if services are running
 echo -e "${YELLOW}Checking service status...${NC}"
-docker-compose -f docker-compose.cloudflare.yml ps
+docker-compose ps
 
 echo -e "${GREEN}Deployment completed!${NC}"
 echo -e "${YELLOW}Your application should now be available at:${NC}"
@@ -42,4 +42,4 @@ echo -e "${GREEN}4. Set SSL/TLS mode to 'Full'${NC}"
 echo -e "${GREEN}5. Enable 'Always Use HTTPS'${NC}"
 echo -e ""
 echo -e "${GREEN}After Cloudflare setup, your site will be available at:${NC}"
-echo -e "${GREEN}  - https://yourdomain.com${NC}" 
+echo -e "${GREEN}  - https://yourdomain.com${NC}"   

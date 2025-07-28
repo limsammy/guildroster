@@ -8,13 +8,11 @@ A FastAPI-based web and API application to manage and track your guild's roster 
 - [Docker Setup](#docker-setup)
   - [Prerequisites](#docker-prerequisites)
   - [Quick Start with Docker](#quick-start-with-docker)
-  - [Development Mode](#docker-development-mode)
   - [Production Deployment](#docker-production-deployment)
   - [Docker Commands](#docker-commands)
 - [Deployment Infrastructure](#deployment-infrastructure)
   - [Deployment Scripts](#deployment-scripts)
   - [Configuration Files](#configuration-files)
-  - [Deployment Documentation](#deployment-documentation)
   - [Making Scripts Executable](#making-scripts-executable)
   - [Environment Variables](#environment-variables)
   - [Quick Deployment Commands](#quick-deployment-commands)
@@ -101,10 +99,6 @@ The easiest way to run GuildRoster is using Docker and Docker Compose. This appr
 git clone https://github.com/limsammy/guildroster.git
 cd guildroster
 
-# Run the automated setup script (recommended)
-./scripts/docker-setup.sh prod
-
-# Or manually:
 # 1. Copy environment file
 cp env.docker.example .env
 
@@ -121,29 +115,11 @@ docker-compose up -d --build
 - **API Documentation:** http://localhost:8000/docs
 - **Database:** localhost:5432
 
-### Development Mode
-
-For development with hot reloading and live code editing:
-
-```bash
-# Start in development mode
-./scripts/docker-setup.sh dev
-
-# Or manually:
-docker-compose -f docker-compose.dev.yml up -d --build
-```
-
-**Development features:**
-- ✅ **Hot reloading** - Code changes automatically restart services
-- ✅ **Volume mounting** - Edit code locally, see changes immediately
-- ✅ **Development tools** - All debugging and testing tools included
-- ✅ **Live logs** - Real-time log monitoring
-
 ### Production Deployment
 
-GuildRoster supports multiple production deployment options with HTTPS support:
+GuildRoster supports production deployment with Cloudflare handling SSL termination:
 
-#### Option A: Cloudflare Proxy (Recommended)
+#### Cloudflare Proxy (Recommended)
 
 For production deployment with Cloudflare handling SSL termination:
 
@@ -164,37 +140,7 @@ For production deployment with Cloudflare handling SSL termination:
 3. Configure SSL/TLS to "Full"
 4. Enable "Always Use HTTPS"
 
-#### Option B: Let's Encrypt (Direct SSL)
-
-For production deployment with server-side SSL certificates:
-
-```bash
-# Set up SSL certificates
-./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
-
-# Deploy with HTTPS configuration
-./scripts/deploy-https.sh
-```
-
-**Features:**
-- 🔒 **Direct SSL** - Server handles SSL termination
-- 🔐 **Let's Encrypt** - Free, automated SSL certificates
-- 🔄 **Auto-renewal** - Certificates renew automatically
-- 📊 **Full Control** - Complete control over SSL configuration
-
-#### Option C: Basic HTTP (Development/Testing)
-
-For simple deployment without HTTPS:
-
-```bash
-# Start with basic configuration
-docker-compose up -d --build
-
-# Or with Nginx reverse proxy
-docker-compose --profile proxy up -d --build
-```
-
-**Production features (all options):**
+**Production features:**
 - 🔒 **Security headers** - XSS protection, CSRF prevention
 - ⚡ **Rate limiting** - API and frontend request throttling
 - 🗜️ **Gzip compression** - Optimized response sizes
@@ -235,15 +181,13 @@ docker stats
 docker-compose exec db pg_dump -U guildroster guildroster > backup.sql
 ```
 
-**For detailed Docker documentation, see [DOCKER.md](DOCKER.md)**
-
 ## Deployment Infrastructure
 
-GuildRoster includes comprehensive deployment infrastructure with multiple configuration options for different environments.
+GuildRoster includes deployment infrastructure optimized for Cloudflare proxy deployment.
 
 ### Deployment Scripts
 
-The project includes several automated deployment scripts:
+The project includes automated deployment scripts:
 
 #### `scripts/deploy-cloudflare.sh`
 Deploys the application with Cloudflare proxy configuration (recommended for production).
@@ -258,66 +202,9 @@ Deploys the application with Cloudflare proxy configuration (recommended for pro
 - Checks service status
 - Provides Cloudflare setup instructions
 
-#### `scripts/deploy-https.sh`
-Deploys the application with Let's Encrypt SSL certificates.
-
-```bash
-./scripts/deploy-https.sh
-```
-
-**What it does:**
-- Generates self-signed certificates if needed
-- Stops existing containers
-- Builds and starts services with HTTPS configuration
-- Checks service status
-
-#### `scripts/setup-letsencrypt.sh`
-Sets up Let's Encrypt SSL certificates for production.
-
-```bash
-./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
-```
-
-**What it does:**
-- Installs certbot if needed
-- Obtains SSL certificates from Let's Encrypt
-- Sets up automatic renewal
-- Configures proper file permissions
-
-#### `scripts/generate-ssl-certs.sh`
-Generates self-signed SSL certificates for testing.
-
-```bash
-./scripts/generate-ssl-certs.sh
-```
-
-**What it does:**
-- Creates self-signed certificates for testing
-- Sets proper file permissions
-- Provides testing instructions
-
-#### `scripts/deploy-subdomain.sh`
-Deploys the application with subdomain architecture (frontend on main domain, API on subdomain).
-
-```bash
-./scripts/deploy-subdomain.sh
-```
-
-**What it does:**
-- Stops existing containers
-- Builds and starts services with subdomain configuration
-- Checks service status
-- Provides Cloudflare setup instructions for subdomains
-
-**Architecture:**
-- **Frontend:** `guildroster.io` (main domain)
-- **Backend API:** `api.guildroster.io` (subdomain)
-- **Clean separation** of frontend and backend services
-- **Better scalability** and maintenance
-
 ### Configuration Files
 
-#### `docker-compose.cloudflare.yml`
+#### `docker-compose.yml`
 Docker Compose configuration for Cloudflare proxy deployment.
 
 **Features:**
@@ -325,15 +212,6 @@ Docker Compose configuration for Cloudflare proxy deployment.
 - Nginx reverse proxy configuration
 - Cloudflare IP range support
 - Optimized for Cloudflare proxy
-
-#### `docker-compose.https.yml`
-Docker Compose configuration for Let's Encrypt deployment.
-
-**Features:**
-- HTTPS with SSL certificates
-- Nginx SSL termination
-- Automatic certificate renewal support
-- Full SSL configuration
 
 #### `nginx.cloudflare.conf`
 Nginx configuration optimized for Cloudflare proxy.
@@ -343,55 +221,6 @@ Nginx configuration optimized for Cloudflare proxy.
 - Cloudflare IP range detection
 - Proper header forwarding
 - Security headers
-
-#### `nginx.https.conf`
-Nginx configuration for HTTPS deployment.
-
-**Features:**
-- SSL/TLS configuration
-- HTTP to HTTPS redirects
-- Security headers
-- Rate limiting
-
-#### `docker-compose.subdomain.yml`
-Docker Compose configuration for subdomain deployment.
-
-**Features:**
-- Frontend on main domain (`guildroster.io`)
-- Backend API on subdomain (`api.guildroster.io`)
-- Nginx routing based on subdomain
-- HTTP-only backend (Cloudflare handles HTTPS)
-- Rate limiting for API endpoints
-
-#### `nginx.subdomain.conf`
-Nginx configuration for subdomain routing.
-
-**Features:**
-- Subdomain-based routing
-- Frontend served on main domain
-- API served on `api` subdomain
-- Rate limiting (API: 10r/s, Frontend: 30r/s)
-- Security headers and compression
-- Cloudflare IP range support
-
-### Deployment Documentation
-
-#### `DEPLOYMENT.md`
-Comprehensive deployment guide covering:
-- Server setup and prerequisites
-- Environment configuration
-- Step-by-step deployment instructions
-- Troubleshooting guide
-- Security considerations
-- Monitoring and maintenance
-
-#### `DEPLOYMENT_CHECKLIST.md`
-Quick reference checklist for deployment:
-- Pre-deployment tasks
-- Deployment method selection
-- Post-deployment verification
-- Security checklist
-- Monitoring setup
 
 ### Making Scripts Executable
 
@@ -443,8 +272,6 @@ This script provides options to:
 - Add domains to CORS origins
 - Generate CORS origins for a domain
 - Set up CORS for Cloudflare deployment
-- Set up CORS for Let's Encrypt deployment
-- Set up CORS for subdomain deployment (frontend + API separation)
 - Set up CORS for development
 
 ### Quick Deployment Commands
@@ -455,32 +282,10 @@ chmod +x scripts/*.sh
 ./scripts/deploy-cloudflare.sh
 ```
 
-**For Let's Encrypt:**
-```bash
-chmod +x scripts/*.sh
-./scripts/setup-letsencrypt.sh yourdomain.com your-email@example.com
-./scripts/deploy-https.sh
-```
-
 **For Development:**
 ```bash
 docker-compose up -d --build
 ```
-
-**For Subdomain Deployment (Recommended for Production):**
-```bash
-chmod +x scripts/*.sh
-./scripts/configure-cors.sh  # Choose option 7 for subdomain setup
-./scripts/deploy-subdomain.sh
-```
-
-### Deployment Options Comparison
-
-| Option | Frontend URL | API URL | DNS Records | Use Case |
-|--------|-------------|---------|-------------|----------|
-| **Cloudflare** | `https://guildroster.io` | `https://guildroster.io/api/` | 2 A records | Simple setup, same domain |
-| **Subdomain** | `https://guildroster.io` | `https://api.guildroster.io` | 3 A records | Clean separation, better scaling |
-| **Let's Encrypt** | `https://guildroster.io` | `https://guildroster.io/api/` | 2 A records | Direct SSL, no CDN |
 
 ## Features
 
@@ -502,10 +307,7 @@ chmod +x scripts/*.sh
 - **Scenario management** - Raid instance definitions with active/inactive status control
 - **Attendance tracking** - Comprehensive raid attendance system with individual and bulk operations, filtering, statistics, and streak tracking
 - **WarcraftLogs Integration** - Automatic participant extraction from WarcraftLogs reports with character name, class, spec, and role detection
-- **Production-Ready Deployment** - Multiple deployment options with HTTPS support
-  - Cloudflare proxy deployment (recommended)
-  - Let's Encrypt SSL certificates
-  - Subdomain deployment (frontend + API separation)
+- **Production-Ready Deployment** - Cloudflare proxy deployment with HTTPS support
   - Automated deployment scripts
   - Comprehensive monitoring and logging
 - **CORS Support** - Properly configured for production environments
@@ -519,7 +321,7 @@ chmod +x scripts/*.sh
 - **Migrations:** Alembic
 - **Python:** 3.13.5
 - **Containerization:** Docker, Docker Compose
-- **Reverse Proxy:** Nginx (optional)
+- **Reverse Proxy:** Nginx
 
 ## Password Authentication
 
@@ -554,7 +356,10 @@ frontend/
 └── public/          # Static assets
 
 scripts/
-└── create_token.py  # Token creation utility
+├── configure-cors.sh    # CORS configuration helper
+├── deploy-cloudflare.sh # Cloudflare deployment script
+├── create_superuser.py  # Superuser creation utility
+└── create_token.py      # Token creation utility
 
 tests/
 ├── model/           # Model tests
@@ -867,7 +672,6 @@ This returns:
 - **Strength**: Passwords must be at least 8 characters long
 - **Storage**: Only hashed passwords are stored in the database
 
-
 ## Database Schema
 
 The application uses a simplified character-focused relational database with the following core tables and relationships:
@@ -938,14 +742,14 @@ GuildRoster integrates with the [WarcraftLogs API](https://www.warcraftlogs.com/
 3. **Test the Integration:**
    ```bash
    # Interactive mode (recommended for first-time testing)
-   python test_warcraftlogs.py --interactive
+   python warcraftlogs_tester.py --interactive
    
    # Command line testing
-   python test_warcraftlogs.py --url "https://www.warcraftlogs.com/reports/YOUR_REPORT_CODE"
+   python warcraftlogs_tester.py --url "https://www.warcraftlogs.com/reports/YOUR_REPORT_CODE"
    
    # Test specific functionality
-   python test_warcraftlogs.py --url "URL" --type participants
-   python test_warcraftlogs.py --url "URL" --type fights
+   python warcraftlogs_tester.py --url "URL" --type participants
+   python warcraftlogs_tester.py --url "URL" --type fights
    ```
 
 **What this enables:**
@@ -970,7 +774,7 @@ The project includes a comprehensive test script to verify your WarcraftLogs API
 
 1. **Interactive Mode** (Recommended for first-time testing):
    ```bash
-   python test_warcraftlogs.py --interactive
+   python warcraftlogs_tester.py --interactive
    ```
    - Prompts for WarcraftLogs report URL
    - Lets you choose what to test (all, participants, or fights)
@@ -979,18 +783,18 @@ The project includes a comprehensive test script to verify your WarcraftLogs API
 2. **Command Line Mode**:
    ```bash
    # Test everything with a specific report
-   python test_warcraftlogs.py --url "https://www.warcraftlogs.com/reports/abc123def456"
+   python warcraftlogs_tester.py --url "https://www.warcraftlogs.com/reports/abc123def456"
    
    # Test only participant data
-   python test_warcraftlogs.py --url "URL" --type participants
+   python warcraftlogs_tester.py --url "URL" --type participants
    
    # Test only fight data
-   python test_warcraftlogs.py --url "URL" --type fights
+   python warcraftlogs_tester.py --url "URL" --type fights
    ```
 
 3. **Basic Credential Test**:
    ```bash
-   python test_warcraftlogs.py
+   python warcraftlogs_tester.py
    ```
    - Tests credentials and URL parsing without a real report
    - Shows setup instructions
@@ -1150,8 +954,7 @@ If you encounter CORS errors in production:
 
 2. **Check deployment method**:
    - For Cloudflare: Ensure DNS records use orange cloud (proxied)
-   - For Let's Encrypt: Verify SSL certificates are valid
-   - For development: Check `app/main.py` CORS configuration
+   - Check `app/main.py` CORS configuration
 
 3. **Verify API configuration**:
    - Frontend should use relative URLs (`/api`) in production
@@ -1165,20 +968,6 @@ If you encounter CORS errors in production:
    - CORS_ORIGINS should be comma-separated: `http://domain1.com,https://domain2.com`
    - Include both HTTP and HTTPS versions of your domain
    - Include www and non-www versions if needed
-
-#### SSL Certificate Issues
-For Let's Encrypt deployments:
-
-```bash
-# Check certificate validity
-openssl x509 -in ssl/cert.pem -text -noout
-
-# Test SSL connection
-openssl s_client -connect yourdomain.com:443
-
-# Renew certificates manually
-sudo certbot renew
-```
 
 #### Database Connection Issues
 ```bash
