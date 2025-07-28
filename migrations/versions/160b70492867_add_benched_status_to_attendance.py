@@ -1,8 +1,8 @@
 """Add benched status to attendance
 
-Revision ID: 50a300331fb9
+Revision ID: 160b70492867
 Revises: e52b8bc5a0d7
-Create Date: 2025-07-27 22:17:14.465779
+Create Date: 2025-07-27 23:25:21.125978
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '50a300331fb9'
+revision: str = '160b70492867'
 down_revision: Union[str, Sequence[str], None] = 'e52b8bc5a0d7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
