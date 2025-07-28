@@ -87,6 +87,34 @@ def create_app() -> FastAPI:
         """Health check endpoint."""
         return {"status": "ok", "message": "GuildRoster API is running"}
 
+    @app.get("/version")
+    def get_version():
+        """Get application version information."""
+        import subprocess
+        from datetime import datetime
+
+        # Get git commit hash if available
+        git_commit = "unknown"
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=".",
+            )
+            if result.returncode == 0:
+                git_commit = result.stdout.strip()
+        except (subprocess.SubprocessError, FileNotFoundError):
+            pass
+
+        return {
+            "version": settings.VERSION,
+            "app_name": settings.APP_NAME,
+            "environment": settings.ENV,
+            "build_date": datetime.utcnow().isoformat() + "Z",
+            "git_commit": git_commit,
+        }
+
     return app
 
 

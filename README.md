@@ -16,6 +16,10 @@ A FastAPI-based web and API application to manage and track your guild's roster 
   - [Making Scripts Executable](#making-scripts-executable)
   - [Environment Variables](#environment-variables)
   - [Quick Deployment Commands](#quick-deployment-commands)
+- [Versioning Strategy](#versioning-strategy)
+  - [Semantic Versioning](#semantic-versioning)
+  - [Version Management](#version-management)
+  - [Version Display](#version-display)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Password Authentication](#password-authentication)
@@ -50,6 +54,77 @@ A FastAPI-based web and API application to manage and track your guild's roster 
   - [Security Best Practices](#security-best-practices)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Versioning Strategy
+
+GuildRoster follows [Semantic Versioning (SemVer)](https://semver.org/) to ensure clear communication about changes and maintain compatibility across releases.
+
+### Semantic Versioning
+
+We use the format `MAJOR.MINOR.PATCH` where:
+
+- **MAJOR** version (X.0.0): Incompatible API changes, breaking changes
+- **MINOR** version (0.X.0): New features added in a backward-compatible manner
+- **PATCH** version (0.0.X): Backward-compatible bug fixes
+
+**Examples:**
+- `0.1.0` - Initial release with core features
+- `0.1.1` - Bug fixes for attendance tracking
+- `0.2.0` - New WarcraftLogs integration feature
+- `1.0.0` - First stable release, API is considered stable
+- `1.1.0` - New guild management features
+- `2.0.0` - Breaking changes to API endpoints
+
+### Version Management
+
+**Version Locations:**
+- **Backend**: `app/config.py` - `VERSION` setting
+- **Frontend**: `frontend/package.json` - `version` field
+- **API**: Available via `/version` endpoint
+- **Display**: Shown in application footer
+
+**Version Update Process:**
+1. Update version in `app/config.py`
+2. Update version in `frontend/package.json`
+3. Update version in `scripts/update_version.py` (if using automation)
+4. Commit changes with version bump
+5. Tag release in Git
+
+**Automated Version Updates:**
+```bash
+# Update to next patch version (0.1.0 → 0.1.1)
+python scripts/update_version.py patch
+
+# Update to next minor version (0.1.0 → 0.2.0)
+python scripts/update_version.py minor
+
+# Update to next major version (0.1.0 → 1.0.0)
+python scripts/update_version.py major
+
+# Set specific version
+python scripts/update_version.py set 1.0.0
+```
+
+### Version Display
+
+The application version is displayed in multiple locations:
+
+- **API Health Check**: `/` endpoint includes version info
+- **API Version Endpoint**: `/version` provides detailed version information
+- **Application Footer**: Version is shown in the frontend footer
+- **Logs**: Version is logged during application startup
+- **Docker Images**: Version is included in container metadata
+
+**API Version Response:**
+```json
+{
+  "version": "0.1.0",
+  "app_name": "GuildRoster",
+  "environment": "production",
+  "build_date": "2024-01-15T10:30:45Z",
+  "git_commit": "abc123def456"
+}
+```
 
 ## Quick Start
 
