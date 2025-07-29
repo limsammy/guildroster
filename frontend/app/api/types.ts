@@ -200,7 +200,7 @@ export interface MatchedParticipant {
     role: string;
   };
   participant: WarcraftLogsParticipant;
-  is_present: boolean;
+  status: AttendanceStatus;
   notes: string;
 }
 
@@ -211,8 +211,9 @@ export interface UnknownParticipant {
 
 export interface AttendanceRecord {
   toon_id: number;
-  is_present: boolean;
+  status: AttendanceStatus;
   notes: string;
+  benched_note?: string;
 }
 
 export interface WarcraftLogsProcessingResult {
@@ -233,12 +234,15 @@ export interface WarcraftLogsProcessingResult {
 }
 
 // Attendance Types
+export type AttendanceStatus = 'present' | 'absent' | 'benched';
+
 export interface Attendance {
   id: number;
   raid_id: number;
   toon_id: number;
-  is_present: boolean;
+  status: AttendanceStatus;
   notes?: string;
+  benched_note?: string;
   created_at: string;
   updated_at: string;
 }
@@ -246,15 +250,17 @@ export interface Attendance {
 export interface AttendanceCreate {
   raid_id: number;
   toon_id: number;
-  is_present: boolean;
+  status: AttendanceStatus;
   notes?: string;
+  benched_note?: string;
 }
 
 export interface AttendanceUpdate {
   raid_id?: number;
   toon_id?: number;
-  is_present?: boolean;
+  status?: AttendanceStatus;
   notes?: string;
+  benched_note?: string;
 }
 
 export interface AttendanceBulkCreate {
@@ -270,6 +276,7 @@ export interface AttendanceStats {
   total_raids: number;
   raids_attended: number;
   raids_missed: number;
+  raids_benched: number;
   attendance_percentage: number;
   current_streak: number;
   longest_streak: number;
@@ -290,9 +297,23 @@ export interface AttendanceFilters {
   raid_id?: number;
   toon_id?: number;
   team_id?: number;
-  is_present?: boolean;
+  status?: AttendanceStatus;
   start_date?: string;
   end_date?: string;
+}
+
+export interface BenchedPlayer {
+  id: number;
+  raid_id: number;
+  toon_id: number;
+  toon_username: string;
+  toon_class: string;
+  toon_role: string;
+  benched_note?: string;
+  raid_scheduled_at: string;
+  raid_scenario_name: string;
+  raid_scenario_difficulty: string;
+  raid_scenario_size: string;
 }
 
 // API Response Types

@@ -9,4 +9,5 @@ export { ScenarioForm } from './ScenarioForm';
 export { TeamForm } from './TeamForm';
 export { ToonForm } from './ToonForm';
 export { AttendanceForm } from './AttendanceForm';
+export { BenchedPlayersView } from './BenchedPlayersView';
 export { WarcraftLogsResults } from './WarcraftLogsResults'; 

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Button, Card } from './';
-import type { Raid, Toon } from '../../api/types';
+import type { Raid, Toon, AttendanceStatus } from '../../api/types';
 
 interface AttendanceFormProps {
   raids: Raid[];
   toons: Toon[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { raid_id: number; toon_id: number; is_present: boolean; notes?: string }) => void;
+  onSubmit: (values: { raid_id: number; toon_id: number; status: AttendanceStatus; notes?: string; benched_note?: string }) => void;
   onCancel: () => void;
-  initialValues?: Partial<{ raid_id: number; toon_id: number; is_present: boolean; notes: string }>;
+  initialValues?: Partial<{ raid_id: number; toon_id: number; status: AttendanceStatus; notes: string; benched_note: string }>;
   isEditing?: boolean;
 }
 
@@ -25,8 +25,9 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
 }) => {
   const [raidId, setRaidId] = useState<number | ''>(initialValues.raid_id ?? (raids.length > 0 ? raids[0].id : ''));
   const [toonId, setToonId] = useState<number | ''>(initialValues.toon_id ?? (toons.length > 0 ? toons[0].id : ''));
-  const [isPresent, setIsPresent] = useState(initialValues.is_present ?? true);
+  const [status, setStatus] = useState<AttendanceStatus>(initialValues.status ?? 'present');
   const [notes, setNotes] = useState(initialValues.notes || '');
+  const [benchedNote, setBenchedNote] = useState(initialValues.benched_note || '');
   const [showErrors, setShowErrors] = useState(false);
 
   const noRaids = raids.length === 0;
@@ -39,8 +40,9 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     onSubmit({
       raid_id: Number(raidId),
       toon_id: Number(toonId),
-      is_present: isPresent,
+      status: status,
       notes: notes.trim() || undefined,
+      benched_note: status === 'benched' ? (benchedNote.trim() || undefined) : undefined,
     });
   };
 
@@ -101,13 +103,13 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-slate-300 mb-2">Status</label>
-          <div className="flex space-x-4">
+          <div className="flex flex-col space-y-2">
             <label className="flex items-center">
               <input
                 type="radio"
                 value="present"
-                checked={isPresent}
-                onChange={() => setIsPresent(true)}
+                checked={status === 'present'}
+                onChange={() => setStatus('present')}
                 className="mr-2 text-amber-500 focus:ring-amber-500"
                 disabled={loading}
               />
@@ -117,16 +119,27 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
               <input
                 type="radio"
                 value="absent"
-                checked={!isPresent}
-                onChange={() => setIsPresent(false)}
+                checked={status === 'absent'}
+                onChange={() => setStatus('absent')}
                 className="mr-2 text-amber-500 focus:ring-amber-500"
                 disabled={loading}
               />
               <span className="text-red-400">Absent</span>
             </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                value="benched"
+                checked={status === 'benched'}
+                onChange={() => setStatus('benched')}
+                className="mr-2 text-amber-500 focus:ring-amber-500"
+                disabled={loading}
+              />
+              <span className="text-yellow-400">Benched</span>
+            </label>
           </div>
         </div>
-        <div className="mb-6">
+        <div className="mb-4">
           <label htmlFor="attendance-notes" className="block text-sm font-medium text-slate-300 mb-2">
             Notes <span className="text-slate-500">(Optional)</span>
           </label>
@@ -140,6 +153,22 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             disabled={loading}
           />
         </div>
+        {status === 'benched' && (
+          <div className="mb-6">
+            <label htmlFor="attendance-benched-notes" className="block text-sm font-medium text-slate-300 mb-2">
+              Benched Note <span className="text-slate-500">(Optional)</span>
+            </label>
+            <textarea
+              id="attendance-benched-notes"
+              value={benchedNote}
+              onChange={e => setBenchedNote(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              placeholder="Add note about why player is benched (e.g., 'Available for fill', 'Gear issues')"
+              disabled={loading}
+            />
+          </div>
+        )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             Cancel
