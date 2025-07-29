@@ -4,15 +4,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 
-from app.models.attendance import Attendance
+from app.models.attendance import Attendance, AttendanceStatus
 from app.models.raid import Raid
 from app.models.scenario import Scenario, SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 from app.models.toon import Toon, WOW_CLASSES, WOW_ROLES
-from app.models.member import Member
 from app.models.user import User
 from app.models.guild import Guild
 from app.models.team import Team
-from app.models.scenario import Scenario
 
 
 class TestAttendanceModel:
@@ -43,15 +41,8 @@ class TestAttendanceModel:
         db_session.add(scenario)
         db_session.commit()
 
-        # Create member
-        member = Member(guild_id=guild.id, display_name="Test Member")
-        db_session.add(member)
-        db_session.commit()
-
         # Create toon
-        toon = Toon(
-            member_id=member.id, username="TestToon", class_="Mage", role="DPS"
-        )
+        toon = Toon(username="TestToon", class_="Mage", role="Ranged DPS")
         db_session.add(toon)
         db_session.commit()
 
@@ -73,7 +64,7 @@ class TestAttendanceModel:
         attendance = Attendance(
             raid_id=raid.id,
             toon_id=toon.id,
-            is_present=True,
+            status=AttendanceStatus.PRESENT,
             notes="On time and performed well",
         )
         db_session.add(attendance)
@@ -82,7 +73,7 @@ class TestAttendanceModel:
         assert attendance.id is not None
         assert attendance.raid_id == raid.id
         assert attendance.toon_id == toon.id
-        assert attendance.is_present is True
+        assert attendance.status == AttendanceStatus.PRESENT
         assert attendance.notes == "On time and performed well"
         assert attendance.created_at is not None
         assert attendance.updated_at is not None
@@ -92,7 +83,7 @@ class TestAttendanceModel:
         raid, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=False
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.ABSENT
         )
         db_session.add(attendance)
         db_session.commit()

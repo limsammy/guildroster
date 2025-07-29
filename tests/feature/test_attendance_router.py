@@ -9,9 +9,8 @@ from app.models.guild import Guild
 from app.models.team import Team
 from app.models.scenario import Scenario, SCENARIO_DIFFICULTIES, SCENARIO_SIZES
 from app.models.raid import Raid
-from app.models.member import Member
 from app.models.toon import Toon
-from app.models.attendance import Attendance
+from app.models.attendance import Attendance, AttendanceStatus
 from app.models.token import Token
 from app.utils.password import hash_password
 
@@ -75,17 +74,8 @@ class TestAttendanceAPI:
         db_session.add(scenario)
         db_session.commit()
 
-        # Create member
-        member = Member(
-            guild_id=guild.id, display_name="Test Member", team_id=team.id
-        )
-        db_session.add(member)
-        db_session.commit()
-
         # Create toon
-        toon = Toon(
-            member_id=member.id, username="TestToon", class_="Mage", role="DPS"
-        )
+        toon = Toon(username="TestToon", class_="Mage", role="Ranged DPS")
         db_session.add(toon)
         db_session.commit()
 
@@ -102,7 +92,6 @@ class TestAttendanceAPI:
             "guild_id": guild.id,
             "team_id": team.id,
             "scenario_id": scenario.id,
-            "member_id": member.id,
             "toon_id": toon.id,
             "raid_id": raid.id,
         }
@@ -118,7 +107,7 @@ class TestAttendanceAPI:
         data = {
             "raid_id": test_data["raid_id"],
             "toon_id": test_data["toon_id"],
-            "is_present": True,
+            "status": "present",
             "notes": "On time and performed well",
         }
         response = client.post("/attendance/", json=data, headers=headers)
@@ -126,7 +115,7 @@ class TestAttendanceAPI:
         resp = response.json()
         assert resp["raid_id"] == test_data["raid_id"]
         assert resp["toon_id"] == test_data["toon_id"]
-        assert resp["is_present"] is True
+        assert resp["status"] == "present"
         assert resp["notes"] == "On time and performed well"
         assert "id" in resp
         assert "created_at" in resp
@@ -143,7 +132,7 @@ class TestAttendanceAPI:
         data = {
             "raid_id": test_data["raid_id"],
             "toon_id": test_data["toon_id"],
-            "is_present": True,
+            "status": "present",
         }
         response = client.post("/attendance/", json=data, headers=headers)
         assert response.status_code == 403
@@ -213,16 +202,7 @@ class TestAttendanceAPI:
         test_data = self._create_test_data(db_session, user_id)
 
         # Create second toon for bulk test
-        member2 = Member(
-            guild_id=test_data["guild_id"],
-            display_name="Test Member 2",
-            team_id=test_data["team_id"],
-        )
-        db_session.add(member2)
-        db_session.commit()
-
         toon2 = Toon(
-            member_id=member2.id,
             username="TestToon2",
             class_="Priest",
             role="Healer",
@@ -237,13 +217,13 @@ class TestAttendanceAPI:
                 {
                     "raid_id": test_data["raid_id"],
                     "toon_id": test_data["toon_id"],
-                    "is_present": True,
+                    "status": "present",
                     "notes": "On time",
                 },
                 {
                     "raid_id": test_data["raid_id"],
                     "toon_id": toon2_id,
-                    "is_present": False,
+                    "status": "absent",
                     "notes": "No show",
                 },
             ]
@@ -254,9 +234,9 @@ class TestAttendanceAPI:
         assert len(resp) == 2
         assert resp[0]["raid_id"] == test_data["raid_id"]
         assert resp[0]["toon_id"] == test_data["toon_id"]
-        assert resp[0]["is_present"] is True
+        assert resp[0]["status"] == "present"
         assert resp[1]["toon_id"] == toon2_id
-        assert resp[1]["is_present"] is False
+        assert resp[1]["status"] == "absent"
 
     def test_list_attendance(self, client: TestClient, db_session: Session):
         """Test listing attendance records."""
@@ -267,7 +247,7 @@ class TestAttendanceAPI:
         attendance = Attendance(
             raid_id=test_data["raid_id"],
             toon_id=test_data["toon_id"],
-            is_present=True,
+            status=AttendanceStatus.PRESENT,
         )
         db_session.add(attendance)
         db_session.commit()

@@ -21,31 +21,31 @@ class TestAttendanceBase:
         data = {
             "raid_id": 1,
             "toon_id": 2,
-            "is_present": True,
+            "status": "present",
             "notes": "On time and performed well",
         }
         attendance = AttendanceBase(**data)
         assert attendance.raid_id == 1
         assert attendance.toon_id == 2
-        assert attendance.is_present is True
+        assert attendance.status == "present"
         assert attendance.notes == "On time and performed well"
 
     def test_attendance_base_without_notes(self):
         """Test creating AttendanceBase without notes."""
-        data = {"raid_id": 1, "toon_id": 2, "is_present": False}
+        data = {"raid_id": 1, "toon_id": 2, "status": "absent"}
         attendance = AttendanceBase(**data)
         assert attendance.notes is None
 
     def test_attendance_base_empty_notes_validation(self):
         """Test that empty string notes are rejected."""
-        data = {"raid_id": 1, "toon_id": 2, "is_present": True, "notes": ""}
+        data = {"raid_id": 1, "toon_id": 2, "status": "present", "notes": ""}
         with pytest.raises(ValidationError) as exc_info:
             AttendanceBase(**data)
         assert "Notes cannot be empty" in str(exc_info.value)
 
     def test_attendance_base_whitespace_notes_validation(self):
         """Test that whitespace-only notes are rejected."""
-        data = {"raid_id": 1, "toon_id": 2, "is_present": True, "notes": "   "}
+        data = {"raid_id": 1, "toon_id": 2, "status": "present", "notes": "   "}
         with pytest.raises(ValidationError) as exc_info:
             AttendanceBase(**data)
         assert "Notes cannot be empty" in str(exc_info.value)
@@ -56,7 +56,7 @@ class TestAttendanceBase:
         data = {
             "raid_id": 1,
             "toon_id": 2,
-            "is_present": True,
+            "status": "present",
             "notes": long_notes,
         }
         with pytest.raises(ValidationError) as exc_info:
@@ -69,11 +69,11 @@ class TestAttendanceBase:
         """Test that required fields are enforced."""
         # Missing raid_id
         with pytest.raises(ValidationError):
-            AttendanceBase(toon_id=2, is_present=True)
+            AttendanceBase(toon_id=2, status="present")
 
         # Missing toon_id
         with pytest.raises(ValidationError):
-            AttendanceBase(raid_id=1, is_present=True)
+            AttendanceBase(raid_id=1, status="present")
 
 
 class TestAttendanceCreate:
@@ -82,13 +82,13 @@ class TestAttendanceCreate:
         data = {
             "raid_id": 1,
             "toon_id": 2,
-            "is_present": True,
+            "status": "present",
             "notes": "Test notes",
         }
         attendance = AttendanceCreate(**data)
         assert attendance.raid_id == 1
         assert attendance.toon_id == 2
-        assert attendance.is_present is True
+        assert attendance.status == "present"
         assert attendance.notes == "Test notes"
 
 
@@ -96,7 +96,7 @@ class TestAttendanceUpdate:
     def test_attendance_update_all_optional(self):
         """Test that all fields in AttendanceUpdate are optional."""
         attendance = AttendanceUpdate()
-        assert attendance.is_present is None
+        assert attendance.status is None
         assert attendance.notes is None
 
     def test_attendance_update_partial(self):
