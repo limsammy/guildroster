@@ -15,14 +15,12 @@ class TestToonSchemas:
         data = {
             "username": "MyToon",
             "class": "Mage",
-            "role": "DPS",
-            "is_main": True,
+            "role": "Ranged DPS",
         }
         toon = ToonBase(**data)
         assert toon.username == "MyToon"
         assert toon.class_ == "Mage"
-        assert toon.role == "DPS"
-        assert toon.is_main is True
+        assert toon.role == "Ranged DPS"
 
     @pytest.mark.parametrize("bad_class", ["", "Invalid", "mage", "Palad1n"])
     def test_toon_base_invalid_class(self, bad_class):
@@ -30,7 +28,7 @@ class TestToonSchemas:
         with pytest.raises(ValueError):
             ToonBase(**data)
 
-    @pytest.mark.parametrize("bad_role", ["", "invalid", "dps", "Tanky"])
+    @pytest.mark.parametrize("bad_role", ["", "invalid", "DPS", "Tanky"])
     def test_toon_base_invalid_role(self, bad_role):
         data = {"username": "Toon", "class": "Mage", "role": bad_role}
         with pytest.raises(ValueError):
@@ -41,37 +39,25 @@ class TestToonSchemas:
             "username": "MyToon",
             "class": "Priest",
             "role": "Healer",
-            "is_main": False,
-            "member_id": 123,
         }
         toon = ToonCreate(**data)
-        assert toon.member_id == 123
         assert toon.class_ == "Priest"
 
     def test_toon_update_partial(self):
-        data = {"class": "Druid", "is_main": True}
+        data = {"class": "Druid"}
         toon = ToonUpdate(**data)
         assert toon.class_ == "Druid"
         assert toon.username is None
         assert toon.role is None
-        assert toon.is_main is True
 
     def test_toon_update_invalid(self):
         # Provide all required fields, only set the invalid one to a bad value
         with pytest.raises(ValueError):
             ToonUpdate(
-                username="Toon",
-                role="DPS",
-                is_main=False,
-                **{"class": "NotAClass"}
+                username="Toon", role="Ranged DPS", **{"class": "NotAClass"}
             )
         with pytest.raises(ValueError):
-            ToonUpdate(
-                username="Toon",
-                role="NotARole",
-                is_main=False,
-                **{"class": "Mage"}
-            )
+            ToonUpdate(username="Toon", role="NotARole", **{"class": "Mage"})
 
     def test_toon_response_serialization(self):
         now = datetime.utcnow()
@@ -80,8 +66,7 @@ class TestToonSchemas:
             "username": "MyToon",
             "class": "Warrior",
             "role": "Tank",
-            "is_main": True,
-            "member_id": 42,
+            "team_ids": [1, 2],
             "created_at": now,
             "updated_at": now,
         }
@@ -89,7 +74,6 @@ class TestToonSchemas:
         assert toon.id == 1
         assert toon.class_ == "Warrior"
         assert toon.role == "Tank"
-        assert toon.member_id == 42
         assert toon.created_at == now
         assert toon.updated_at == now
 
@@ -101,8 +85,7 @@ class TestToonSchemas:
             "username": "AliasToon",
             "class": "Druid",
             "role": "Healer",
-            "is_main": False,
-            "member_id": 99,
+            "team_ids": [1],
             "created_at": now,
             "updated_at": now,
         }

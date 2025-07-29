@@ -101,8 +101,8 @@ class TestAttendanceUpdate:
 
     def test_attendance_update_partial(self):
         """Test updating only some fields."""
-        attendance = AttendanceUpdate(is_present=False)
-        assert attendance.is_present is False
+        attendance = AttendanceUpdate(status="absent")
+        assert attendance.status == "absent"
         assert attendance.notes is None
 
     def test_attendance_update_notes_validation(self):
@@ -119,7 +119,7 @@ class TestAttendanceResponse:
             "id": 1,
             "raid_id": 2,
             "toon_id": 3,
-            "is_present": True,
+            "status": "present",
             "notes": "Test notes",
             "created_at": datetime.now(),
             "updated_at": datetime.now(),
@@ -128,7 +128,7 @@ class TestAttendanceResponse:
         assert attendance.id == 1
         assert attendance.raid_id == 2
         assert attendance.toon_id == 3
-        assert attendance.is_present is True
+        assert attendance.status == "present"
         assert attendance.notes == "Test notes"
         assert attendance.created_at is not None
         assert attendance.updated_at is not None
@@ -142,13 +142,13 @@ class TestAttendanceBulkCreate:
                 {
                     "raid_id": 1,
                     "toon_id": 2,
-                    "is_present": True,
+                    "status": "present",
                     "notes": "On time",
                 },
                 {
                     "raid_id": 1,
                     "toon_id": 3,
-                    "is_present": False,
+                    "status": "absent",
                     "notes": "No show",
                 },
             ]
@@ -169,7 +169,7 @@ class TestAttendanceBulkCreate:
         """Test that too many records are rejected."""
         data = {
             "attendance_records": [
-                {"raid_id": 1, "toon_id": i, "is_present": True}
+                {"raid_id": 1, "toon_id": i, "status": "present"}
                 for i in range(101)
             ]
         }
@@ -199,8 +199,8 @@ class TestAttendanceBulkUpdate:
         """Test creating valid bulk update records."""
         data = {
             "attendance_records": [
-                {"id": 1, "is_present": False, "notes": "Updated notes"},
-                {"id": 2, "is_present": True},
+                {"id": 1, "status": "absent", "notes": "Updated notes"},
+                {"id": 2, "status": "present"},
             ]
         }
         bulk_update = AttendanceBulkUpdate(**data)
@@ -211,9 +211,7 @@ class TestAttendanceBulkUpdate:
     def test_bulk_update_missing_id(self):
         """Test that missing id field is caught."""
         data = {
-            "attendance_records": [
-                {"is_present": False, "notes": "No ID field"}
-            ]
+            "attendance_records": [{"status": "absent", "notes": "No ID field"}]
         }
         with pytest.raises(ValidationError) as exc_info:
             AttendanceBulkUpdate(**data)
@@ -238,6 +236,7 @@ class TestAttendanceStats:
             "total_raids": 10,
             "raids_attended": 8,
             "raids_missed": 2,
+            "raids_benched": 1,
             "attendance_percentage": 80.0,
             "current_streak": 3,
             "longest_streak": 5,
@@ -258,6 +257,7 @@ class TestAttendanceStats:
             "total_raids": 0,
             "raids_attended": 0,
             "raids_missed": 0,
+            "raids_benched": 0,
             "attendance_percentage": 0.0,
             "current_streak": 0,
             "longest_streak": 0,
@@ -276,16 +276,21 @@ class TestAttendanceReport:
             "total_raids": 5,
             "total_attendance_records": 25,
             "present_count": 20,
-            "absent_count": 5,
+            "absent_count": 3,
+            "benched_count": 2,
             "overall_attendance_rate": 80.0,
-            "attendance_by_raid": [{"raid_id": 1, "present": 8, "absent": 2}],
-            "attendance_by_toon": [{"toon_id": 1, "present": 4, "absent": 1}],
+            "attendance_by_raid": [
+                {"raid_id": 1, "present": 8, "absent": 2, "benched": 1}
+            ],
+            "attendance_by_toon": [
+                {"toon_id": 1, "present": 4, "absent": 1, "benched": 1}
+            ],
         }
         report = AttendanceReport(**data)
         assert report.total_raids == 5
         assert report.total_attendance_records == 25
         assert report.present_count == 20
-        assert report.absent_count == 5
+        assert report.absent_count == 3
         assert report.overall_attendance_rate == 80.0
         assert len(report.attendance_by_raid) == 1
         assert len(report.attendance_by_toon) == 1

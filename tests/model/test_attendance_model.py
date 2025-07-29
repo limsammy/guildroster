@@ -34,8 +34,6 @@ class TestAttendanceModel:
         # Create scenario
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
         )
         db_session.add(scenario)
@@ -49,7 +47,9 @@ class TestAttendanceModel:
         # Create raid
         raid = Raid(
             scheduled_at=datetime.now() + timedelta(days=1),
-            scenario_id=scenario.id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team.id,
         )
         db_session.add(raid)
@@ -90,7 +90,7 @@ class TestAttendanceModel:
 
         assert attendance.id is not None
         assert attendance.notes is None
-        assert attendance.is_present is False
+        assert attendance.status == AttendanceStatus.ABSENT
 
     def test_unique_raid_toon_constraint(self, db_session: Session):
         """Test that duplicate attendance records are prevented."""
@@ -98,14 +98,14 @@ class TestAttendanceModel:
 
         # Create first attendance record
         attendance1 = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
         db_session.add(attendance1)
         db_session.commit()
 
         # Try to create duplicate attendance record
         attendance2 = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=False
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.ABSENT
         )
         db_session.add(attendance2)
         with pytest.raises(IntegrityError):
@@ -117,7 +117,10 @@ class TestAttendanceModel:
 
         # Test with empty string notes
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True, notes=""
+            raid_id=raid.id,
+            toon_id=toon.id,
+            status=AttendanceStatus.PRESENT,
+            notes="",
         )
         db_session.add(attendance)
         with pytest.raises(IntegrityError):
@@ -126,7 +129,10 @@ class TestAttendanceModel:
 
         # Test with whitespace-only notes
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True, notes="   "
+            raid_id=raid.id,
+            toon_id=toon.id,
+            status=AttendanceStatus.PRESENT,
+            notes="   ",
         )
         db_session.add(attendance)
         with pytest.raises(IntegrityError):
@@ -137,7 +143,7 @@ class TestAttendanceModel:
         raid, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
         db_session.add(attendance)
         db_session.commit()
@@ -150,7 +156,7 @@ class TestAttendanceModel:
         raid, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
         db_session.add(attendance)
         db_session.commit()
@@ -163,7 +169,7 @@ class TestAttendanceModel:
         raid, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
         db_session.add(attendance)
         db_session.commit()
@@ -184,7 +190,7 @@ class TestAttendanceModel:
         raid, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
         db_session.add(attendance)
         db_session.commit()
@@ -205,7 +211,9 @@ class TestAttendanceModel:
         _, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=99999, toon_id=toon.id, is_present=True  # Non-existent raid
+            raid_id=99999,
+            toon_id=toon.id,
+            status=AttendanceStatus.PRESENT,  # Non-existent raid
         )
         db_session.add(attendance)
         with pytest.raises(IntegrityError):
@@ -216,7 +224,9 @@ class TestAttendanceModel:
         raid, _ = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=99999, is_present=True  # Non-existent toon
+            raid_id=raid.id,
+            toon_id=99999,
+            status=AttendanceStatus.PRESENT,  # Non-existent toon
         )
         db_session.add(attendance)
         with pytest.raises(IntegrityError):
@@ -227,7 +237,7 @@ class TestAttendanceModel:
         raid, toon = self.setup_raid_and_toon(db_session)
 
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
         db_session.add(attendance)
         db_session.commit()
@@ -247,14 +257,7 @@ class TestAttendanceModel:
         raid1, toon1 = self.setup_raid_and_toon(db_session)
 
         # Create second toon
-        user = db_session.query(User).first()
-        guild = db_session.query(Guild).first()
-        member2 = Member(guild_id=guild.id, display_name="Test Member 2")
-        db_session.add(member2)
-        db_session.commit()
-
         toon2 = Toon(
-            member_id=member2.id,
             username="TestToon2",
             class_="Priest",
             role="Healer",
@@ -267,7 +270,9 @@ class TestAttendanceModel:
         team = db_session.query(Team).first()
         raid2 = Raid(
             scheduled_at=datetime.now() + timedelta(days=2),
-            scenario_id=scenario.id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Heroic",
+            scenario_size="25",
             team_id=team.id,
         )
         db_session.add(raid2)
@@ -275,16 +280,16 @@ class TestAttendanceModel:
 
         # Create multiple attendance records
         attendance1 = Attendance(
-            raid_id=raid1.id, toon_id=toon1.id, is_present=True
+            raid_id=raid1.id, toon_id=toon1.id, status=AttendanceStatus.PRESENT
         )
         attendance2 = Attendance(
-            raid_id=raid1.id, toon_id=toon2.id, is_present=False
+            raid_id=raid1.id, toon_id=toon2.id, status=AttendanceStatus.ABSENT
         )
         attendance3 = Attendance(
-            raid_id=raid2.id, toon_id=toon1.id, is_present=True
+            raid_id=raid2.id, toon_id=toon1.id, status=AttendanceStatus.PRESENT
         )
         attendance4 = Attendance(
-            raid_id=raid2.id, toon_id=toon2.id, is_present=True
+            raid_id=raid2.id, toon_id=toon2.id, status=AttendanceStatus.PRESENT
         )
 
         db_session.add_all([attendance1, attendance2, attendance3, attendance4])
@@ -296,23 +301,23 @@ class TestAttendanceModel:
         assert len(toon1.attendance) == 2
         assert len(toon2.attendance) == 2
 
-    def test_boolean_is_present_field(self, db_session: Session):
-        """Test the is_present boolean field with different values."""
+    def test_attendance_status_field(self, db_session: Session):
+        """Test the status enum field with different values."""
         raid, toon = self.setup_raid_and_toon(db_session)
 
-        # Test with True
-        attendance_true = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True
+        # Test with PRESENT
+        attendance_present = Attendance(
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.PRESENT
         )
-        db_session.add(attendance_true)
+        db_session.add(attendance_present)
         db_session.commit()
-        assert attendance_true.is_present is True
+        assert attendance_present.status == AttendanceStatus.PRESENT
 
-        # Test with False
-        attendance_false = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=False
+        # Test with ABSENT
+        attendance_absent = Attendance(
+            raid_id=raid.id, toon_id=toon.id, status=AttendanceStatus.ABSENT
         )
-        db_session.add(attendance_false)
+        db_session.add(attendance_absent)
         with pytest.raises(
             IntegrityError
         ):  # Should fail due to unique constraint
@@ -326,7 +331,10 @@ class TestAttendanceModel:
         # Test with maximum length notes
         long_notes = "A" * 500
         attendance = Attendance(
-            raid_id=raid.id, toon_id=toon.id, is_present=True, notes=long_notes
+            raid_id=raid.id,
+            toon_id=toon.id,
+            status=AttendanceStatus.PRESENT,
+            notes=long_notes,
         )
         db_session.add(attendance)
         db_session.commit()

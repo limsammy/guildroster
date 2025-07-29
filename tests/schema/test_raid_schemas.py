@@ -12,35 +12,43 @@ class TestRaidSchemas:
     def test_raid_base_valid(self):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
-            "scenario_id": 1,
+            "scenario_name": "Test Scenario",
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": 1,
             "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test",
         }
         raid = RaidBase(**data)
         assert raid.scheduled_at == data["scheduled_at"]
-        assert raid.scenario_id == 1
+        assert raid.scenario_name == "Test Scenario"
+        assert raid.scenario_difficulty == "Normal"
+        assert raid.scenario_size == "10"
         assert raid.team_id == 1
         assert raid.warcraftlogs_url == data["warcraftlogs_url"]
 
     def test_raid_create(self):
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
-            "scenario_id": 2,
+            "scenario_name": "Test Scenario 2",
+            "scenario_difficulty": "Heroic",
+            "scenario_size": "25",
             "team_id": 2,
             "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test2",
         }
         raid = RaidCreate(**data)
-        assert raid.scenario_id == 2
+        assert raid.scenario_name == "Test Scenario 2"
+        assert raid.scenario_difficulty == "Heroic"
+        assert raid.scenario_size == "25"
         assert raid.team_id == 2
         assert raid.warcraftlogs_url == data["warcraftlogs_url"]
 
     def test_raid_update_partial(self):
         data = {
-            "scenario_id": 3,
+            "scenario_name": "Updated Scenario",
             "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test3",
         }
         raid = RaidUpdate(**data)
-        assert raid.scenario_id == 3
+        assert raid.scenario_name == "Updated Scenario"
         assert raid.scheduled_at is None
         assert raid.team_id is None
         assert raid.warcraftlogs_url == data["warcraftlogs_url"]
@@ -50,7 +58,9 @@ class TestRaidSchemas:
         data = {
             "id": 1,
             "scheduled_at": now,
-            "scenario_id": 1,
+            "scenario_name": "Test Scenario",
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": 1,
             "created_at": now,
             "updated_at": now,
@@ -68,7 +78,9 @@ class TestRaidSchemas:
         raid = RaidResponse(**data)
         assert raid.id == 1
         assert raid.scheduled_at == now
-        assert raid.scenario_id == 1
+        assert raid.scenario_name == "Test Scenario"
+        assert raid.scenario_difficulty == "Normal"
+        assert raid.scenario_size == "10"
         assert raid.team_id == 1
         assert raid.created_at == now
         assert raid.updated_at == now
@@ -87,7 +99,9 @@ class TestRaidSchemas:
         """Test that valid WarcraftLogs URLs are accepted."""
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
-            "scenario_id": 1,
+            "scenario_name": "Test Scenario",
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": 1,
             "warcraftlogs_url": "https://www.warcraftlogs.com/reports/abc123def456",
         }
@@ -109,7 +123,9 @@ class TestRaidSchemas:
         """Test that None WarcraftLogs URLs are accepted."""
         data = {
             "scheduled_at": datetime.now() + timedelta(days=1),
-            "scenario_id": 1,
+            "scenario_name": "Test Scenario",
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": 1,
             "warcraftlogs_url": None,
         }

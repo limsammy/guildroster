@@ -51,17 +51,15 @@ class TestScenarioAPI:
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Test Scenario",
-            "difficulty": SCENARIO_DIFFICULTIES[0],
-            "size": SCENARIO_SIZES[0],
             "is_active": True,
+            "mop": False,
         }
         response = client.post("/scenarios/", json=data, headers=headers)
         assert response.status_code == 201
         resp = response.json()
         assert resp["name"] == "Test Scenario"
-        assert resp["difficulty"] == SCENARIO_DIFFICULTIES[0]
-        assert resp["size"] == SCENARIO_SIZES[0]
         assert resp["is_active"] is True
+        assert resp["mop"] is False
         assert "id" in resp
         assert "created_at" in resp
         assert "updated_at" in resp
@@ -75,9 +73,8 @@ class TestScenarioAPI:
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Test Scenario",
-            "difficulty": SCENARIO_DIFFICULTIES[0],
-            "size": SCENARIO_SIZES[0],
             "is_active": True,
+            "mop": False,
         }
         response = client.post("/scenarios/", json=data, headers=headers)
         assert response.status_code == 403
@@ -133,15 +130,13 @@ class TestScenarioAPI:
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Test Scenario",
-            "difficulty": SCENARIO_DIFFICULTIES[0],
-            "size": SCENARIO_SIZES[0],
+            "mop": False,
         }
         response = client.post("/scenarios/", json=data, headers=headers)
         assert response.status_code == 201
         resp = response.json()
         assert resp["name"] == "Test Scenario"
-        assert resp["difficulty"] == SCENARIO_DIFFICULTIES[0]
-        assert resp["size"] == SCENARIO_SIZES[0]
+        assert resp["mop"] is False
         assert resp["is_active"] is True  # Default value
 
     def test_list_scenarios(self, client: TestClient, db_session: Session):
@@ -151,21 +146,18 @@ class TestScenarioAPI:
         # Create some scenarios
         scenario1 = Scenario(
             name="Scenario 1",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         scenario2 = Scenario(
             name="Scenario 2",
-            difficulty=SCENARIO_DIFFICULTIES[1],
-            size=SCENARIO_SIZES[1],
             is_active=False,
+            mop=True,
         )
         scenario3 = Scenario(
             name="Scenario 3",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add_all([scenario1, scenario2, scenario3])
         db_session.commit()
@@ -189,21 +181,18 @@ class TestScenarioAPI:
         # Create scenarios with different active states
         scenario1 = Scenario(
             name="Active Scenario 1",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         scenario2 = Scenario(
             name="Inactive Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[1],
-            size=SCENARIO_SIZES[1],
             is_active=False,
+            mop=True,
         )
         scenario3 = Scenario(
             name="Active Scenario 2",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add_all([scenario1, scenario2, scenario3])
         db_session.commit()
@@ -225,21 +214,18 @@ class TestScenarioAPI:
         # Create scenarios with different active states
         scenario1 = Scenario(
             name="Active Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         scenario2 = Scenario(
             name="Inactive Scenario 1",
-            difficulty=SCENARIO_DIFFICULTIES[1],
-            size=SCENARIO_SIZES[1],
             is_active=False,
+            mop=True,
         )
         scenario3 = Scenario(
             name="Inactive Scenario 2",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=False,
+            mop=False,
         )
         db_session.add_all([scenario1, scenario2, scenario3])
         db_session.commit()
@@ -259,9 +245,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -295,21 +280,18 @@ class TestScenarioAPI:
         # Create scenarios with different active states
         scenario1 = Scenario(
             name="Active Scenario 1",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         scenario2 = Scenario(
             name="Inactive Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[1],
-            size=SCENARIO_SIZES[1],
             is_active=False,
+            mop=True,
         )
         scenario3 = Scenario(
             name="Active Scenario 2",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add_all([scenario1, scenario2, scenario3])
         db_session.commit()
@@ -331,9 +313,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Original Name",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -342,9 +323,8 @@ class TestScenarioAPI:
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Updated Name",
-            "difficulty": SCENARIO_DIFFICULTIES[1],
-            "size": SCENARIO_SIZES[1],
             "is_active": False,
+            "mop": True,
         }
         response = client.put(
             f"/scenarios/{scenario_id}", json=data, headers=headers
@@ -353,9 +333,8 @@ class TestScenarioAPI:
         resp = response.json()
         assert resp["id"] == scenario_id
         assert resp["name"] == "Updated Name"
-        assert resp["difficulty"] == SCENARIO_DIFFICULTIES[1]
-        assert resp["size"] == SCENARIO_SIZES[1]
         assert resp["is_active"] is False
+        assert resp["mop"] is True
 
     def test_update_scenario_regular_user_forbidden(
         self, client: TestClient, db_session: Session
@@ -366,9 +345,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Original Name",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -377,9 +355,8 @@ class TestScenarioAPI:
         headers = {"Authorization": f"Bearer {token_key}"}
         data = {
             "name": "Updated Name",
-            "difficulty": SCENARIO_DIFFICULTIES[1],
-            "size": SCENARIO_SIZES[1],
             "is_active": False,
+            "mop": True,
         }
         response = client.put(
             f"/scenarios/{scenario_id}", json=data, headers=headers
@@ -410,9 +387,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Original Name",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -429,11 +405,8 @@ class TestScenarioAPI:
         resp = response.json()
         assert resp["id"] == scenario_id
         assert resp["name"] == "Updated Name"
-        assert (
-            resp["difficulty"] == SCENARIO_DIFFICULTIES[0]
-        )  # Should remain unchanged
-        assert resp["size"] == SCENARIO_SIZES[0]  # Should remain unchanged
         assert resp["is_active"] is True  # Should remain unchanged
+        assert resp["mop"] is False  # Should remain unchanged
 
     def test_update_scenario_invalid_name(
         self, client: TestClient, db_session: Session
@@ -444,9 +417,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Original Name",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -471,9 +443,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -496,9 +467,8 @@ class TestScenarioAPI:
         # Create a scenario
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -526,9 +496,8 @@ class TestScenarioAPI:
         # Create a scenario for testing
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
@@ -541,9 +510,8 @@ class TestScenarioAPI:
                 "/scenarios/",
                 {
                     "name": "Test",
-                    "difficulty": SCENARIO_DIFFICULTIES[0],
-                    "size": SCENARIO_SIZES[0],
                     "is_active": True,
+                    "mop": False,
                 },
             ),
             ("GET", "/scenarios/", None),

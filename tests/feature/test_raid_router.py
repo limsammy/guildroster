@@ -75,13 +75,12 @@ class TestRaidAPI:
 
         scenario = Scenario(
             name=f"Test Scenario {uuid.uuid4().hex[:8]}",
-            difficulty="Normal",
-            size="10",
             is_active=True,
+            mop=False,
         )
         db_session.add(scenario)
         db_session.commit()
-        return scenario.id  # Store ID before making API request
+        return scenario  # Return the scenario object
 
     def test_create_raid_superuser(
         self, client: TestClient, db_session: Session
@@ -90,13 +89,16 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
-            "scenario_id": scenario_id,
+            "scenario_name": scenario.name,
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": team_id,
             "warcraftlogs_url": "https://www.warcraftlogs.com/reports/test-api",
         }
@@ -104,7 +106,9 @@ class TestRaidAPI:
         assert response.status_code == 201
         resp = response.json()
         assert resp["scheduled_at"] == scheduled_at.isoformat()
-        assert resp["scenario_id"] == scenario_id
+        assert resp["scenario_name"] == data["scenario_name"]
+        assert resp["scenario_difficulty"] == "Normal"
+        assert resp["scenario_size"] == "10"
         assert resp["team_id"] == team_id
         assert resp["warcraftlogs_url"] == data["warcraftlogs_url"]
         assert "id" in resp
@@ -118,13 +122,16 @@ class TestRaidAPI:
         user_id, token_key = self._create_regular_user(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
-            "scenario_id": scenario_id,
+            "scenario_name": scenario.name,
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": team_id,
         }
         response = client.post("/raids/", json=data, headers=headers)
@@ -135,13 +142,16 @@ class TestRaidAPI:
     ):
         """Test creating raid with non-existent team."""
         user_id, token_key = self._create_superuser(db_session)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         headers = {"Authorization": f"Bearer {token_key}"}
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
-            "scenario_id": scenario_id,
+            "scenario_name": scenario.name,
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": 999,  # Non-existent team
         }
         response = client.post("/raids/", json=data, headers=headers)
@@ -160,32 +170,39 @@ class TestRaidAPI:
         scheduled_at = datetime.now() + timedelta(days=1)
         data = {
             "scheduled_at": scheduled_at.isoformat(),
-            "scenario_id": 999,  # Non-existent scenario
+            "scenario_name": "Non-existent Scenario",
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
             "team_id": team_id,
         }
         response = client.post("/raids/", json=data, headers=headers)
-        assert response.status_code == 404
-        assert "not found" in response.json()["detail"]
+        assert response.status_code == 400
+        assert "Invalid scenario variation" in response.json()["detail"]
 
     def test_list_raids(self, client: TestClient, db_session: Session):
         """Test listing all raids."""
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         # Create raids
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -206,26 +223,33 @@ class TestRaidAPI:
         guild_id = self._create_guild(db_session, user_id)
         team1_id = self._create_team(db_session, guild_id, user_id)
         team2_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         # Create raids for different teams
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team1_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team1_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid3 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team2_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -246,27 +270,35 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario1_id = self._create_scenario(db_session)
-        scenario2_id = self._create_scenario(db_session)
+        scenario1 = self._create_scenario(db_session)
+        scenario2 = self._create_scenario(db_session)
+        db_session.refresh(scenario1)
+        db_session.refresh(scenario2)
 
         # Create raids for different scenarios
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario1_id,
+            scenario_name=scenario1.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
-            scenario_id=scenario1_id,
+            scenario_name=scenario1.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid3 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario2_id,
+            scenario_name=scenario2.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -275,24 +307,28 @@ class TestRaidAPI:
 
         headers = {"Authorization": f"Bearer {token_key}"}
         response = client.get(
-            f"/raids/?scenario_id={scenario1_id}", headers=headers
+            f"/raids/?scenario_name={scenario1.name}", headers=headers
         )
         assert response.status_code == 200
         raids = response.json()
         assert len(raids) == 2
-        assert all(raid["scenario_id"] == scenario1_id for raid in raids)
+        assert all(raid["scenario_name"] == scenario1.name for raid in raids)
 
     def test_get_raid_by_id(self, client: TestClient, db_session: Session):
         """Test getting a specific raid by ID."""
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
+        scenario_name = scenario.name  # Store the name before API call
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario_name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -304,7 +340,9 @@ class TestRaidAPI:
         assert response.status_code == 200
         resp = response.json()
         assert resp["scheduled_at"] == scheduled_at.isoformat()
-        assert resp["scenario_id"] == scenario_id
+        assert resp["scenario_name"] == scenario_name
+        assert resp["scenario_difficulty"] == "Normal"
+        assert resp["scenario_size"] == "10"
         assert resp["team_id"] == team_id
         assert resp["warcraftlogs_url"] == raid.warcraftlogs_url
 
@@ -322,20 +360,25 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         # Create raids
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -367,20 +410,25 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         # Create raids
         scheduled_at1 = datetime.now() + timedelta(days=1)
         scheduled_at2 = datetime.now() + timedelta(days=2)
         raid1 = Raid(
             scheduled_at=scheduled_at1,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
         raid2 = Raid(
             scheduled_at=scheduled_at2,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -388,11 +436,13 @@ class TestRaidAPI:
         db_session.commit()
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        response = client.get(f"/raids/scenario/{scenario_id}", headers=headers)
+        response = client.get(
+            f"/raids/scenario/{scenario.name}", headers=headers
+        )
         assert response.status_code == 200
         raids = response.json()
         assert len(raids) == 2
-        assert all(raid["scenario_id"] == scenario_id for raid in raids)
+        assert all(raid["scenario_name"] == scenario.name for raid in raids)
 
     def test_get_raids_by_scenario_not_found(
         self, client: TestClient, db_session: Session
@@ -412,12 +462,16 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
+        scenario_name = scenario.name  # Store the name before API call
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario_name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -433,7 +487,9 @@ class TestRaidAPI:
         assert response.status_code == 200
         resp = response.json()
         assert resp["scheduled_at"] == new_scheduled_at.isoformat()
-        assert resp["scenario_id"] == scenario_id
+        assert resp["scenario_name"] == scenario_name
+        assert resp["scenario_difficulty"] == "Normal"
+        assert resp["scenario_size"] == "10"
         assert resp["team_id"] == team_id
         assert resp["warcraftlogs_url"] == raid.warcraftlogs_url
 
@@ -445,12 +501,15 @@ class TestRaidAPI:
         superuser_id, _ = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, superuser_id)
         team_id = self._create_team(db_session, guild_id, superuser_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -485,12 +544,15 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -510,12 +572,15 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -523,10 +588,14 @@ class TestRaidAPI:
         db_session.commit()
 
         headers = {"Authorization": f"Bearer {token_key}"}
-        data = {"scenario_id": 999}  # Non-existent scenario
+        data = {
+            "scenario_name": "Non-existent Scenario",
+            "scenario_difficulty": "Normal",
+            "scenario_size": "10",
+        }
         response = client.put(f"/raids/{raid.id}", json=data, headers=headers)
-        assert response.status_code == 404
-        assert "not found" in response.json()["detail"]
+        assert response.status_code == 400
+        assert "Invalid scenario variation" in response.json()["detail"]
 
     def test_delete_raid_superuser(
         self, client: TestClient, db_session: Session
@@ -535,12 +604,15 @@ class TestRaidAPI:
         user_id, token_key = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, user_id)
         team_id = self._create_team(db_session, guild_id, user_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
@@ -563,12 +635,15 @@ class TestRaidAPI:
         superuser_id, _ = self._create_superuser(db_session)
         guild_id = self._create_guild(db_session, superuser_id)
         team_id = self._create_team(db_session, guild_id, superuser_id)
-        scenario_id = self._create_scenario(db_session)
+        scenario = self._create_scenario(db_session)
+        db_session.refresh(scenario)
 
         scheduled_at = datetime.now() + timedelta(days=1)
         raid = Raid(
             scheduled_at=scheduled_at,
-            scenario_id=scenario_id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team_id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test-api",
         )
