@@ -3,8 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router';
+import '@testing-library/jest-dom';
 import Guilds from '../../app/routes/guilds';
 import { GuildService } from '../../app/api/guilds';
+import { GuildProvider } from '../../app/contexts/GuildContext';
 
 // Mock the services
 vi.mock('../../app/api/guilds');
@@ -19,6 +21,17 @@ Object.defineProperty(window, 'confirm', {
   writable: true,
 });
 
+// Helper function to render with providers
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(
+    <MemoryRouter>
+      <GuildProvider>
+        {component}
+      </GuildProvider>
+    </MemoryRouter>
+  );
+};
+
 describe('Guilds Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,32 +40,20 @@ describe('Guilds Page', () => {
 
   it('renders loading state', () => {
     vi.mocked(GuildService.getGuilds).mockImplementation(() => new Promise(() => {}));
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     expect(screen.getByText('Loading guilds...')).toBeInTheDocument();
   });
 
   it('renders error state', async () => {
     vi.mocked(GuildService.getGuilds).mockRejectedValue(new Error('Failed to load'));
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Error Loading Guilds')).toBeInTheDocument());
     expect(screen.getByText('Failed to load')).toBeInTheDocument();
   });
 
   it('renders empty state when no guilds', async () => {
     vi.mocked(GuildService.getGuilds).mockResolvedValue([]);
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('No Guilds Found')).toBeInTheDocument());
     expect(screen.getByText('Get started by creating your first guild')).toBeInTheDocument();
   });
@@ -62,11 +63,7 @@ describe('Guilds Page', () => {
       { id: 1, name: 'Guild One', created_at: '', updated_at: '' },
       { id: 2, name: 'Guild Two', created_at: '', updated_at: '' },
     ]);
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => {
       expect(screen.getByText('Guild One')).toBeInTheDocument();
       expect(screen.getByText('Guild Two')).toBeInTheDocument();
@@ -77,11 +74,7 @@ describe('Guilds Page', () => {
 
   it('opens and cancels the add guild modal', async () => {
     vi.mocked(GuildService.getGuilds).mockResolvedValue([]);
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Add Guild')).toBeInTheDocument());
     userEvent.click(screen.getByText('Add Guild'));
     await screen.findByTestId('guild-form-modal');
@@ -91,11 +84,7 @@ describe('Guilds Page', () => {
 
   it('validates required fields in the add guild form', async () => {
     vi.mocked(GuildService.getGuilds).mockResolvedValue([]);
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Add Guild')).toBeInTheDocument());
     userEvent.click(screen.getByText('Add Guild'));
     await waitFor(() => expect(screen.getByTestId('guild-form-modal')).toBeInTheDocument());
@@ -117,11 +106,7 @@ describe('Guilds Page', () => {
       created_at: '', 
       updated_at: '' 
     });
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Add Guild')).toBeInTheDocument());
     userEvent.click(screen.getByText('Add Guild'));
     await screen.findByTestId('guild-form-modal');
@@ -131,7 +116,6 @@ describe('Guilds Page', () => {
     userEvent.click(submitButton);
     await waitFor(() => expect(GuildService.createGuild).toHaveBeenCalledWith({
       name: 'New Guild',
-      created_by: 1,
     }));
     await waitFor(() => expect(screen.queryByTestId('guild-form-modal')).not.toBeInTheDocument());
   });
@@ -146,11 +130,7 @@ describe('Guilds Page', () => {
       created_at: '', 
       updated_at: '' 
     });
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Edit')).toBeInTheDocument());
     userEvent.click(screen.getByText('Edit'));
     await screen.findByTestId('guild-form-modal');
@@ -169,11 +149,7 @@ describe('Guilds Page', () => {
       { id: 1, name: 'Test Guild', created_at: '', updated_at: '' }
     ]);
     vi.mocked(GuildService.deleteGuild).mockResolvedValue();
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Delete')).toBeInTheDocument());
     userEvent.click(screen.getByText('Delete'));
     await waitFor(() => expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to delete this guild? This action cannot be undone.'));
@@ -185,11 +161,7 @@ describe('Guilds Page', () => {
       { id: 1, name: 'Alliance Guild', created_at: '', updated_at: '' },
       { id: 2, name: 'Horde Guild', created_at: '', updated_at: '' },
     ]);
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Alliance Guild')).toBeInTheDocument());
     
     await userEvent.type(screen.getByPlaceholderText(/search by guild name/i), 'Alliance');
@@ -202,11 +174,7 @@ describe('Guilds Page', () => {
       { id: 1, name: 'Alliance Guild', created_at: '', updated_at: '' },
       { id: 2, name: 'Horde Guild', created_at: '', updated_at: '' },
     ]);
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Alliance Guild')).toBeInTheDocument());
     
     await userEvent.type(screen.getByPlaceholderText(/search by guild name/i), 'Alliance');
@@ -227,11 +195,7 @@ describe('Guilds Page', () => {
   it('shows error in the form if createGuild fails', async () => {
     vi.mocked(GuildService.getGuilds).mockResolvedValue([]);
     vi.mocked(GuildService.createGuild).mockRejectedValue(new Error('Create failed'));
-    render(
-      <MemoryRouter>
-        <Guilds />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Guilds />);
     await waitFor(() => expect(screen.getByText('Add Guild')).toBeInTheDocument());
     userEvent.click(screen.getByText('Add Guild'));
     await screen.findByTestId('guild-form-modal');
