@@ -5,6 +5,7 @@ from .user import (
     UserCreate,
     UserUpdate,
     UserLogin,
+    UserRegistration,
 )
 from .token import (
     TokenBase,
@@ -38,6 +39,12 @@ from .attendance import (
     AttendanceStats,
     AttendanceReport,
 )
+from .invite import (
+    InviteBase,
+    InviteCreate,
+    InviteResponse,
+    InviteListResponse,
+)
 
 __all__ = [
     "UserBase",
@@ -46,6 +53,7 @@ __all__ = [
     "UserCreate",
     "UserUpdate",
     "UserLogin",
+    "UserRegistration",
     "TokenBase",
     "TokenCreate",
     "TokenResponse",
@@ -76,4 +84,8 @@ __all__ = [
     "AttendanceBulkUpdateItem",
     "AttendanceStats",
     "AttendanceReport",
+    "InviteBase",
+    "InviteCreate",
+    "InviteResponse",
+    "InviteListResponse",
 ]

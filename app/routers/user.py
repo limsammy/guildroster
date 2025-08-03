@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.database import get_db
 from app.models.user import User
@@ -10,6 +11,7 @@ from app.schemas.user import (
     UserCreate,
     UserUpdate,
     UserLogin,
+    UserRegistration,
 )
 from app.utils.auth import (
     require_any_token,
@@ -18,6 +20,7 @@ from app.utils.auth import (
     security,
 )
 from app.utils.password import hash_password, verify_password
+from app.utils.invite import use_invite_code
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -71,6 +74,74 @@ def create_user(
     db.refresh(user)
 
     logger.info(f"User {user.username} created successfully")
+    return user
+
+
+@router.post("/register", response_model=UserResponse)
+def register_user(
+    user_data: UserRegistration,
+    db: Session = Depends(get_db),
+):
+    """
+    Register a new user using an invite code.
+
+    **Authentication:**
+    - No authentication required (public endpoint)
+    """
+    logger.info(f"Registration attempt for user: {user_data.username}")
+
+    # Check if username already exists
+    existing_user = (
+        db.query(User).filter(User.username == user_data.username).first()
+    )
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered",
+        )
+
+    # Validate and use the invite code
+    try:
+        use_invite_code(
+            user_data.invite_code, None, db
+        )  # We'll update this after user creation
+    except HTTPException as e:
+        logger.warning(
+            f"Registration failed: invalid invite code {user_data.invite_code}"
+        )
+        raise e
+
+    # Hash the password
+    hashed_password = hash_password(user_data.password)
+
+    # Create user
+    user = User(
+        username=user_data.username,
+        hashed_password=hashed_password,
+        is_active=True,
+        is_superuser=False,  # New registrations are never superusers
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    # Now mark the invite code as used by this user
+    from app.models.invite import Invite
+
+    invite = (
+        db.query(Invite)
+        .filter(Invite.code == user_data.invite_code.upper())
+        .first()
+    )
+    if invite:
+        invite.used_by = user.id
+        invite.used_at = datetime.now()
+        db.commit()
+
+    logger.info(
+        f"User {user.username} registered successfully using invite code {user_data.invite_code}"
+    )
     return user
 
 

@@ -71,6 +71,7 @@ def create_app() -> FastAPI:
         raid,
         scenario,
         attendance,
+        invite,
     )
 
     app.include_router(user.router)
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(raid.router)
     app.include_router(scenario.router)
     app.include_router(attendance.router)
+    app.include_router(invite.router)
 
     @app.get("/")
     def read_root():
