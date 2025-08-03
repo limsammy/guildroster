@@ -9,6 +9,7 @@ import { ToonService } from "../api/toons";
 import { RaidService } from "../api/raids";
 import { ScenarioService } from "../api/scenarios";
 import type { Guild, Team, Toon, Raid, Scenario } from "../api/types";
+import { Navigation } from "../components/layout/Navigation";
 
 export function meta() {
   return [
@@ -161,8 +162,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      <Navigation />
       {/* Header */}
-      <div className="bg-slate-800/60 border-b border-slate-600/50">
+      <div className="bg-slate-800/60 border-b border-slate-600/50 pt-16">
         <Container>
           <div className="py-6">
             <div className="flex items-center justify-between">
@@ -178,18 +180,6 @@ export default function Dashboard() {
                     Viewing: {selectedGuild.name}
                   </p>
                 )}
-              </div>
-              <div className="flex gap-3">
-                <Link to="/">
-                  <Button variant="primary">Home</Button>
-                </Link>
-                <Button variant="danger" onClick={async () => {
-                  try {
-                    await logout();
-                  } catch (error) {
-                    console.error('Dashboard logout failed:', error);
-                  }
-                }}>Logout</Button>
               </div>
             </div>
           </div>
@@ -308,6 +298,14 @@ export default function Dashboard() {
                     <div className="text-sm font-medium">Attendance</div>
                   </Button>
                 </Link>
+                {user?.is_superuser && (
+                  <Link to="/invites" className="block">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">
+                      <div className="text-3xl mb-2">🔑</div>
+                      <div className="text-sm font-medium">Invites</div>
+                    </Button>
+                  </Link>
+                )}
                 {user?.is_superuser && (
                   <Link to="/settings" className="block">
                     <Button className="w-full h-20 flex flex-col items-center justify-center" variant="primary">

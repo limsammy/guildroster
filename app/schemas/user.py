@@ -46,3 +46,18 @@ class UserResponse(UserBase):
 class UserListResponse(BaseModel):
     users: List[UserResponse]
     total: int
+
+
+class UserRegistration(BaseModel):
+    username: str = Field(
+        ..., min_length=3, max_length=50, description="Username for the account"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="Password for the account",
+    )
+    invite_code: str = Field(
+        ..., min_length=8, max_length=8, description="8-character invite code"
+    )

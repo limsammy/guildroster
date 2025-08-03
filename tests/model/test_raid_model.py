@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 
 from app.models.raid import Raid
-from app.models.scenario import Scenario, SCENARIO_DIFFICULTIES, SCENARIO_SIZES
+from app.models.scenario import Scenario
 from app.models.team import Team
 from app.models.guild import Guild
 from app.models.user import User
@@ -32,8 +32,6 @@ class TestRaidModel:
         # Create scenario
         scenario = Scenario(
             name="Test Scenario",
-            difficulty=SCENARIO_DIFFICULTIES[0],
-            size=SCENARIO_SIZES[0],
             is_active=True,
         )
         db_session.add(scenario)
@@ -47,7 +45,9 @@ class TestRaidModel:
 
         raid = Raid(
             scheduled_at=datetime.now() + timedelta(days=1),
-            scenario_id=scenario.id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team.id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/test",
         )
@@ -56,7 +56,9 @@ class TestRaidModel:
 
         assert raid.id is not None
         assert raid.scheduled_at > datetime.now()
-        assert raid.scenario_id == scenario.id
+        assert raid.scenario_name == scenario.name
+        assert raid.scenario_difficulty == "Normal"
+        assert raid.scenario_size == "10"
         assert raid.team_id == team.id
         assert (
             raid.warcraftlogs_url == "https://www.warcraftlogs.com/reports/test"
@@ -97,7 +99,9 @@ class TestRaidModel:
 
         raid = Raid(
             scheduled_at=datetime.now() + timedelta(days=1),
-            scenario_id=scenario.id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team.id,
             warcraftlogs_url="https://www.warcraftlogs.com/reports/abc123def456",
             warcraftlogs_report_code="abc123def456",
@@ -133,7 +137,9 @@ class TestRaidModel:
 
         raid = Raid(
             scheduled_at=datetime.now() + timedelta(days=1),
-            scenario_id=scenario.id,
+            scenario_name=scenario.name,
+            scenario_difficulty="Normal",
+            scenario_size="10",
             team_id=team.id,
             warcraftlogs_metadata=complex_metadata,
         )

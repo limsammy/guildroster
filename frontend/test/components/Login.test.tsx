@@ -145,6 +145,7 @@ describe('Login Page', () => {
       expect(mockLogin).toHaveBeenCalledWith({
         username: 'testuser',
         password: 'testpass',
+        invite_code: '',
       });
     });
   });

@@ -83,19 +83,17 @@ class TestTeamCreate:
             "name": "Raid Team A",
             "description": "Main raid team",
             "guild_id": 1,
-            "created_by": 1,
         }
         team = TeamCreate(**data)
         assert team.name == "Raid Team A"
         assert team.description == "Main raid team"
         assert team.guild_id == 1
-        assert team.created_by == 1
 
-    def test_team_create_missing_created_by(self):
-        """Test that created_by is required."""
+    def test_team_create_missing_required_fields(self):
+        """Test that required fields are enforced."""
         data = {
             "name": "Test Team",
-            "guild_id": 1,
+            # Missing guild_id
         }
         with pytest.raises(ValidationError):
             TeamCreate(**data)
@@ -106,7 +104,6 @@ class TestTeamCreate:
         data = {
             "name": "A" * 51,
             "guild_id": 1,
-            "created_by": 1,
         }
         with pytest.raises(ValidationError) as exc_info:
             TeamCreate(**data)

@@ -17,7 +17,9 @@ from app.schemas.attendance import (
     AttendanceBulkUpdateItem,
     AttendanceStats,
     AttendanceReport,
+    BenchedPlayer,
 )
+from app.models.attendance import AttendanceStatus
 from app.models.token import Token
 from app.utils.auth import require_any_token, require_superuser, require_user
 from app.models.user import User
@@ -100,8 +102,9 @@ def create_attendance(
     attendance = Attendance(
         raid_id=attendance_in.raid_id,
         toon_id=attendance_in.toon_id,
-        is_present=attendance_in.is_present,
+        status=attendance_in.status,
         notes=attendance_in.notes,
+        benched_note=attendance_in.benched_note,
     )
     db.add(attendance)
     db.commit()
@@ -149,8 +152,9 @@ def create_attendance_bulk(
         attendance = Attendance(
             raid_id=record.raid_id,
             toon_id=record.toon_id,
-            is_present=record.is_present,
+            status=record.status,
             notes=record.notes,
+            benched_note=record.benched_note,
         )
         db.add(attendance)
         created_records.append(attendance)
@@ -173,7 +177,7 @@ def list_attendance(
     raid_id: Optional[int] = None,
     toon_id: Optional[int] = None,
     team_id: Optional[int] = None,
-    is_present: Optional[bool] = None,
+    status: Optional[AttendanceStatus] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     db: Session = Depends(get_db),
@@ -197,8 +201,8 @@ def list_attendance(
         )
         query = query.filter(Attendance.raid_id.in_(team_raids))
 
-    if is_present is not None:
-        query = query.filter(Attendance.is_present == is_present)
+    if status is not None:
+        query = query.filter(Attendance.status == status)
 
     if start_date:
         # Join with raids to filter by raid date
@@ -230,10 +234,12 @@ def update_attendance_bulk(
     for record in bulk_in.attendance_records:
         attendance = get_attendance_or_404(db, record.id)
         update_data = record.model_dump(exclude_unset=True, exclude={"id"})
-        if "is_present" in update_data:
-            attendance.is_present = update_data["is_present"]  # type: ignore[assignment]
+        if "status" in update_data:
+            attendance.status = update_data["status"]  # type: ignore[assignment]
         if "notes" in update_data:
             attendance.notes = update_data["notes"]  # type: ignore[assignment]
+        if "benched_note" in update_data:
+            attendance.benched_note = update_data["benched_note"]  # type: ignore[assignment]
         updated_records.append(attendance)
 
     db.commit()
@@ -339,11 +345,14 @@ def update_attendance(
     """
     attendance = get_attendance_or_404(db, attendance_id)
 
-    if attendance_in.is_present is not None:
-        attendance.is_present = attendance_in.is_present  # type: ignore[assignment]
+    if attendance_in.status is not None:
+        attendance.status = attendance_in.status  # type: ignore[assignment]
 
     if attendance_in.notes is not None:
         attendance.notes = attendance_in.notes  # type: ignore[assignment]
+
+    if attendance_in.benched_note is not None:
+        attendance.benched_note = attendance_in.benched_note  # type: ignore[assignment]
 
     db.commit()
     db.refresh(attendance)
@@ -390,8 +399,21 @@ def get_raid_attendance_stats(
     )
 
     total_records = len(attendance_records)
-    present_count = sum(1 for record in attendance_records if record.is_present)
-    absent_count = total_records - present_count
+    present_count = sum(
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.PRESENT
+    )
+    absent_count = sum(
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.ABSENT
+    )
+    benched_count = sum(
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.BENCHED
+    )
 
     attendance_percentage = (
         (present_count / total_records * 100) if total_records > 0 else 0.0
@@ -401,6 +423,7 @@ def get_raid_attendance_stats(
         total_raids=1,  # Single raid
         raids_attended=present_count,
         raids_missed=absent_count,
+        raids_benched=benched_count,
         attendance_percentage=attendance_percentage,
         current_streak=0,  # Not applicable for single raid
         longest_streak=0,  # Not applicable for single raid
@@ -597,8 +620,21 @@ def get_attendance_report(
     attendance_records = attendance_query.all()
 
     total_attendance_records = len(attendance_records)
-    present_count = sum(1 for record in attendance_records if record.is_present)
-    absent_count = total_attendance_records - present_count
+    present_count = sum(
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.PRESENT
+    )
+    absent_count = sum(
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.ABSENT
+    )
+    benched_count = sum(
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.BENCHED
+    )
     overall_attendance_rate = (
         (present_count / total_attendance_records * 100)
         if total_attendance_records > 0
@@ -611,8 +647,15 @@ def get_attendance_report(
         raid_attendance = [
             r for r in attendance_records if r.raid_id == raid.id
         ]
-        raid_present = sum(1 for r in raid_attendance if r.is_present)
-        raid_absent = len(raid_attendance) - raid_present
+        raid_present = sum(
+            1 for r in raid_attendance if r.status == AttendanceStatus.PRESENT
+        )
+        raid_absent = sum(
+            1 for r in raid_attendance if r.status == AttendanceStatus.ABSENT
+        )
+        raid_benched = sum(
+            1 for r in raid_attendance if r.status == AttendanceStatus.BENCHED
+        )
 
         attendance_by_raid.append(
             {
@@ -621,6 +664,7 @@ def get_attendance_report(
                 "scheduled_at": raid.scheduled_at,
                 "present": raid_present,
                 "absent": raid_absent,
+                "benched": raid_benched,
                 "total": len(raid_attendance),
             }
         )
@@ -633,14 +677,22 @@ def get_attendance_report(
         toon_attendance = [
             r for r in attendance_records if r.toon_id == toon_id
         ]
-        toon_present = sum(1 for r in toon_attendance if r.is_present)
-        toon_absent = len(toon_attendance) - toon_present
+        toon_present = sum(
+            1 for r in toon_attendance if r.status == AttendanceStatus.PRESENT
+        )
+        toon_absent = sum(
+            1 for r in toon_attendance if r.status == AttendanceStatus.ABSENT
+        )
+        toon_benched = sum(
+            1 for r in toon_attendance if r.status == AttendanceStatus.BENCHED
+        )
 
         attendance_by_toon.append(
             {
                 "toon_id": toon_id,
                 "present": toon_present,
                 "absent": toon_absent,
+                "benched": toon_benched,
                 "total": len(toon_attendance),
             }
         )
@@ -652,7 +704,101 @@ def get_attendance_report(
         total_attendance_records=total_attendance_records,
         present_count=present_count,
         absent_count=absent_count,
+        benched_count=benched_count,
         overall_attendance_rate=overall_attendance_rate,
         attendance_by_raid=attendance_by_raid,
         attendance_by_toon=attendance_by_toon,
     )
+
+
+@router.get(
+    "/benched/team/{team_id}/week/{week_date}",
+    response_model=List[BenchedPlayer],
+    dependencies=[Depends(require_any_token)],
+)
+def get_benched_players_for_week(
+    team_id: int,
+    week_date: datetime,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
+    """
+    Get benched players for a team in a specific week (Tuesday reset to next Tuesday).
+    Any valid token required.
+
+    Week is defined as Tuesday 9am PST to the following Tuesday 9am PST.
+    """
+    # Verify team exists
+    team = get_team_or_404(db, team_id)
+
+    # Calculate week boundaries (Tuesday 9am PST)
+    # Convert week_date to Tuesday 9am PST of that week
+    from datetime import timezone, timedelta
+    import pytz
+
+    pst = pytz.timezone("US/Pacific")
+
+    # Get the Tuesday of the week_date
+    days_since_tuesday = (week_date.weekday() - 1) % 7  # 1 = Tuesday
+    tuesday_start = week_date - timedelta(days=days_since_tuesday)
+    tuesday_start = tuesday_start.replace(
+        hour=9, minute=0, second=0, microsecond=0
+    )
+    tuesday_start = pst.localize(tuesday_start)
+
+    # End of week is next Tuesday 9am PST
+    week_end = tuesday_start + timedelta(days=7)
+
+    # Get all raids for the team in this week
+    team_raids = (
+        db.query(Raid)
+        .filter(
+            Raid.team_id == team_id,
+            Raid.scheduled_at >= tuesday_start,
+            Raid.scheduled_at < week_end,
+        )
+        .all()
+    )
+
+    if not team_raids:
+        return []
+
+    raid_ids = [raid.id for raid in team_raids]
+
+    # Get benched attendance records for these raids
+    benched_attendance = (
+        db.query(Attendance)
+        .filter(
+            Attendance.raid_id.in_(raid_ids),
+            Attendance.status == AttendanceStatus.BENCHED,
+        )
+        .all()
+    )
+
+    # Get toon and raid details for benched players
+    benched_players = []
+    for attendance in benched_attendance:
+        # Get toon details
+        toon = db.query(Toon).filter(Toon.id == attendance.toon_id).first()
+        if not toon:
+            continue
+
+        # Get raid details
+        raid = db.query(Raid).filter(Raid.id == attendance.raid_id).first()
+        if not raid:
+            continue
+
+        benched_players.append(
+            BenchedPlayer(
+                toon_id=toon.id,
+                toon_name=toon.name,
+                class_name=toon.class_name,
+                spec_name=toon.spec_name,
+                raid_id=raid.id,
+                raid_name=f"Raid {raid.id}",
+                raid_date=raid.scheduled_at,
+                benched_note=attendance.benched_note,
+            )
+        )
+
+    return benched_players

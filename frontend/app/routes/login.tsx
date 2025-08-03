@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Card, Container } from "../components/ui";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { AuthService } from "../api/auth";
 
 export function meta() {
   return [
@@ -13,9 +14,11 @@ export function meta() {
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  const [isRegistration, setIsRegistration] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
-    password: ''
+    password: '',
+    invite_code: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,10 +39,19 @@ export default function Login() {
     setError('');
 
     try {
-      await login(formData);
-      // Login successful - AuthContext will handle the redirect
+      if (isRegistration) {
+        await AuthService.register(formData);
+        setError('');
+        // Show success message and switch to login
+        setIsRegistration(false);
+        setFormData({ username: '', password: '', invite_code: '' });
+        alert('Registration successful! Please sign in with your new account.');
+      } else {
+        await login(formData);
+        // Login successful - AuthContext will handle the redirect
+      }
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || (isRegistration ? 'Registration failed.' : 'Login failed. Please check your credentials.'));
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +62,11 @@ export default function Login() {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const resetForm = () => {
+    setFormData({ username: '', password: '', invite_code: '' });
+    setError('');
   };
 
   // Show loading state while checking authentication
@@ -79,7 +96,9 @@ export default function Login() {
               <p className="text-slate-300">Redirecting to dashboard...</p>
             </div>
           ) : (
-            <p className="text-slate-300">Sign in to your account</p>
+            <p className="text-slate-300">
+              {isRegistration ? 'Create a new account' : 'Sign in to your account'}
+            </p>
           )}
         </div>
 
@@ -92,6 +111,38 @@ export default function Login() {
           </Card>
         ) : (
           <Card variant="elevated" className="max-w-md mx-auto">
+            {/* Toggle between login and registration */}
+            <div className="flex mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistration(false);
+                  resetForm();
+                }}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg transition-colors ${
+                  !isRegistration
+                    ? 'bg-amber-500 text-slate-900'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistration(true);
+                  resetForm();
+                }}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg transition-colors ${
+                  isRegistration
+                    ? 'bg-amber-500 text-slate-900'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                Register
+              </button>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6" role="form">
               {(error || authError) && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
@@ -131,17 +182,41 @@ export default function Login() {
                 />
               </div>
 
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-amber-500 focus:ring-amber-500 border-slate-600 rounded bg-slate-800"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-300">
-                  Remember me
-                </label>
-              </div>
+              {isRegistration && (
+                <div>
+                  <label htmlFor="invite_code" className="block text-sm font-medium text-slate-300 mb-2">
+                    Invite Code
+                  </label>
+                  <input
+                    id="invite_code"
+                    name="invite_code"
+                    type="text"
+                    required
+                    value={formData.invite_code}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
+                    placeholder="Enter your 8-character invite code"
+                    maxLength={8}
+                  />
+                  <p className="mt-1 text-xs text-slate-400">
+                    You need a valid invite code to register. Contact an administrator to get one.
+                  </p>
+                </div>
+              )}
+
+              {!isRegistration && (
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-amber-500 focus:ring-amber-500 border-slate-600 rounded bg-slate-800"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-300">
+                    Remember me
+                  </label>
+                </div>
+              )}
 
               <Button
                 type="submit"
@@ -149,7 +224,10 @@ export default function Login() {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading 
+                  ? (isRegistration ? 'Creating account...' : 'Signing in...') 
+                  : (isRegistration ? 'Create Account' : 'Sign in')
+                }
               </Button>
             </form>
           </Card>

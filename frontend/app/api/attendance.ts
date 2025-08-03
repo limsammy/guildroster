@@ -6,7 +6,8 @@ import type {
   AttendanceBulkCreate, 
   AttendanceBulkUpdate,
   AttendanceStats,
-  AttendanceFilters
+  AttendanceFilters,
+  BenchedPlayer
 } from './types';
 
 export class AttendanceService {
@@ -110,6 +111,12 @@ export class AttendanceService {
     });
     
     const response = await apiClient.get<Attendance[]>(`/attendance/report/date-range?${params.toString()}`);
+    return response.data;
+  }
+
+  // Get benched players for a team in a specific week
+  static async getBenchedPlayers(teamId: number, weekDate: string): Promise<BenchedPlayer[]> {
+    const response = await apiClient.get<BenchedPlayer[]>(`/attendance/benched/team/${teamId}/week/${weekDate}`);
     return response.data;
   }
 } 

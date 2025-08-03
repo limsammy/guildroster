@@ -8,3 +8,4 @@ from .toon_team import ToonTeam
 from .raid import Raid
 from .scenario import Scenario
 from .attendance import Attendance
+from .invite import Invite

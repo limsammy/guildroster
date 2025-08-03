@@ -335,7 +335,6 @@ describe('Teams', () => {
         expect(mockTeamService.createTeam).toHaveBeenCalledWith({
           name: 'New Team',
           guild_id: 1,
-          created_by: 1,
         });
       });
 

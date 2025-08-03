@@ -33,5 +33,13 @@ class User(Base):
 
     created_teams = relationship("Team", back_populates="creator")
 
+    # Invite relationships
+    created_invites = relationship(
+        "Invite", foreign_keys="Invite.created_by", back_populates="creator"
+    )
+    used_invite = relationship(
+        "Invite", foreign_keys="Invite.used_by", back_populates="used_user"
+    )
+
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)

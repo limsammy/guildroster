@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Button, Card, Container, TeamForm } from '../components/ui';
+import { Button, Card, Container, TeamForm, BenchedPlayersView } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { TeamService } from '../api/teams';
 import { GuildService } from '../api/guilds';
@@ -26,6 +26,8 @@ export default function Teams() {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showBenchedPlayers, setShowBenchedPlayers] = useState(false);
+  const [selectedTeamForBenched, setSelectedTeamForBenched] = useState<Team | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +110,16 @@ export default function Teams() {
     setShowAddForm(false);
     setEditingTeam(null);
     setFormError(null);
+  };
+
+  const handleViewBenchedPlayers = (team: Team) => {
+    setSelectedTeamForBenched(team);
+    setShowBenchedPlayers(true);
+  };
+
+  const handleCloseBenchedPlayers = () => {
+    setShowBenchedPlayers(false);
+    setSelectedTeamForBenched(null);
   };
 
   // Filter teams based on search and guild filter
@@ -284,6 +296,13 @@ export default function Teams() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleViewBenchedPlayers(team)}
+                        >
+                          Benched Players
+                        </Button>
                         <Link to={`/teams/${team.id}`}>
                           <Button size="sm" variant="ghost">
                             View
@@ -328,6 +347,14 @@ export default function Teams() {
             />
           </div>
         </div>
+      )}
+
+      {/* Benched Players Modal */}
+      {showBenchedPlayers && selectedTeamForBenched && (
+        <BenchedPlayersView
+          team={selectedTeamForBenched}
+          onClose={handleCloseBenchedPlayers}
+        />
       )}
     </div>
   );

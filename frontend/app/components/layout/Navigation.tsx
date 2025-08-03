@@ -1,10 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthService } from '../../api/auth';
+import type { UserInfo } from '../../api/auth';
 
 export const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const { isAuthenticated, logout } = useAuth();
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (isAuthenticated) {
+        try {
+          const user = await AuthService.getCurrentUser();
+          setCurrentUser(user);
+        } catch (error) {
+          console.error('Failed to load user info:', error);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    loadUserInfo();
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     try {
@@ -38,6 +58,14 @@ export const Navigation: React.FC = () => {
                 >
                   Dashboard
                 </Link>
+                {currentUser?.is_superuser && (
+                  <Link 
+                    to="/invites"
+                    className="text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-800/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-900"
+                  >
+                    Invites
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-800/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-900"
@@ -86,6 +114,15 @@ export const Navigation: React.FC = () => {
                     >
                       Dashboard
                     </Link>
+                    {currentUser?.is_superuser && (
+                      <Link 
+                        to="/invites" 
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block w-full text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-700/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-800"
+                      >
+                        Invites
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="block w-full text-slate-300 hover:text-slate-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-slate-700/80 border border-slate-600/30 hover:border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-800"

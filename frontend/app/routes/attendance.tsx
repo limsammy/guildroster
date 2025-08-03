@@ -6,7 +6,7 @@ import { AttendanceService } from '../api/attendance';
 import { RaidService } from '../api/raids';
 import { ToonService } from '../api/toons';
 import { TeamService } from '../api/teams';
-import type { Attendance, Raid, Toon, Team } from '../api/types';
+import type { Attendance, Raid, Toon, Team, AttendanceStatus } from '../api/types';
 import { AttendanceForm } from '../components/ui/AttendanceForm';
 
 export function meta() {
@@ -27,7 +27,7 @@ export default function Attendance() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState<number | ''>('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | AttendanceStatus>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -148,15 +148,16 @@ export default function Attendance() {
     }
   };
 
-  const handleAddAttendance = async (values: { raid_id: number; toon_id: number; is_present: boolean; notes?: string }) => {
+  const handleAddAttendance = async (values: { raid_id: number; toon_id: number; status: AttendanceStatus; notes?: string; benched_note?: string }) => {
     setFormLoading(true);
     setFormError(null);
     try {
       await AttendanceService.createAttendance({
         raid_id: values.raid_id,
         toon_id: values.toon_id,
-        is_present: values.is_present,
+        status: values.status,
         notes: values.notes || undefined,
+        benched_note: values.benched_note || undefined,
       });
       setShowAddForm(false);
       await reloadAttendance();
@@ -167,7 +168,7 @@ export default function Attendance() {
     }
   };
 
-  const handleEditAttendance = async (values: { raid_id: number; toon_id: number; is_present: boolean; notes?: string }) => {
+  const handleEditAttendance = async (values: { raid_id: number; toon_id: number; status: AttendanceStatus; notes?: string; benched_note?: string }) => {
     if (!editingAttendance) return;
     setFormLoading(true);
     setFormError(null);
@@ -175,8 +176,9 @@ export default function Attendance() {
       await AttendanceService.updateAttendance(editingAttendance.id, {
         raid_id: values.raid_id,
         toon_id: values.toon_id,
-        is_present: values.is_present,
+        status: values.status,
         notes: values.notes || undefined,
+        benched_note: values.benched_note || undefined,
       });
       setEditingAttendance(null);
       await reloadAttendance();
@@ -222,8 +224,7 @@ export default function Attendance() {
       raidInfo.team_id === teamFilter;
     
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'present' && record.is_present) ||
-      (statusFilter === 'absent' && !record.is_present);
+      record.status === statusFilter;
 
     const matchesRaid = raidFilter.length === 0 || raidFilter.includes(record.raid_id);
     
@@ -247,7 +248,8 @@ export default function Attendance() {
 
   // Calculate quick statistics
   const totalRecords = attendance.length;
-  const presentRecords = attendance.filter(r => r.is_present).length;
+  const presentRecords = attendance.filter(r => r.status === 'present').length;
+  const benchedRecords = attendance.filter(r => r.status === 'benched').length;
   const attendanceRate = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 0;
 
   if (loading) {
@@ -307,7 +309,7 @@ export default function Attendance() {
         <div className="py-8">
           {/* Quick Statistics */}
           <Card variant="elevated" className="p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-white">{totalRecords}</div>
                 <div className="text-slate-400 text-sm">Total Records</div>
@@ -315,6 +317,10 @@ export default function Attendance() {
               <div>
                 <div className="text-2xl font-bold text-green-400">{presentRecords}</div>
                 <div className="text-slate-400 text-sm">Present</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-yellow-400">{benchedRecords}</div>
+                <div className="text-slate-400 text-sm">Benched</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-amber-400">{attendanceRate}%</div>
@@ -370,12 +376,13 @@ export default function Attendance() {
                 <select
                   id="status-filter"
                   value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value as 'all' | 'present' | 'absent')}
+                  onChange={e => setStatusFilter(e.target.value as 'all' | AttendanceStatus)}
                   className="w-full px-2 py-2 min-h-[40px] bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
                   <option value="all">All</option>
                   <option value="present">Present</option>
                   <option value="absent">Absent</option>
+                  <option value="benched">Benched</option>
                 </select>
               </div>
               <div className="col-span-2 flex flex-col">
@@ -483,8 +490,10 @@ export default function Attendance() {
                             <div
                               key={record.id}
                               className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                                record.is_present
+                                record.status === 'present'
                                   ? 'bg-slate-800/50 border-green-600/30'
+                                  : record.status === 'benched'
+                                  ? 'bg-slate-800/40 border-yellow-600/30'
                                   : 'bg-slate-800/30 border-red-600/30'
                               }`}
                             >
@@ -492,11 +501,13 @@ export default function Attendance() {
                                 <div className="flex items-center space-x-4 mb-2">
                                   <span className="text-white font-medium">Record #{record.id}</span>
                                   <span className={`px-2 py-1 text-xs rounded ${
-                                    record.is_present 
+                                    record.status === 'present'
                                       ? 'bg-green-600/20 text-green-400' 
+                                      : record.status === 'benched'
+                                      ? 'bg-yellow-600/20 text-yellow-400'
                                       : 'bg-red-600/20 text-red-400'
                                   }`}>
-                                    {record.is_present ? 'Present' : 'Absent'}
+                                    {record.status === 'present' ? 'Present' : record.status === 'benched' ? 'Benched' : 'Absent'}
                                   </span>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-400">
@@ -510,6 +521,13 @@ export default function Attendance() {
                                     <br />
                                     {record.notes || 'No notes'}
                                   </div>
+                                  {record.status === 'benched' && record.benched_note && (
+                                    <div>
+                                      <span className="font-medium text-yellow-300">Benched Note:</span>
+                                      <br />
+                                      {record.benched_note}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2 ml-4">
@@ -556,8 +574,9 @@ export default function Attendance() {
               initialValues={editingAttendance ? {
                 raid_id: editingAttendance.raid_id,
                 toon_id: editingAttendance.toon_id,
-                is_present: editingAttendance.is_present,
+                status: editingAttendance.status,
                 notes: editingAttendance.notes || '',
+                benched_note: editingAttendance.benched_note || '',
               } : {}}
             />
           </div>

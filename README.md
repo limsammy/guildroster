@@ -243,17 +243,63 @@ docker-compose exec db psql -U guildroster -d guildroster
 # Run migrations manually
 docker-compose exec backend alembic upgrade head
 
-# Create superuser
-docker-compose exec backend python scripts/create_superuser.py
-
-# Create API token
-docker-compose exec backend python scripts/create_token.py --type system --name "Docker Token"
-
 # View container resource usage
 docker stats
 
 # Backup database
 docker-compose exec db pg_dump -U guildroster guildroster > backup.sql
+```
+
+### Docker Scripts
+
+After starting the containers, you'll need to create initial users and tokens:
+
+#### Create Superuser Account
+```bash
+# Run the superuser creation script
+docker-compose exec backend python scripts/create_superuser.py
+
+# The script will prompt you for:
+# - Username
+# - Password  
+# - Confirm password
+# - Superuser status (y/n)
+```
+
+#### Create System Token
+```bash
+# Create a system token for development/testing
+docker-compose exec backend python scripts/create_token.py --type system --name "Development Token"
+
+# This will output a token that you can use for API authentication
+```
+
+#### Create API Token
+```bash
+# Create an API token for frontend authentication
+docker-compose exec backend python scripts/create_token.py --type api --name "Frontend App"
+
+# This will output a token for frontend API calls
+```
+
+#### Complete Setup Example
+```bash
+# 1. Start containers
+docker-compose up -d --build
+
+# 2. Create superuser
+docker-compose exec backend python scripts/create_superuser.py
+
+# 3. Create system token (optional)
+docker-compose exec backend python scripts/create_token.py --type system --name "Development Token"
+
+# 4. Create API token (optional)
+docker-compose exec backend python scripts/create_token.py --type api --name "Frontend App"
+
+# 5. Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
 ```
 
 ## Deployment Infrastructure

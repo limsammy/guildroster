@@ -40,7 +40,9 @@ const mockRaids = [
     id: 1,
     scheduled_at: '2024-01-20T20:00:00Z', // Later date - will appear first due to sorting
     team_id: 1,
-    scenario_id: 1,
+    scenario_name: 'Blackrock Foundry',
+    scenario_difficulty: 'Normal',
+    scenario_size: '10',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
@@ -48,7 +50,9 @@ const mockRaids = [
     id: 2,
     scheduled_at: '2024-01-15T20:00:00Z', // Earlier date - will appear second due to sorting
     team_id: 2,
-    scenario_id: 2,
+    scenario_name: 'Hellfire Citadel',
+    scenario_difficulty: 'Heroic',
+    scenario_size: '25',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
@@ -60,8 +64,8 @@ const mockTeams = [
 ];
 
 const mockScenarios = [
-  { id: 1, name: 'Blackrock Foundry', difficulty: 'Normal', size: '10', is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-  { id: 2, name: 'Hellfire Citadel', difficulty: 'Heroic', size: '25', is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 1, name: 'Blackrock Foundry', difficulty: 'Normal', size: '10', is_active: true, mop: false, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 2, name: 'Hellfire Citadel', difficulty: 'Heroic', size: '25', is_active: true, mop: false, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
 ];
 
 const renderRaids = () => {
@@ -108,8 +112,8 @@ describe('Raids', () => {
     await waitFor(() => {
       expect(screen.getByText('Team Alpha')).toBeInTheDocument();
       expect(screen.getByText('Team Beta')).toBeInTheDocument();
-      expect(screen.getByText('Blackrock Foundry (Normal, 10)')).toBeInTheDocument();
-      expect(screen.getByText('Hellfire Citadel (Heroic, 25)')).toBeInTheDocument();
+      expect(screen.getByText('Blackrock Foundry (Normal, 10-man)')).toBeInTheDocument();
+      expect(screen.getByText('Hellfire Citadel (Heroic, 25-man)')).toBeInTheDocument();
     });
   });
 
@@ -180,7 +184,7 @@ describe('Raids', () => {
       // Look for the form title specifically (h2 element)
       expect(screen.getByRole('heading', { name: 'Add Raid' })).toBeInTheDocument();
       expect(screen.getByLabelText('Team')).toBeInTheDocument();
-      expect(screen.getByLabelText('Scenario')).toBeInTheDocument();
+      expect(screen.getByLabelText('Scenario Variation')).toBeInTheDocument();
     });
   });
 

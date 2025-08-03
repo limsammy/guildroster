@@ -178,9 +178,9 @@ describe('Settings', () => {
 
     expect(screen.getByText('Content Management')).toBeInTheDocument();
     expect(screen.getByText('Manage scenarios and game content')).toBeInTheDocument();
-    expect(screen.getByText('Scenarios')).toBeInTheDocument();
-    expect(screen.getByText('Teams')).toBeInTheDocument();
-            expect(screen.getByText('Characters')).toBeInTheDocument();
+    expect(screen.getByText('Scenarios', { selector: 'h3' })).toBeInTheDocument();
+    expect(screen.getByText('Teams', { selector: 'h3' })).toBeInTheDocument();
+            expect(screen.getByText('Characters', { selector: 'h3' })).toBeInTheDocument();
   });
 
   it('should display system information section', () => {

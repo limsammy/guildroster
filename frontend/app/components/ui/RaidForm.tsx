@@ -314,7 +314,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             disabled={loading || noScenarios || variationsLoading}
           >
             <option value="">Select a scenario variation</option>
-            {allVariations.map(variation => (
+            {allVariations?.map(variation => (
               <option key={variation.variation_id} value={variation.variation_id}>
                 {variation.display_name}
               </option>
