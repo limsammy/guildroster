@@ -100,11 +100,12 @@ def register_user(
             detail="Username already registered",
         )
 
-    # Validate and use the invite code
+    # Validate the invite code (but don't use it yet)
+    from app.models.invite import Invite
+    from app.utils.invite import validate_invite_code
+
     try:
-        use_invite_code(
-            user_data.invite_code, None, db
-        )  # We'll update this after user creation
+        invite = validate_invite_code(user_data.invite_code, db)
     except HTTPException as e:
         logger.warning(
             f"Registration failed: invalid invite code {user_data.invite_code}"
@@ -127,17 +128,9 @@ def register_user(
     db.refresh(user)
 
     # Now mark the invite code as used by this user
-    from app.models.invite import Invite
-
-    invite = (
-        db.query(Invite)
-        .filter(Invite.code == user_data.invite_code.upper())
-        .first()
-    )
-    if invite:
-        invite.used_by = user.id
-        invite.used_at = datetime.now()
-        db.commit()
+    invite.used_by = user.id
+    invite.used_at = datetime.now()
+    db.commit()
 
     logger.info(
         f"User {user.username} registered successfully using invite code {user_data.invite_code}"
