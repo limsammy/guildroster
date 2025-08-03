@@ -17,6 +17,12 @@ export interface UserLogin {
   password: string;
 }
 
+export interface UserRegistration {
+  username: string;
+  password: string;
+  invite_code: string;
+}
+
 export interface UserLoginResponse {
   access_token: string;
   token_type: string;
@@ -325,4 +331,31 @@ export interface ApiResponse<T> {
 export interface ApiError {
   detail: string;
   status_code: number;
+}
+
+// Invite Types
+export interface Invite {
+  id: number;
+  code: string;
+  created_by: number;
+  used_by?: number;
+  is_active: boolean;
+  expires_at?: string;
+  created_at: string;
+  used_at?: string;
+  creator_username?: string;
+  used_username?: string;
+  is_expired: boolean;
+}
+
+export interface InviteCreate {
+  expires_in_days?: number;
+}
+
+export interface InviteListResponse {
+  invites: Invite[];
+  total: number;
+  unused_count: number;
+  used_count: number;
+  expired_count: number;
 } 

@@ -18,6 +18,12 @@ export interface UserInfo {
   is_superuser: boolean;
 }
 
+export interface UserRegistration {
+  username: string;
+  password: string;
+  invite_code: string;
+}
+
 export interface AuthError {
   message: string;
   status?: number;
@@ -97,6 +103,28 @@ export class AuthService {
       return user !== null;
     } catch (error) {
       return false;
+    }
+  }
+
+  /**
+   * Register a new user with an invite code
+   */
+  static async register(userData: UserRegistration): Promise<any> {
+    try {
+      const response = await apiClient.post('/users/register', userData);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data.detail || 'Registration failed');
+      } else if (error.response?.status === 404) {
+        throw new Error('Invalid invite code');
+      } else if (error.response?.status === 422) {
+        throw new Error('Invalid input data');
+      } else if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else {
+        throw new Error('Registration failed. Please try again.');
+      }
     }
   }
 
