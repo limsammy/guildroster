@@ -51,8 +51,8 @@ apiClient.interceptors.request.use(
             // Add Referer to show which page made the request
             config.headers['Referer'] = window.location.href;
             
-            // Temporarily removed X-Frontend-Route header to fix CORS issue
-            // config.headers['X-Frontend-Route'] = window.location.pathname;
+            // Add custom header for additional context
+            config.headers['X-Frontend-Route'] = window.location.pathname;
           }
         }
     
