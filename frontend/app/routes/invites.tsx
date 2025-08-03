@@ -20,7 +20,7 @@ export default function InvitesPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [expiresInDays, setExpiresInDays] = useState<number | undefined>(7);
+  const [expiresInDays, setExpiresInDays] = useState<string>('7');
   const [filter, setFilter] = useState<'all' | 'unused' | 'used' | 'expired'>('all');
   const [showConfirmInvalidate, setShowConfirmInvalidate] = useState<number | null>(null);
 
@@ -28,6 +28,11 @@ export default function InvitesPage() {
 
   useEffect(() => {
     checkAuthAndLoadData();
+  }, []);
+
+  // Ensure the select value is properly set
+  useEffect(() => {
+    setExpiresInDays('7');
   }, []);
 
   const checkAuthAndLoadData = async () => {
@@ -73,9 +78,9 @@ export default function InvitesPage() {
   const handleGenerateInvite = async () => {
     try {
       setGenerating(true);
-      await InviteService.createInvite({ expires_in_days: expiresInDays });
+      await InviteService.createInvite({ expires_in_days: expiresInDays ? Number(expiresInDays) : undefined });
       await loadInvites();
-      setExpiresInDays(7); // Reset to default
+      setExpiresInDays('7'); // Reset to default
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -161,13 +166,13 @@ export default function InvitesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Invite Code Management</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-white">Invite Code Management</h1>
+          <p className="mt-2 text-slate-300">
             Generate and manage invite codes for new user registration
           </p>
         </div>
@@ -201,25 +206,25 @@ export default function InvitesPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-slate-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Codes</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.total}</dd>
+                    <dt className="text-sm font-medium text-slate-400 truncate">Total Codes</dt>
+                    <dd className="text-lg font-medium text-white">{stats.total}</dd>
                   </dl>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-slate-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -229,15 +234,15 @@ export default function InvitesPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Active</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.unused}</dd>
+                    <dt className="text-sm font-medium text-slate-400 truncate">Active</dt>
+                    <dd className="text-lg font-medium text-white">{stats.unused}</dd>
                   </dl>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-slate-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -247,15 +252,15 @@ export default function InvitesPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Used</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.used}</dd>
+                    <dt className="text-sm font-medium text-slate-400 truncate">Used</dt>
+                    <dd className="text-lg font-medium text-white">{stats.used}</dd>
                   </dl>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-slate-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -265,8 +270,8 @@ export default function InvitesPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Expired</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.expired}</dd>
+                    <dt className="text-sm font-medium text-slate-400 truncate">Expired</dt>
+                    <dd className="text-lg font-medium text-white">{stats.expired}</dd>
                   </dl>
                 </div>
               </div>
@@ -275,21 +280,21 @@ export default function InvitesPage() {
         </div>
 
         {/* Generate New Code */}
-        <div className="bg-white shadow rounded-lg mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Generate New Invite Code</h3>
+        <div className="bg-slate-800 shadow rounded-lg mb-8">
+          <div className="px-6 py-4 border-b border-slate-600">
+            <h3 className="text-lg font-medium text-white">Generate New Invite Code</h3>
           </div>
           <div className="px-6 py-4">
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="flex-1">
-                <label htmlFor="expiresInDays" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="expiresInDays" className="block text-sm font-medium text-slate-300 mb-2">
                   Expires in (days)
                 </label>
                 <select
                   id="expiresInDays"
-                  value={expiresInDays || ''}
-                  onChange={(e) => setExpiresInDays(e.target.value ? Number(e.target.value) : undefined)}
-                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={expiresInDays}
+                  onChange={(e) => setExpiresInDays(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent sm:text-sm"
                 >
                   <option value="">No expiration</option>
                   <option value="1">1 day</option>
@@ -334,8 +339,8 @@ export default function InvitesPage() {
                 onClick={() => setFilter(tab.key as any)}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   filter === tab.key
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-amber-500 text-amber-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
                 }`}
               >
                 {tab.label} ({tab.count})
@@ -345,27 +350,27 @@ export default function InvitesPage() {
         </div>
 
         {/* Invite Codes Table */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
+        <div className="bg-slate-800 shadow overflow-hidden sm:rounded-md">
+                      <ul className="divide-y divide-slate-600">
             {getFilteredInvites().map((invite) => (
               <li key={invite.id} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                        <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center">
+                        <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
                       </div>
                     </div>
                     <div className="ml-4">
                       <div className="flex items-center space-x-2">
-                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-sm font-mono bg-slate-700 text-white px-2 py-1 rounded border border-slate-600">
                           {invite.code}
                         </code>
                         <button
                           onClick={() => copyToClipboard(invite.code)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-slate-400 hover:text-slate-300"
                           title="Copy to clipboard"
                         >
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -374,7 +379,7 @@ export default function InvitesPage() {
                         </button>
                         {getStatusBadge(invite)}
                       </div>
-                      <div className="mt-1 text-sm text-gray-500">
+                      <div className="mt-1 text-sm text-slate-400">
                         Created {formatDate(invite.created_at)}
                         {invite.expires_at && (
                           <span className="ml-2">
@@ -393,7 +398,7 @@ export default function InvitesPage() {
                     {invite.is_active && !invite.used_by && !invite.is_expired && (
                       <button
                         onClick={() => setShowConfirmInvalidate(invite.id)}
-                        className="text-red-600 hover:text-red-900 text-sm font-medium"
+                        className="text-red-400 hover:text-red-300 text-sm font-medium"
                       >
                         Invalidate
                       </button>
@@ -406,11 +411,11 @@ export default function InvitesPage() {
           
           {getFilteredInvites().length === 0 && (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No invite codes</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="mt-2 text-sm font-medium text-white">No invite codes</h3>
+              <p className="mt-1 text-sm text-slate-400">
                 {filter === 'all' 
                   ? 'Get started by generating your first invite code.'
                   : `No ${filter} invite codes found.`
@@ -422,17 +427,17 @@ export default function InvitesPage() {
 
         {/* Invalidation Confirmation Modal */}
         {showConfirmInvalidate && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border border-slate-600 w-96 shadow-lg rounded-md bg-slate-800">
               <div className="mt-3 text-center">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Invalidation</h3>
-                <p className="text-sm text-gray-500 mb-6">
+                <h3 className="text-lg font-medium text-white mb-4">Confirm Invalidation</h3>
+                <p className="text-sm text-slate-300 mb-6">
                   Are you sure you want to invalidate this invite code? This action cannot be undone.
                 </p>
                 <div className="flex justify-center space-x-4">
                   <button
                     onClick={() => setShowConfirmInvalidate(null)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    className="px-4 py-2 bg-slate-600 text-slate-200 rounded-md hover:bg-slate-500"
                   >
                     Cancel
                   </button>
