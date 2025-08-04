@@ -7,6 +7,8 @@ import { ToonService } from '../api/toons';
 import type { Team, Toon, ToonCreate, ToonUpdate } from '../api/types';
 import { getClassColor } from '../utils/classColors';
 
+type SortOption = 'role-name' | 'name' | 'class' | 'role';
+
 export default function TeamView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,6 +22,41 @@ export default function TeamView() {
   const [allTeams, setAllTeams] = useState<Team[]>([]);
   const [editingToon, setEditingToon] = useState<Toon | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('role-name');
+
+  // Role priority for sorting (Healer first, Tank last)
+  const rolePriority = {
+    'Healer': 1,
+    'Melee DPS': 2,
+    'Ranged DPS': 3,
+    'Tank': 4,
+  };
+
+  // Sorting function
+  const sortToons = (toons: Toon[], sortOption: SortOption): Toon[] => {
+    const sortedToons = [...toons];
+    
+    switch (sortOption) {
+      case 'role-name':
+        return sortedToons.sort((a, b) => {
+          const roleDiff = (rolePriority[a.role as keyof typeof rolePriority] || 0) - 
+                          (rolePriority[b.role as keyof typeof rolePriority] || 0);
+          if (roleDiff !== 0) return roleDiff;
+          return a.username.localeCompare(b.username);
+        });
+      case 'name':
+        return sortedToons.sort((a, b) => a.username.localeCompare(b.username));
+      case 'class':
+        return sortedToons.sort((a, b) => a.class.localeCompare(b.class));
+      case 'role':
+        return sortedToons.sort((a, b) => a.role.localeCompare(b.role));
+      default:
+        return sortedToons;
+    }
+  };
+
+  // Get sorted toons
+  const sortedToons = sortToons(toons, sortBy);
 
   useEffect(() => {
     if (!id) return;
@@ -152,47 +189,123 @@ export default function TeamView() {
           <Card variant="elevated" className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold text-white">Characters ({toons.length})</h2>
+              <div className="flex items-center gap-2">
+                <label htmlFor="sort-select" className="text-sm text-slate-300">Sort by:</label>
+                <select
+                  id="sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="role-name">Role & Name</option>
+                  <option value="name">Name</option>
+                  <option value="class">Class</option>
+                  <option value="role">Role</option>
+                </select>
+              </div>
             </div>
             {toons.length === 0 ? (
               <div className="text-slate-400 text-center py-6">No characters assigned to this team yet.</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {toons.map(toon => (
-                  <div key={toon.id} className="bg-slate-800 rounded-lg border border-slate-700/50 p-3 hover:bg-slate-750 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-base font-bold truncate ${getClassColor(toon.class)}`} title={toon.username}>
-                          {toon.username}
+              <div>
+                {sortBy === 'role-name' ? (
+                  // Group by role when sorting by role-name
+                  (() => {
+                    const groupedToons = sortedToons.reduce((groups, toon) => {
+                      if (!groups[toon.role]) {
+                        groups[toon.role] = [];
+                      }
+                      groups[toon.role].push(toon);
+                      return groups;
+                    }, {} as Record<string, Toon[]>);
+
+                    return Object.entries(groupedToons).map(([role, roleToons]) => (
+                      <div key={role} className="mb-6">
+                        <h3 className="text-md font-semibold text-slate-300 mb-3 border-b border-slate-700 pb-2">
+                          {role} ({roleToons.length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {roleToons.map(toon => (
+                            <div key={toon.id} className="bg-slate-800 rounded-lg border border-slate-700/50 p-3 hover:bg-slate-750 transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className={`text-base font-bold truncate ${getClassColor(toon.class)}`} title={toon.username}>
+                                    {toon.username}
+                                  </div>
+                                  <div className="text-slate-300 text-xs">Class: {toon.class}</div>
+                                </div>
+                                <div className="flex items-center gap-1 ml-2">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getRoleBadgeClass(toon.role)}`}>
+                                    {toon.role}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="secondary" 
+                                  onClick={() => setEditingToon(toon)}
+                                  className="text-xs px-2 py-1"
+                                >
+                                  Edit
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="danger" 
+                                  onClick={() => handleDeleteToon(toon.id)} 
+                                  disabled={deleteLoading}
+                                  className="text-xs px-2 py-1"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="text-slate-300 text-xs">Class: {toon.class}</div>
                       </div>
-                      <div className="flex items-center gap-1 ml-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getRoleBadgeClass(toon.role)}`}>
-                          {toon.role}
-                        </span>
+                    ));
+                  })()
+                ) : (
+                  // Regular grid layout for other sort options
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {sortedToons.map(toon => (
+                      <div key={toon.id} className="bg-slate-800 rounded-lg border border-slate-700/50 p-3 hover:bg-slate-750 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-base font-bold truncate ${getClassColor(toon.class)}`} title={toon.username}>
+                              {toon.username}
+                            </div>
+                            <div className="text-slate-300 text-xs">Class: {toon.class}</div>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getRoleBadgeClass(toon.role)}`}>
+                              {toon.role}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="secondary" 
+                            onClick={() => setEditingToon(toon)}
+                            className="text-xs px-2 py-1"
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="danger" 
+                            onClick={() => handleDeleteToon(toon.id)} 
+                            disabled={deleteLoading}
+                            className="text-xs px-2 py-1"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        size="sm" 
-                        variant="secondary" 
-                        onClick={() => setEditingToon(toon)}
-                        className="text-xs px-2 py-1"
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="danger" 
-                        onClick={() => handleDeleteToon(toon.id)} 
-                        disabled={deleteLoading}
-                        className="text-xs px-2 py-1"
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </Card>
