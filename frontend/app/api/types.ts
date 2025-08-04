@@ -347,10 +347,12 @@ export interface Invite {
   creator_username?: string;
   used_username?: string;
   is_expired: boolean;
+  is_superuser_invite: boolean;
 }
 
 export interface InviteCreate {
   expires_in_days?: number;
+  is_superuser_invite?: boolean;
 }
 
 export interface InviteListResponse {

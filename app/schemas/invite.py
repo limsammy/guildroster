@@ -16,6 +16,10 @@ class InviteCreate(BaseModel):
         le=365,
         description="Days until expiration (None for no expiration)",
     )
+    is_superuser_invite: bool = Field(
+        False,
+        description="Whether this invite creates a superuser account",
+    )
 
 
 class InviteResponse(InviteBase):
@@ -27,6 +31,7 @@ class InviteResponse(InviteBase):
     creator_username: Optional[str] = None
     used_username: Optional[str] = None
     is_expired: bool
+    is_superuser_invite: bool
 
     model_config = ConfigDict(from_attributes=True)
 

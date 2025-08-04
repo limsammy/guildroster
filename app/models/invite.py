@@ -14,6 +14,7 @@ class Invite(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     used_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    is_superuser_invite = Column(Boolean, default=False, nullable=False)
     expires_at = Column(DateTime, nullable=True)  # NULL = no expiration
     created_at = Column(DateTime, default=datetime.now)
     used_at = Column(DateTime, nullable=True)

@@ -61,6 +61,7 @@ def create_invite(
         code=code,
         created_by=current_user.id,
         expires_at=expires_at,
+        is_superuser_invite=invite_data.is_superuser_invite,
     )
 
     db.add(invite)

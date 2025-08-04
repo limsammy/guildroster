@@ -22,6 +22,7 @@ export default function InvitesPage() {
   const [generating, setGenerating] = useState(false);
   const [expiresInDays, setExpiresInDays] = useState<string>('7');
   const [bulkCount, setBulkCount] = useState<number>(5);
+  const [isSuperuserInvite, setIsSuperuserInvite] = useState<boolean>(false);
   const [filter, setFilter] = useState<'all' | 'unused' | 'used' | 'expired'>('all');
   const [showConfirmInvalidate, setShowConfirmInvalidate] = useState<number | null>(null);
   const [newlyGeneratedCodes, setNewlyGeneratedCodes] = useState<string[]>([]);
@@ -80,10 +81,14 @@ export default function InvitesPage() {
   const handleGenerateInvite = async () => {
     try {
       setGenerating(true);
-      const response = await InviteService.createInvite({ expires_in_days: expiresInDays ? Number(expiresInDays) : undefined });
+      const response = await InviteService.createInvite({ 
+        expires_in_days: expiresInDays ? Number(expiresInDays) : undefined,
+        is_superuser_invite: isSuperuserInvite
+      });
       await loadInvites();
       setNewlyGeneratedCodes([response.code]); // Track the newly generated code
       setExpiresInDays('7'); // Reset to default
+      setIsSuperuserInvite(false); // Reset to default
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -95,13 +100,17 @@ export default function InvitesPage() {
     try {
       setGenerating(true);
       const promises = Array.from({ length: bulkCount }, () => 
-        InviteService.createInvite({ expires_in_days: expiresInDays ? Number(expiresInDays) : undefined })
+        InviteService.createInvite({ 
+          expires_in_days: expiresInDays ? Number(expiresInDays) : undefined,
+          is_superuser_invite: isSuperuserInvite
+        })
       );
       const responses = await Promise.all(promises);
       await loadInvites();
       const newCodes = responses.map(response => response.code);
       setNewlyGeneratedCodes(newCodes); // Track the newly generated codes
       setExpiresInDays('7'); // Reset to default
+      setIsSuperuserInvite(false); // Reset to default
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -336,6 +345,18 @@ export default function InvitesPage() {
                   <option value="30">30 days</option>
                 </select>
               </div>
+              <div className="flex items-center">
+                <input
+                  id="superuserInvite"
+                  type="checkbox"
+                  checked={isSuperuserInvite}
+                  onChange={(e) => setIsSuperuserInvite(e.target.checked)}
+                  className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-600 rounded bg-slate-800"
+                />
+                <label htmlFor="superuserInvite" className="ml-2 block text-sm text-slate-300">
+                  Create superuser account
+                </label>
+              </div>
               <button
                 onClick={handleGenerateInvite}
                 disabled={generating}
@@ -378,6 +399,18 @@ export default function InvitesPage() {
                   className="block w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent sm:text-sm"
                   placeholder="5"
                 />
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="bulkSuperuserInvite"
+                  type="checkbox"
+                  checked={isSuperuserInvite}
+                  onChange={(e) => setIsSuperuserInvite(e.target.checked)}
+                  className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-600 rounded bg-slate-800"
+                />
+                <label htmlFor="bulkSuperuserInvite" className="ml-2 block text-sm text-slate-300">
+                  Create superuser accounts
+                </label>
               </div>
               <button
                 onClick={handleBulkGenerateInvites}
@@ -468,6 +501,11 @@ export default function InvitesPage() {
                           </svg>
                         </button>
                         {getStatusBadge(invite)}
+                        {invite.is_superuser_invite && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                            Superuser
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1 text-sm text-slate-400">
                         Created {formatDate(invite.created_at)}
