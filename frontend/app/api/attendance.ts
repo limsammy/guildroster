@@ -7,7 +7,8 @@ import type {
   AttendanceBulkUpdate,
   AttendanceStats,
   AttendanceFilters,
-  BenchedPlayer
+  BenchedPlayer,
+  TeamViewData
 } from './types';
 
 export class AttendanceService {
@@ -117,6 +118,24 @@ export class AttendanceService {
   // Get benched players for a team in a specific week
   static async getBenchedPlayers(teamId: number, weekDate: string): Promise<BenchedPlayer[]> {
     const response = await apiClient.get<BenchedPlayer[]>(`/attendance/benched/team/${teamId}/week/${weekDate}`);
+    return response.data;
+  }
+
+  // Get team attendance view with toons as rows and raids as columns
+  static async getTeamAttendanceView(
+    teamId: number, 
+    raidCount: number = 5, 
+    guildId?: number
+  ): Promise<TeamViewData> {
+    const params = new URLSearchParams({
+      raid_count: raidCount.toString()
+    });
+    
+    if (guildId) {
+      params.append('guild_id', guildId.toString());
+    }
+    
+    const response = await apiClient.get<TeamViewData>(`/attendance/team-view/${teamId}?${params.toString()}`);
     return response.data;
   }
 } 

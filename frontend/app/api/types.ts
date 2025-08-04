@@ -361,4 +361,39 @@ export interface InviteListResponse {
   unused_count: number;
   used_count: number;
   expired_count: number;
+}
+
+// Team View Types
+export interface ToonAttendanceRecord {
+  raid_id: number;
+  raid_date: string;
+  status: AttendanceStatus;
+  notes?: string;
+  benched_note?: string;
+  has_note: boolean;
+}
+
+export interface TeamViewToon {
+  id: number;
+  username: string;
+  class_name: string;
+  role: string;
+  overall_attendance_percentage: number;
+  attendance_records: ToonAttendanceRecord[];
+}
+
+export interface TeamViewRaid {
+  id: number;
+  scheduled_at: string;
+  scenario_name: string;
+}
+
+export interface TeamViewData {
+  team: {
+    id: number;
+    name: string;
+    guild_id: number;
+  };
+  toons: TeamViewToon[];
+  raids: TeamViewRaid[];
 } 

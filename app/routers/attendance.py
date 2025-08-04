@@ -26,7 +26,7 @@ from app.schemas.attendance import (
 )
 from app.models.attendance import AttendanceStatus
 from app.models.token import Token
-from app.utils.auth import require_any_token, require_superuser, require_user
+from app.utils.auth import require_superuser, require_user
 from app.models.user import User
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
@@ -267,12 +267,12 @@ def update_attendance_bulk(
 @router.get(
     "/{attendance_id}",
     response_model=AttendanceResponse,
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_attendance(
     attendance_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get attendance record by ID. Any valid token required.
@@ -284,12 +284,12 @@ def get_attendance(
 @router.get(
     "/raid/{raid_id}",
     response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_attendance_by_raid(
     raid_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all attendance records for a specific raid. Any valid token required.
@@ -304,12 +304,12 @@ def get_attendance_by_raid(
 @router.get(
     "/toon/{toon_id}",
     response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_attendance_by_toon(
     toon_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all attendance records for a specific toon. Any valid token required.
@@ -324,12 +324,12 @@ def get_attendance_by_toon(
 @router.get(
     "/team/{team_id}",
     response_model=List[AttendanceResponse],
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_attendance_by_team(
     team_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get all attendance records for all raids of a specific team. Any valid token required.
@@ -345,14 +345,14 @@ def get_attendance_by_team(
 @router.get(
     "/team-view/{team_id}",
     response_model=TeamViewData,
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_team_attendance_view(
     team_id: int,
     raid_count: int = 5,
     guild_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get team attendance view with toons as rows and raids as columns.
@@ -362,20 +362,19 @@ def get_team_attendance_view(
     # Validate raid_count
     if raid_count < 1 or raid_count > 50:
         raise HTTPException(
-            status_code=400,
-            detail="raid_count must be between 1 and 50"
+            status_code=400, detail="raid_count must be between 1 and 50"
         )
 
     # Get team and verify it exists
     team = get_team_or_404(db, team_id)
-    
+
     # If guild_id is provided, verify the team belongs to that guild
     if guild_id is not None:
         guild = get_guild_or_404(db, guild_id)
         if team.guild_id != guild_id:
             raise HTTPException(
                 status_code=400,
-                detail="Team does not belong to the specified guild"
+                detail="Team does not belong to the specified guild",
             )
 
     # Get the last N raids for this team, ordered by date (newest first)
@@ -390,13 +389,9 @@ def get_team_attendance_view(
     if not recent_raids:
         # Return empty response if no raids found
         return TeamViewData(
-            team={
-                "id": team.id,
-                "name": team.name,
-                "guild_id": team.guild_id
-            },
+            team={"id": team.id, "name": team.name, "guild_id": team.guild_id},
             toons=[],
-            raids=[]
+            raids=[],
         )
 
     raid_ids = [raid.id for raid in recent_raids]
@@ -417,37 +412,39 @@ def get_team_attendance_view(
     attendance_records = (
         db.query(Attendance)
         .filter(
-            Attendance.raid_id.in_(raid_ids),
-            Attendance.toon_id.in_(toon_ids)
+            Attendance.raid_id.in_(raid_ids), Attendance.toon_id.in_(toon_ids)
         )
         .all()
     )
 
     # Build response data
     team_view_toons = []
-    
+
     for toon in toons:
         # Get attendance records for this toon
         toon_attendance = [
-            record for record in attendance_records 
-            if record.toon_id == toon.id
+            record for record in attendance_records if record.toon_id == toon.id
         ]
 
         # Calculate overall attendance percentage (excluding benched)
         total_raids = len(toon_attendance)
         present_count = sum(
-            1 for record in toon_attendance 
+            1
+            for record in toon_attendance
             if record.status == AttendanceStatus.PRESENT
         )
         benched_count = sum(
-            1 for record in toon_attendance 
+            1
+            for record in toon_attendance
             if record.status == AttendanceStatus.BENCHED
         )
-        
+
         # Calculate percentage excluding benched from denominator
         effective_total = total_raids - benched_count
         attendance_percentage = (
-            (present_count / effective_total * 100) if effective_total > 0 else 0.0
+            (present_count / effective_total * 100)
+            if effective_total > 0
+            else 0.0
         )
 
         # Build attendance records for this toon
@@ -455,63 +452,75 @@ def get_team_attendance_view(
         for raid in recent_raids:
             # Find attendance record for this raid and toon
             attendance_record = next(
-                (record for record in toon_attendance if record.raid_id == raid.id),
-                None
+                (
+                    record
+                    for record in toon_attendance
+                    if record.raid_id == raid.id
+                ),
+                None,
             )
-            
+
             if attendance_record:
                 # Determine if there's a note
                 has_note = bool(
-                    (attendance_record.notes and attendance_record.notes.strip()) or
-                    (attendance_record.benched_note and attendance_record.benched_note.strip())
+                    (
+                        attendance_record.notes
+                        and attendance_record.notes.strip()
+                    )
+                    or (
+                        attendance_record.benched_note
+                        and attendance_record.benched_note.strip()
+                    )
                 )
-                
-                toon_attendance_records.append(ToonAttendanceRecord(
-                    raid_id=raid.id,
-                    raid_date=raid.scheduled_at,
-                    status=attendance_record.status,
-                    notes=attendance_record.notes,
-                    benched_note=attendance_record.benched_note,
-                    has_note=has_note
-                ))
+
+                toon_attendance_records.append(
+                    ToonAttendanceRecord(
+                        raid_id=raid.id,
+                        raid_date=raid.scheduled_at,
+                        status=attendance_record.status,
+                        notes=attendance_record.notes,
+                        benched_note=attendance_record.benched_note,
+                        has_note=has_note,
+                    )
+                )
             else:
                 # No attendance record found for this raid
-                toon_attendance_records.append(ToonAttendanceRecord(
-                    raid_id=raid.id,
-                    raid_date=raid.scheduled_at,
-                    status=AttendanceStatus.ABSENT,  # Default to absent if no record
-                    notes=None,
-                    benched_note=None,
-                    has_note=False
-                ))
+                toon_attendance_records.append(
+                    ToonAttendanceRecord(
+                        raid_id=raid.id,
+                        raid_date=raid.scheduled_at,
+                        status=AttendanceStatus.ABSENT,  # Default to absent if no record
+                        notes=None,
+                        benched_note=None,
+                        has_note=False,
+                    )
+                )
 
-        team_view_toons.append(TeamViewToon(
-            id=toon.id,
-            username=toon.username,
-            class_name=toon.class_,
-            role=toon.role,
-            overall_attendance_percentage=attendance_percentage,
-            attendance_records=toon_attendance_records
-        ))
+        team_view_toons.append(
+            TeamViewToon(
+                id=toon.id,
+                username=toon.username,
+                class_name=toon.class_,
+                role=toon.role,
+                overall_attendance_percentage=attendance_percentage,
+                attendance_records=toon_attendance_records,
+            )
+        )
 
     # Build raid data
     team_view_raids = [
         TeamViewRaid(
             id=raid.id,
             scheduled_at=raid.scheduled_at,
-            scenario_name=raid.scenario_name
+            scenario_name=raid.scenario_name,
         )
         for raid in recent_raids
     ]
 
     return TeamViewData(
-        team={
-            "id": team.id,
-            "name": team.name,
-            "guild_id": team.guild_id
-        },
+        team={"id": team.id, "name": team.name, "guild_id": team.guild_id},
         toons=team_view_toons,
-        raids=team_view_raids
+        raids=team_view_raids,
     )
 
 
@@ -567,12 +576,12 @@ def delete_attendance(
 @router.get(
     "/stats/raid/{raid_id}",
     response_model=AttendanceStats,
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_raid_attendance_stats(
     raid_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get attendance statistics for a specific raid. Any valid token required.
@@ -620,12 +629,12 @@ def get_raid_attendance_stats(
 @router.get(
     "/stats/toon/{toon_id}",
     response_model=AttendanceStats,
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_toon_attendance_stats(
     toon_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get attendance statistics for a specific toon. Any valid token required.
@@ -643,13 +652,19 @@ def get_toon_attendance_stats(
 
     total_raids = len(attendance_records)
     raids_attended = sum(
-        1 for record in attendance_records if record.status == AttendanceStatus.PRESENT
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.PRESENT
     )
     raids_missed = sum(
-        1 for record in attendance_records if record.status == AttendanceStatus.ABSENT
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.ABSENT
     )
     raids_benched = sum(
-        1 for record in attendance_records if record.status == AttendanceStatus.BENCHED
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.BENCHED
     )
 
     # Calculate percentage excluding benched from denominator
@@ -696,12 +711,12 @@ def get_toon_attendance_stats(
 @router.get(
     "/stats/team/{team_id}",
     response_model=AttendanceStats,
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_team_attendance_stats(
     team_id: int,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get attendance statistics for all raids of a specific team. Any valid token required.
@@ -720,13 +735,19 @@ def get_team_attendance_stats(
 
     total_raids = len(attendance_records)
     raids_attended = sum(
-        1 for record in attendance_records if record.status == AttendanceStatus.PRESENT
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.PRESENT
     )
     raids_missed = sum(
-        1 for record in attendance_records if record.status == AttendanceStatus.ABSENT
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.ABSENT
     )
     raids_benched = sum(
-        1 for record in attendance_records if record.status == AttendanceStatus.BENCHED
+        1
+        for record in attendance_records
+        if record.status == AttendanceStatus.BENCHED
     )
 
     # Calculate percentage excluding benched from denominator
@@ -772,14 +793,14 @@ def get_team_attendance_stats(
 @router.get(
     "/report/date-range",
     response_model=AttendanceReport,
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_attendance_report(
     start_date: datetime,
     end_date: datetime,
     team_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get comprehensive attendance report for a date range. Any valid token required.
@@ -917,13 +938,13 @@ def get_attendance_report(
 @router.get(
     "/benched/team/{team_id}/week/{week_date}",
     response_model=List[BenchedPlayer],
-    dependencies=[Depends(require_any_token)],
+    dependencies=[Depends(require_user)],
 )
 def get_benched_players_for_week(
     team_id: int,
     week_date: datetime,
     db: Session = Depends(get_db),
-    current_token: Token = Depends(require_any_token),
+    current_user: User = Depends(require_user),
 ):
     """
     Get benched players for a team in a specific week (Tuesday reset to next Tuesday).
