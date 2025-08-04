@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Card } from './';
 import type { WarcraftLogsProcessingResult } from '../../api/types';
 
@@ -47,7 +47,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   const benchedCount = participants.filter(p => p.status === 'benched').length;
 
   // Initialize participants with status if not already set
-  React.useEffect(() => {
+  useEffect(() => {
     const initializedParticipants = result.matched_participants.map(p => ({
       ...p,
       status: p.is_present ? 'present' : 'absent',
