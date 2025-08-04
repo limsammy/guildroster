@@ -54,6 +54,13 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
       benched_note: ''
     }));
     setParticipants(initializedParticipants);
+    
+    // Also update the result object with initialized participants
+    const newResult = {
+      ...result,
+      matched_participants: initializedParticipants
+    };
+    setUpdatedResult(newResult);
   }, [result.matched_participants]);
 
   const handleStatusChange = (index: number, newStatus: 'present' | 'absent' | 'benched') => {

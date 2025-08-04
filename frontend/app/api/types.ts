@@ -209,6 +209,7 @@ export interface MatchedParticipant {
   participant: WarcraftLogsParticipant;
   status: AttendanceStatus;
   notes: string;
+  benched_note?: string;
 }
 
 export interface UnknownParticipant {

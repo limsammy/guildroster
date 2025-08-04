@@ -129,7 +129,7 @@ export default function Raids() {
     }
   };
 
-  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }) => {
+  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string; updated_attendance?: any[] }) => {
     setFormLoading(true);
     setFormError(null);
     try {
@@ -140,6 +140,7 @@ export default function Raids() {
         scenario_difficulty: values.scenario_difficulty,
         scenario_size: values.scenario_size,
         warcraftlogs_url: values.warcraftlogs_url || undefined,
+        updated_attendance: values.updated_attendance,
       });
       setShowAddForm(false);
       await reloadRaids();

@@ -227,22 +227,45 @@ def create_raid(
                                 .first()
                             )
 
-                            if not existing:
-                                # Determine status based on the updated data
-                                if updated_record["status"] == "present":
-                                    status = AttendanceStatus.PRESENT
-                                elif updated_record["status"] == "benched":
-                                    status = AttendanceStatus.BENCHED
-                                else:
-                                    status = AttendanceStatus.ABSENT
+                            # Determine status based on the updated data
+                            if updated_record["status"] == "present":
+                                status = AttendanceStatus.PRESENT
+                            elif updated_record["status"] == "benched":
+                                status = AttendanceStatus.BENCHED
+                            else:
+                                status = AttendanceStatus.ABSENT
 
+                            # Get notes and benched_note, handling both possible field names
+                            notes = updated_record.get(
+                                "notes"
+                            ) or updated_record.get("participant_notes", "")
+                            benched_note = updated_record.get(
+                                "benched_note"
+                            ) or updated_record.get("benched_reason", "")
+
+                            if existing:
+                                # Update existing record
+                                existing.status = status
+                                existing.notes = (
+                                    notes if notes.strip() else None
+                                )
+                                existing.benched_note = (
+                                    benched_note
+                                    if benched_note.strip()
+                                    else None
+                                )
+                                created_attendance.append(existing)
+                            else:
+                                # Create new record
                                 attendance = Attendance(
                                     raid_id=raid.id,
                                     toon_id=updated_record["toon"]["id"],
                                     status=status,
-                                    notes=updated_record.get("notes"),
-                                    benched_note=updated_record.get(
-                                        "benched_note"
+                                    notes=notes if notes.strip() else None,
+                                    benched_note=(
+                                        benched_note
+                                        if benched_note.strip()
+                                        else None
                                     ),
                                 )
                                 db.add(attendance)
