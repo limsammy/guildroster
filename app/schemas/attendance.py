@@ -184,3 +184,54 @@ class AttendanceReport(BaseModel):
     attendance_by_toon: List[dict] = Field(
         ..., description="Attendance breakdown by toon"
     )
+
+
+# New schemas for team view
+class ToonAttendanceRecord(BaseModel):
+    raid_id: int = Field(..., description="Raid ID")
+    raid_date: datetime = Field(..., description="Raid date")
+    status: AttendanceStatus = Field(..., description="Attendance status")
+    notes: Optional[str] = Field(None, description="Attendance notes")
+    benched_note: Optional[str] = Field(None, description="Benched note")
+    has_note: bool = Field(..., description="Whether this record has any notes")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
+
+
+class TeamViewToon(BaseModel):
+    id: int = Field(..., description="Toon ID")
+    username: str = Field(..., description="Toon username")
+    class_name: str = Field(..., description="Toon class")
+    role: str = Field(..., description="Toon role")
+    overall_attendance_percentage: float = Field(..., description="Overall attendance percentage")
+    attendance_records: List[ToonAttendanceRecord] = Field(..., description="Attendance records for this toon")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
+
+
+class TeamViewRaid(BaseModel):
+    id: int = Field(..., description="Raid ID")
+    scheduled_at: datetime = Field(..., description="Raid scheduled date")
+    scenario_name: str = Field(..., description="Scenario name")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
+
+
+class TeamViewData(BaseModel):
+    team: dict = Field(..., description="Team information")
+    toons: List[TeamViewToon] = Field(..., description="Toons with their attendance data")
+    raids: List[TeamViewRaid] = Field(..., description="Raids included in this view")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )

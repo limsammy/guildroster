@@ -8,6 +8,7 @@ from app.models.attendance import Attendance
 from app.models.raid import Raid
 from app.models.toon import Toon
 from app.models.team import Team
+from app.models.guild import Guild
 from app.schemas.attendance import (
     AttendanceCreate,
     AttendanceUpdate,
@@ -18,6 +19,10 @@ from app.schemas.attendance import (
     AttendanceStats,
     AttendanceReport,
     BenchedPlayer,
+    TeamViewData,
+    TeamViewToon,
+    TeamViewRaid,
+    ToonAttendanceRecord,
 )
 from app.models.attendance import AttendanceStatus
 from app.models.token import Token
@@ -61,6 +66,14 @@ def get_team_or_404(db: Session, team_id: int) -> Team:
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     return team
+
+
+def get_guild_or_404(db: Session, guild_id: int) -> Guild:
+    """Get guild by ID or raise 404."""
+    guild = db.query(Guild).filter(Guild.id == guild_id).first()
+    if not guild:
+        raise HTTPException(status_code=404, detail="Guild not found")
+    return guild
 
 
 @router.post(
@@ -329,6 +342,179 @@ def get_attendance_by_team(
     return attendance_records
 
 
+@router.get(
+    "/team-view/{team_id}",
+    response_model=TeamViewData,
+    dependencies=[Depends(require_any_token)],
+)
+def get_team_attendance_view(
+    team_id: int,
+    raid_count: int = 5,
+    guild_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_token: Token = Depends(require_any_token),
+):
+    """
+    Get team attendance view with toons as rows and raids as columns.
+    Returns toons with their attendance data for the last N raids.
+    Any valid token required.
+    """
+    # Validate raid_count
+    if raid_count < 1 or raid_count > 50:
+        raise HTTPException(
+            status_code=400,
+            detail="raid_count must be between 1 and 50"
+        )
+
+    # Get team and verify it exists
+    team = get_team_or_404(db, team_id)
+    
+    # If guild_id is provided, verify the team belongs to that guild
+    if guild_id is not None:
+        guild = get_guild_or_404(db, guild_id)
+        if team.guild_id != guild_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Team does not belong to the specified guild"
+            )
+
+    # Get the last N raids for this team, ordered by date (newest first)
+    recent_raids = (
+        db.query(Raid)
+        .filter(Raid.team_id == team_id)
+        .order_by(Raid.scheduled_at.desc())
+        .limit(raid_count)
+        .all()
+    )
+
+    if not recent_raids:
+        # Return empty response if no raids found
+        return TeamViewData(
+            team={
+                "id": team.id,
+                "name": team.name,
+                "guild_id": team.guild_id
+            },
+            toons=[],
+            raids=[]
+        )
+
+    raid_ids = [raid.id for raid in recent_raids]
+
+    # Get all toons that have attendance records for these raids
+    toon_ids = (
+        db.query(Attendance.toon_id)
+        .filter(Attendance.raid_id.in_(raid_ids))
+        .distinct()
+        .all()
+    )
+    toon_ids = [toon_id[0] for toon_id in toon_ids]
+
+    # Get toon details
+    toons = db.query(Toon).filter(Toon.id.in_(toon_ids)).all()
+
+    # Get all attendance records for these raids and toons
+    attendance_records = (
+        db.query(Attendance)
+        .filter(
+            Attendance.raid_id.in_(raid_ids),
+            Attendance.toon_id.in_(toon_ids)
+        )
+        .all()
+    )
+
+    # Build response data
+    team_view_toons = []
+    
+    for toon in toons:
+        # Get attendance records for this toon
+        toon_attendance = [
+            record for record in attendance_records 
+            if record.toon_id == toon.id
+        ]
+
+        # Calculate overall attendance percentage (excluding benched)
+        total_raids = len(toon_attendance)
+        present_count = sum(
+            1 for record in toon_attendance 
+            if record.status == AttendanceStatus.PRESENT
+        )
+        benched_count = sum(
+            1 for record in toon_attendance 
+            if record.status == AttendanceStatus.BENCHED
+        )
+        
+        # Calculate percentage excluding benched from denominator
+        effective_total = total_raids - benched_count
+        attendance_percentage = (
+            (present_count / effective_total * 100) if effective_total > 0 else 0.0
+        )
+
+        # Build attendance records for this toon
+        toon_attendance_records = []
+        for raid in recent_raids:
+            # Find attendance record for this raid and toon
+            attendance_record = next(
+                (record for record in toon_attendance if record.raid_id == raid.id),
+                None
+            )
+            
+            if attendance_record:
+                # Determine if there's a note
+                has_note = bool(
+                    (attendance_record.notes and attendance_record.notes.strip()) or
+                    (attendance_record.benched_note and attendance_record.benched_note.strip())
+                )
+                
+                toon_attendance_records.append(ToonAttendanceRecord(
+                    raid_id=raid.id,
+                    raid_date=raid.scheduled_at,
+                    status=attendance_record.status,
+                    notes=attendance_record.notes,
+                    benched_note=attendance_record.benched_note,
+                    has_note=has_note
+                ))
+            else:
+                # No attendance record found for this raid
+                toon_attendance_records.append(ToonAttendanceRecord(
+                    raid_id=raid.id,
+                    raid_date=raid.scheduled_at,
+                    status=AttendanceStatus.ABSENT,  # Default to absent if no record
+                    notes=None,
+                    benched_note=None,
+                    has_note=False
+                ))
+
+        team_view_toons.append(TeamViewToon(
+            id=toon.id,
+            username=toon.username,
+            class_name=toon.class_,
+            role=toon.role,
+            overall_attendance_percentage=attendance_percentage,
+            attendance_records=toon_attendance_records
+        ))
+
+    # Build raid data
+    team_view_raids = [
+        TeamViewRaid(
+            id=raid.id,
+            scheduled_at=raid.scheduled_at,
+            scenario_name=raid.scenario_name
+        )
+        for raid in recent_raids
+    ]
+
+    return TeamViewData(
+        team={
+            "id": team.id,
+            "name": team.name,
+            "guild_id": team.guild_id
+        },
+        toons=team_view_toons,
+        raids=team_view_raids
+    )
+
+
 @router.put(
     "/{attendance_id}",
     response_model=AttendanceResponse,
@@ -457,12 +643,19 @@ def get_toon_attendance_stats(
 
     total_raids = len(attendance_records)
     raids_attended = sum(
-        1 for record in attendance_records if record.is_present
+        1 for record in attendance_records if record.status == AttendanceStatus.PRESENT
     )
-    raids_missed = total_raids - raids_attended
+    raids_missed = sum(
+        1 for record in attendance_records if record.status == AttendanceStatus.ABSENT
+    )
+    raids_benched = sum(
+        1 for record in attendance_records if record.status == AttendanceStatus.BENCHED
+    )
 
+    # Calculate percentage excluding benched from denominator
+    effective_total = total_raids - raids_benched
     attendance_percentage = (
-        (raids_attended / total_raids * 100) if total_raids > 0 else 0.0
+        (raids_attended / effective_total * 100) if effective_total > 0 else 0.0
     )
 
     # Calculate streaks
@@ -471,7 +664,7 @@ def get_toon_attendance_stats(
     temp_streak = 0
 
     for record in reversed(attendance_records):  # Start from most recent
-        if record.is_present:
+        if record.status == AttendanceStatus.PRESENT:
             temp_streak += 1
             current_streak = temp_streak  # Update current streak continuously
         else:
@@ -485,13 +678,14 @@ def get_toon_attendance_stats(
     last_attendance = None
     if attendance_records:
         last_record = attendance_records[-1]
-        if last_record.is_present:
+        if last_record.status == AttendanceStatus.PRESENT:
             last_attendance = last_record.raid.scheduled_at
 
     return AttendanceStats(
         total_raids=total_raids,
         raids_attended=raids_attended,
         raids_missed=raids_missed,
+        raids_benched=raids_benched,
         attendance_percentage=attendance_percentage,
         current_streak=current_streak,
         longest_streak=longest_streak,
@@ -526,12 +720,19 @@ def get_team_attendance_stats(
 
     total_raids = len(attendance_records)
     raids_attended = sum(
-        1 for record in attendance_records if record.is_present
+        1 for record in attendance_records if record.status == AttendanceStatus.PRESENT
     )
-    raids_missed = total_raids - raids_attended
+    raids_missed = sum(
+        1 for record in attendance_records if record.status == AttendanceStatus.ABSENT
+    )
+    raids_benched = sum(
+        1 for record in attendance_records if record.status == AttendanceStatus.BENCHED
+    )
 
+    # Calculate percentage excluding benched from denominator
+    effective_total = total_raids - raids_benched
     attendance_percentage = (
-        (raids_attended / total_raids * 100) if total_raids > 0 else 0.0
+        (raids_attended / effective_total * 100) if effective_total > 0 else 0.0
     )
 
     # For team stats, we'll use simplified streak calculation
@@ -540,7 +741,7 @@ def get_team_attendance_stats(
     temp_streak = 0
 
     for record in reversed(attendance_records):
-        if record.is_present:
+        if record.status == AttendanceStatus.PRESENT:
             temp_streak += 1
             current_streak = temp_streak  # Update current streak continuously
         else:
@@ -553,13 +754,14 @@ def get_team_attendance_stats(
     last_attendance = None
     if attendance_records:
         last_record = attendance_records[-1]
-        if last_record.is_present:
+        if last_record.status == AttendanceStatus.PRESENT:
             last_attendance = last_record.raid.scheduled_at
 
     return AttendanceStats(
         total_raids=total_raids,
         raids_attended=raids_attended,
         raids_missed=raids_missed,
+        raids_benched=raids_benched,
         attendance_percentage=attendance_percentage,
         current_streak=current_streak,
         longest_streak=longest_streak,
@@ -607,6 +809,7 @@ def get_attendance_report(
             total_attendance_records=0,
             present_count=0,
             absent_count=0,
+            benched_count=0,
             overall_attendance_rate=0.0,
             attendance_by_raid=[],
             attendance_by_toon=[],
