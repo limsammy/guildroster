@@ -169,6 +169,7 @@ export interface RaidCreate {
   scenario_difficulty: string;
   scenario_size: string;
   warcraftlogs_url?: string;
+  updated_attendance?: any[];
 }
 
 export interface RaidUpdate {

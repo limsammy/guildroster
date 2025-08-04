@@ -32,6 +32,10 @@ class RaidCreate(RaidBase):
     warcraftlogs_url: Optional[str] = Field(
         None, description="Optional WarcraftLogs report URL for this raid"
     )
+    updated_attendance: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Updated attendance data from frontend with benched status",
+    )
 
 
 class RaidUpdate(BaseModel):

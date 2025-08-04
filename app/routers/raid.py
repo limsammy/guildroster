@@ -7,7 +7,7 @@ from app.models.raid import Raid
 from app.models.team import Team
 from app.models.scenario import Scenario
 from app.models.toon import Toon
-from app.models.attendance import Attendance
+from app.models.attendance import Attendance, AttendanceStatus
 from app.schemas.raid import RaidCreate, RaidUpdate, RaidResponse
 from app.models.token import Token
 from app.utils.auth import require_user, require_superuser
@@ -212,26 +212,67 @@ def create_raid(
                     attendance_records = processing_result["attendance_records"]
                     created_attendance = []
 
-                    for record in attendance_records:
-                        # Check if attendance record already exists
-                        existing = (
-                            db.query(Attendance)
-                            .filter(
-                                Attendance.raid_id == raid.id,
-                                Attendance.toon_id == record["toon_id"],
+                    # Use updated attendance data if provided, otherwise use processed data
+                    if raid_in.updated_attendance:
+                        # Use the updated attendance data from frontend
+                        for updated_record in raid_in.updated_attendance:
+                            # Check if attendance record already exists
+                            existing = (
+                                db.query(Attendance)
+                                .filter(
+                                    Attendance.raid_id == raid.id,
+                                    Attendance.toon_id
+                                    == updated_record["toon"]["id"],
+                                )
+                                .first()
                             )
-                            .first()
-                        )
 
-                        if not existing:
-                            attendance = Attendance(
-                                raid_id=raid.id,
-                                toon_id=record["toon_id"],
-                                is_present=record["is_present"],
-                                notes=record["notes"],
+                            if not existing:
+                                # Determine status based on the updated data
+                                if updated_record["status"] == "present":
+                                    status = AttendanceStatus.PRESENT
+                                elif updated_record["status"] == "benched":
+                                    status = AttendanceStatus.BENCHED
+                                else:
+                                    status = AttendanceStatus.ABSENT
+
+                                attendance = Attendance(
+                                    raid_id=raid.id,
+                                    toon_id=updated_record["toon"]["id"],
+                                    status=status,
+                                    notes=updated_record.get("notes"),
+                                    benched_note=updated_record.get(
+                                        "benched_note"
+                                    ),
+                                )
+                                db.add(attendance)
+                                created_attendance.append(attendance)
+                    else:
+                        # Use the original processed data
+                        for record in attendance_records:
+                            # Check if attendance record already exists
+                            existing = (
+                                db.query(Attendance)
+                                .filter(
+                                    Attendance.raid_id == raid.id,
+                                    Attendance.toon_id == record["toon_id"],
+                                )
+                                .first()
                             )
-                            db.add(attendance)
-                            created_attendance.append(attendance)
+
+                            if not existing:
+                                attendance = Attendance(
+                                    raid_id=raid.id,
+                                    toon_id=record["toon_id"],
+                                    status=(
+                                        AttendanceStatus.PRESENT
+                                        if record["is_present"]
+                                        else AttendanceStatus.ABSENT
+                                    ),
+                                    notes=record["notes"],
+                                )
+                                db.add(attendance)
+                                created_attendance.append(attendance)
 
                     if created_attendance:
                         db.commit()

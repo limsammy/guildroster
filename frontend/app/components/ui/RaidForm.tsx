@@ -131,18 +131,19 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     }
   };
 
-  const handleProceedWithRaid = async () => {
+  const handleProceedWithRaid = async (updatedResult?: any) => {
     if (!processingResult) return;
 
     setProcessingLoading(true);
     try {
-      // Submit the raid creation
+      // Submit the raid creation with updated attendance data
       onSubmit({
         warcraftlogs_url: warcraftlogsUrl.trim(),
         team_id: Number(teamId),
         scenario_name: scenarioName,
         scenario_difficulty: scenarioDifficulty,
         scenario_size: scenarioSize,
+        updated_attendance: updatedResult?.matched_participants || processingResult.matched_participants,
       });
     } catch (err) {
       console.error('Failed to create raid:', err);

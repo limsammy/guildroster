@@ -4,7 +4,7 @@ import type { WarcraftLogsProcessingResult } from '../../api/types';
 
 interface WarcraftLogsResultsProps {
   result: WarcraftLogsProcessingResult;
-  onProceed: () => void;
+  onProceed: (updatedResult?: WarcraftLogsProcessingResult) => void;
   onCancel: () => void;
   loading?: boolean;
   onAddUnknownParticipant?: (participant: any) => void;
@@ -17,6 +17,8 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
   loading = false,
   onAddUnknownParticipant,
 }) => {
+  const [participants, setParticipants] = useState(result.matched_participants);
+  const [updatedResult, setUpdatedResult] = useState(result);
   const getClassColor = (className: string) => {
     const colors: Record<string, string> = {
       'Death Knight': 'text-red-400',
@@ -40,8 +42,56 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
     return new Date(timestamp).toLocaleString();
   };
 
-  const presentCount = result.matched_participants.filter(p => p.is_present).length;
-  const absentCount = result.matched_participants.filter(p => !p.is_present).length;
+  const presentCount = participants.filter(p => p.status === 'present').length;
+  const absentCount = participants.filter(p => p.status === 'absent').length;
+  const benchedCount = participants.filter(p => p.status === 'benched').length;
+
+  // Initialize participants with status if not already set
+  React.useEffect(() => {
+    const initializedParticipants = result.matched_participants.map(p => ({
+      ...p,
+      status: p.is_present ? 'present' : 'absent',
+      benched_note: ''
+    }));
+    setParticipants(initializedParticipants);
+  }, [result.matched_participants]);
+
+  const handleStatusChange = (index: number, newStatus: 'present' | 'absent' | 'benched') => {
+    const updatedParticipants = [...participants];
+    updatedParticipants[index] = {
+      ...updatedParticipants[index],
+      status: newStatus,
+      is_present: newStatus === 'present'
+    };
+    setParticipants(updatedParticipants);
+    
+    // Update the result object
+    const newResult = {
+      ...result,
+      matched_participants: updatedParticipants
+    };
+    setUpdatedResult(newResult);
+  };
+
+  const handleBenchedNoteChange = (index: number, note: string) => {
+    const updatedParticipants = [...participants];
+    updatedParticipants[index] = {
+      ...updatedParticipants[index],
+      benched_note: note
+    };
+    setParticipants(updatedParticipants);
+    
+    // Update the result object
+    const newResult = {
+      ...result,
+      matched_participants: updatedParticipants
+    };
+    setUpdatedResult(newResult);
+  };
+
+  const handleProceed = () => {
+    onProceed(updatedResult);
+  };
 
   return (
     <Card variant="elevated" className="w-full max-w-[1200px] min-w-[900px] mx-auto max-h-[90vh] flex flex-col">
@@ -76,7 +126,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 flex-shrink-0">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 flex-shrink-0">
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-green-400">{presentCount}</div>
             <div className="text-sm text-green-300">Present</div>
@@ -84,6 +134,10 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-red-400">{absentCount}</div>
             <div className="text-sm text-red-300">Absent</div>
+          </div>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+            <div className="text-2xl font-bold text-yellow-400">{benchedCount}</div>
+            <div className="text-sm text-yellow-300">Benched</div>
           </div>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
             <div className="text-2xl font-bold text-amber-400">{result.participants.length}</div>
@@ -106,12 +160,14 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
             </div>
           ) : (
             <div className="space-y-2">
-              {result.matched_participants.map((matched, index) => (
+              {participants.map((matched, index) => (
               <div
                 key={index}
                 className={`flex items-center justify-between p-3 rounded-lg border ${
-                  matched.is_present
+                  matched.status === 'present'
                     ? 'bg-green-500/10 border-green-500/20'
+                    : matched.status === 'benched'
+                    ? 'bg-yellow-500/10 border-yellow-500/20'
                     : 'bg-red-500/10 border-red-500/20'
                 }`}
               >
@@ -125,12 +181,63 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className={`font-medium ${matched.is_present ? 'text-green-400' : 'text-red-400'}`}>
-                    {matched.is_present ? 'Present' : 'Absent'}
+                <div className="flex items-center gap-3">
+                  {/* Status Selection */}
+                  <div className="flex flex-col gap-1">
+                    <div className="text-xs text-slate-400">Status:</div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleStatusChange(index, 'present')}
+                        className={`px-2 py-1 text-xs rounded ${
+                          matched.status === 'present'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        Present
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(index, 'absent')}
+                        className={`px-2 py-1 text-xs rounded ${
+                          matched.status === 'absent'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        Absent
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(index, 'benched')}
+                        className={`px-2 py-1 text-xs rounded ${
+                          matched.status === 'benched'
+                            ? 'bg-yellow-500 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        Benched
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-400">
-                    {matched.notes}
+                  
+                  {/* Benched Note Input */}
+                  {matched.status === 'benched' && (
+                    <div className="flex flex-col gap-1">
+                      <div className="text-xs text-slate-400">Note:</div>
+                      <input
+                        type="text"
+                        value={matched.benched_note || ''}
+                        onChange={(e) => handleBenchedNoteChange(index, e.target.value)}
+                        placeholder="Benched reason..."
+                        className="px-2 py-1 text-xs bg-slate-800 border border-slate-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Original Notes */}
+                  <div className="text-right">
+                    <div className="text-xs text-slate-400">
+                      {matched.notes}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -190,7 +297,7 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button type="button" variant="primary" onClick={onProceed} disabled={loading}>
+        <Button type="button" variant="primary" onClick={handleProceed} disabled={loading}>
           {loading ? 'Creating Raid...' : 'Create Raid with Attendance'}
         </Button>
       </div>
