@@ -1,6 +1,13 @@
 import apiClient from './config';
 import type { Team, TeamCreate, TeamUpdate } from './types';
 
+interface SimpleBenchedPlayer {
+  id: number;
+  username: string;
+  class_: string;
+  role: string;
+}
+
 export class TeamService {
   // Get all teams
   static async getTeams(): Promise<Team[]> {
@@ -35,5 +42,11 @@ export class TeamService {
   // Delete team
   static async deleteTeam(teamId: number): Promise<void> {
     await apiClient.delete(`/teams/${teamId}`);
+  }
+
+  // Get benched players for a team
+  static async getBenchedPlayers(teamId: number): Promise<SimpleBenchedPlayer[]> {
+    const response = await apiClient.get<SimpleBenchedPlayer[]>(`/teams/${teamId}/benched`);
+    return response.data;
   }
 } 

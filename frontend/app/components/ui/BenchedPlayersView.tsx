@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button } from './';
-import { AttendanceService } from '../../api/attendance';
-import type { BenchedPlayer, Team } from '../../api/types';
+import { TeamService } from '../../api/teams';
+import type { Team } from '../../api/types';
+
+interface SimpleBenchedPlayer {
+  id: number;
+  username: string;
+  class_: string;
+  role: string;
+}
 
 interface BenchedPlayersViewProps {
   team: Team;
@@ -12,43 +19,19 @@ export const BenchedPlayersView: React.FC<BenchedPlayersViewProps> = ({
   team,
   onClose,
 }) => {
-  const [benchedPlayers, setBenchedPlayers] = useState<BenchedPlayer[]>([]);
+  const [benchedPlayers, setBenchedPlayers] = useState<SimpleBenchedPlayer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedWeek, setSelectedWeek] = useState<string>('');
-
-  // Get current week (Tuesday 9 AM PST)
-  const getCurrentWeek = () => {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 2 = Tuesday
-    const daysUntilTuesday = dayOfWeek <= 2 ? 2 - dayOfWeek : 9 - dayOfWeek;
-    const nextTuesday = new Date(now);
-    nextTuesday.setDate(now.getDate() + daysUntilTuesday);
-    nextTuesday.setHours(9, 0, 0, 0); // 9 AM PST
-    
-    // If we're past Tuesday 9 AM, use this Tuesday, otherwise use last Tuesday
-    if (now > nextTuesday) {
-      nextTuesday.setDate(nextTuesday.getDate() - 7);
-    }
-    
-    return nextTuesday.toISOString().split('T')[0];
-  };
 
   useEffect(() => {
-    setSelectedWeek(getCurrentWeek());
-  }, []);
-
-  useEffect(() => {
-    if (selectedWeek) {
-      fetchBenchedPlayers();
-    }
-  }, [selectedWeek, team.id]);
+    fetchBenchedPlayers();
+  }, [team.id]);
 
   const fetchBenchedPlayers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const players = await AttendanceService.getBenchedPlayers(team.id, selectedWeek);
+      const players = await TeamService.getBenchedPlayers(team.id);
       setBenchedPlayers(players);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch benched players');
@@ -57,29 +40,7 @@ export const BenchedPlayersView: React.FC<BenchedPlayersViewProps> = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'present':
-        return 'text-green-400';
-      case 'absent':
-        return 'text-red-400';
-      case 'benched':
-        return 'text-yellow-400';
-      default:
-        return 'text-slate-400';
-    }
-  };
 
   const getClassColor = (className: string) => {
     const classColors: Record<string, string> = {
@@ -111,18 +72,7 @@ export const BenchedPlayersView: React.FC<BenchedPlayersViewProps> = ({
             </Button>
           </div>
 
-          <div className="mb-4">
-            <label htmlFor="week-selector" className="block text-sm font-medium text-slate-300 mb-2">
-              Week Starting (Tuesday 9 AM PST)
-            </label>
-            <input
-              id="week-selector"
-              type="date"
-              value={selectedWeek}
-              onChange={(e) => setSelectedWeek(e.target.value)}
-              className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            />
-          </div>
+
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
@@ -137,7 +87,7 @@ export const BenchedPlayersView: React.FC<BenchedPlayersViewProps> = ({
             </div>
           ) : benchedPlayers.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-slate-400">No benched players found for this week.</p>
+              <p className="text-slate-400">No team members found.</p>
             </div>
           ) : (
             <div className="overflow-y-auto max-h-[60vh]">
@@ -147,32 +97,17 @@ export const BenchedPlayersView: React.FC<BenchedPlayersViewProps> = ({
                     key={player.id}
                     className="bg-slate-800 border border-slate-600 rounded-lg p-4"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-white">
-                          {player.toon_username}
-                        </span>
-                        <span className={`text-sm ${getClassColor(player.toon_class)}`}>
-                          {player.toon_class}
-                        </span>
-                        <span className="text-sm text-slate-400">
-                          {player.toon_role}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-slate-400">
-                          {formatDate(player.raid_scheduled_at)}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {player.raid_scenario_name} ({player.raid_scenario_difficulty} {player.raid_scenario_size})
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-white">
+                        {player.username}
+                      </span>
+                      <span className={`text-sm ${getClassColor(player.class_)}`}>
+                        {player.class_}
+                      </span>
+                      <span className="text-sm text-slate-400">
+                        {player.role}
+                      </span>
                     </div>
-                    {player.benched_note && (
-                      <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-400">
-                        <strong>Note:</strong> {player.benched_note}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -181,10 +116,7 @@ export const BenchedPlayersView: React.FC<BenchedPlayersViewProps> = ({
 
           <div className="mt-6 text-sm text-slate-400">
             <p>
-              <strong>Week Definition:</strong> A week for benched players is defined as Tuesday morning at 9 AM PST until the following Tuesday morning at 9 AM PST.
-            </p>
-            <p className="mt-1">
-              <strong>Current Week:</strong> {selectedWeek ? formatDate(selectedWeek) : 'Loading...'}
+              <strong>Note:</strong> This shows all team members. In the future, this will show only players who are not assigned to current raids.
             </p>
           </div>
         </div>
