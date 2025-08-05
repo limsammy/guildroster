@@ -130,12 +130,12 @@ export default function Raids() {
     }
   };
 
-  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string; updated_attendance?: any[] }) => {
+  const handleAddRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string; scheduled_at: string; updated_attendance?: any[] }) => {
     setFormLoading(true);
     setFormError(null);
     try {
       await RaidService.createRaid({
-        scheduled_at: new Date().toISOString(), // Placeholder - backend will extract from WarcraftLogs
+        scheduled_at: values.scheduled_at,
         team_id: values.team_id,
         scenario_name: values.scenario_name,
         scenario_difficulty: values.scenario_difficulty,
@@ -152,7 +152,7 @@ export default function Raids() {
     }
   };
 
-  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }) => {
+  const handleEditRaid = async (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string; scheduled_at: string }) => {
     if (!editingRaid) return;
     setFormLoading(true);
     setFormError(null);
@@ -162,6 +162,7 @@ export default function Raids() {
         scenario_name: values.scenario_name,
         scenario_difficulty: values.scenario_difficulty,
         scenario_size: values.scenario_size,
+        scheduled_at: values.scheduled_at,
         warcraftlogs_url: values.warcraftlogs_url || undefined,
       });
       setEditingRaid(null);
@@ -414,6 +415,7 @@ export default function Raids() {
                 scenario_name: editingRaid.scenario_name,
                 scenario_difficulty: editingRaid.scenario_difficulty,
                 scenario_size: editingRaid.scenario_size,
+                scheduled_at: editingRaid.scheduled_at.slice(0, 16), // Convert ISO string to datetime-local format
                 warcraftlogs_url: editingRaid.warcraftlogs_url || '',
               } : {}}
             />

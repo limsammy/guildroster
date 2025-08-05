@@ -11,9 +11,9 @@ interface RaidFormProps {
   scenarios: Scenario[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }) => void;
+  onSubmit: (values: { warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string; scheduled_at: string }) => void;
   onCancel: () => void;
-  initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string }>;
+  initialValues?: Partial<{ warcraftlogs_url: string; team_id: number; scenario_name: string; scenario_difficulty: string; scenario_size: string; scheduled_at: string }>;
   isEditing?: boolean;
 }
 
@@ -34,6 +34,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [scenarioName, setScenarioName] = useState(initialValues.scenario_name || '');
   const [scenarioDifficulty, setScenarioDifficulty] = useState(initialValues.scenario_difficulty || '');
   const [scenarioSize, setScenarioSize] = useState(initialValues.scenario_size || '');
+  const [scheduledAt, setScheduledAt] = useState(initialValues.scheduled_at || new Date().toISOString().slice(0, 16));
   const [showErrors, setShowErrors] = useState(false);
   
   // WarcraftLogs processing state
@@ -86,7 +87,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setShowErrors(true);
-    if (!teamId || !scenarioName || !scenarioDifficulty || !scenarioSize) return;
+    if (!teamId || !scenarioName || !scenarioDifficulty || !scenarioSize || !scheduledAt) return;
 
     // If no WarcraftLogs URL, proceed with normal form submission
     if (!warcraftlogsUrl.trim()) {
@@ -96,6 +97,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         scenario_name: scenarioName,
         scenario_difficulty: scenarioDifficulty,
         scenario_size: scenarioSize,
+        scheduled_at: scheduledAt,
       });
       return;
     }
@@ -151,6 +153,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
         scenario_name: scenarioName,
         scenario_difficulty: scenarioDifficulty,
         scenario_size: scenarioSize,
+        scheduled_at: scheduledAt,
         updated_attendance: updatedResult?.matched_participants || processingResult.matched_participants,
       });
     } catch (err) {
@@ -315,6 +318,17 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             ))}
           </select>
         </div>
+        <div className="mb-4">
+          <label htmlFor="raid-scheduled-at" className="block text-sm font-medium text-slate-300 mb-2">Raid Date & Time</label>
+          <input
+            id="raid-scheduled-at"
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={e => setScheduledAt(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={loading}
+          />
+        </div>
         <div className="mb-6">
           <label htmlFor="raid-scenario" className="block text-sm font-medium text-slate-300 mb-2">Scenario Variation</label>
           <select
@@ -347,7 +361,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           <Button 
             type="submit" 
             variant="primary" 
-            disabled={loading || !teamId || !scenarioName || !scenarioDifficulty || !scenarioSize || noTeams || noScenarios} 
+            disabled={loading || !teamId || !scenarioName || !scenarioDifficulty || !scenarioSize || !scheduledAt || noTeams || noScenarios} 
             data-testid="raid-form-submit"
             className="w-full sm:w-auto"
           >
