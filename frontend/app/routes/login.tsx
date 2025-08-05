@@ -3,6 +3,7 @@ import { Button, Card, Container } from "../components/ui";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { AuthService } from "../api/auth";
+import { Footer } from "../components/layout/Footer";
 
 export function meta() {
   return [
@@ -233,6 +234,7 @@ export default function Login() {
           </Card>
         )}
       </Container>
+      <Footer />
     </div>
   );
 } 
