@@ -10,6 +10,7 @@ import { ScenarioService } from '../api/scenarios';
 import type { Team } from '../api/types';
 import type { Scenario } from '../api/types';
 import { exportJson } from '../utils/exportJson';
+import { Footer } from '../components/layout/Footer';
 
 export function meta() {
   return [
@@ -419,6 +420,7 @@ export default function Raids() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 } 

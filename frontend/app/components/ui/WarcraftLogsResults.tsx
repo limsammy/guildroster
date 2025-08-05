@@ -110,6 +110,8 @@ export const WarcraftLogsResults: React.FC<WarcraftLogsResultsProps> = ({
             Scroll down to add any participants from the report who aren't recognized as existing characters. If a name doesn't match but should, you can link it to an existing character.
           </span>
         </div>
+        
+
         <h2 className="text-xl font-bold text-white mb-4">
           WarcraftLogs Report Analysis
         </h2>

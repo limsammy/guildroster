@@ -6,6 +6,7 @@ import { useGuild } from '../contexts/GuildContext';
 import { GuildService } from '../api/guilds';
 import type { Guild } from '../api/types';
 import { exportJson } from '../utils/exportJson';
+import { Footer } from '../components/layout/Footer';
 
 export function meta() {
   return [
@@ -284,6 +285,7 @@ export default function Guilds() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 } 

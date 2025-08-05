@@ -100,8 +100,29 @@ class WarcraftLogsAPI:
 
     def get_report_participants(self, report_code: str) -> Optional[List[Dict]]:
         """
-        Fetch all participants/characters from a WarcraftLogs report using rankedCharacters.
+        Fetch all participants/characters from a WarcraftLogs report.
+        First tries rankedCharacters, falls back to masterData if rankedCharacters is None.
         Converts classID to class names using WarcraftLogs class ID mappings.
+        """
+        # First attempt: try rankedCharacters
+        participants = self._get_participants_ranked_characters(report_code)
+        used_fallback = False
+        
+        # If rankedCharacters failed or returned None, try masterData
+        if not participants:
+            participants = self._get_participants_master_data(report_code)
+            used_fallback = True
+        
+        # Add metadata about which method was used
+        if participants:
+            for participant in participants:
+                participant["_used_fallback_method"] = used_fallback
+        
+        return participants
+
+    def _get_participants_ranked_characters(self, report_code: str) -> Optional[List[Dict]]:
+        """
+        Fetch participants using rankedCharacters query.
         """
         query = f"""
         query {{
@@ -129,7 +150,11 @@ class WarcraftLogsAPI:
         if not report_data:
             return None
 
-        ranked_characters = report_data.get("rankedCharacters", [])
+        ranked_characters = report_data.get("rankedCharacters")
+        
+        # Check if rankedCharacters is None or empty
+        if not ranked_characters:
+            return None
 
         # Convert classID to class name for better usability
         # WarcraftLogs class ID mappings (these are the actual IDs used by WarcraftLogs)
@@ -161,6 +186,66 @@ class WarcraftLogsAPI:
                 "role": "DPS",  # Default role
             }
             participants.append(participant)
+
+        return participants
+
+    def _get_participants_master_data(self, report_code: str) -> Optional[List[Dict]]:
+        """
+        Fetch participants using masterData query as fallback.
+        This is used when rankedCharacters returns None.
+        """
+        query = f"""
+        query {{
+            reportData {{
+                report(code: "{report_code}") {{
+                    title
+                    startTime
+                    endTime
+                    masterData(translate: true) {{
+                        actors(type: "Player") {{
+                            id
+                            gameID
+                            server
+                            subType
+                            name
+                        }}
+                    }}
+                }}
+            }}
+        }}
+        """
+
+        result = self._make_api_request(query)
+        if not result or "data" not in result:
+            return None
+
+        report_data = result["data"]["reportData"]["report"]
+        if not report_data:
+            return None
+
+        master_data = report_data.get("masterData")
+        if not master_data:
+            return None
+
+        actors = master_data.get("actors", [])
+        if not actors:
+            return None
+
+        participants = []
+        for actor in actors:
+            # Include all actors with a subType (which are player characters)
+            # subType contains the character class, not "Player"
+            sub_type = actor.get("subType")
+            if sub_type and sub_type != "Unknown":
+                participant = {
+                    "id": actor.get("id"),
+                    "canonicalID": actor.get("gameID"),
+                    "name": actor.get("name"),
+                    "class": sub_type,  # subType contains the class name
+                    "classID": None,
+                    "role": "DPS",  # Default role
+                }
+                participants.append(participant)
 
         return participants
 
@@ -425,7 +510,7 @@ def process_warcraftlogs_raid(
         if not participants:
             return {
                 "success": False,
-                "error": "No participants found in WarcraftLogs report",
+                "error": "No participants found in WarcraftLogs report. This may be due to the report being private, having restricted access, or using an unsupported format. Please check that the report is public and accessible.",
             }
 
         # Match participants to team toons
@@ -445,6 +530,9 @@ def process_warcraftlogs_raid(
             }
             attendance_records.append(attendance_record)
 
+        # Check if any participant used the fallback method
+        used_fallback = any(participant.get("_used_fallback_method", False) for participant in participants)
+        
         return {
             "success": True,
             "report_metadata": report_metadata,
@@ -452,6 +540,7 @@ def process_warcraftlogs_raid(
             "matched_participants": matched_participants,
             "unknown_participants": unknown_participants,
             "attendance_records": attendance_records,
+            "used_fallback_method": used_fallback,
             "error": None,
         }
 

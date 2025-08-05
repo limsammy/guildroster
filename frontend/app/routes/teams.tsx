@@ -6,6 +6,7 @@ import { TeamService } from '../api/teams';
 import { GuildService } from '../api/guilds';
 import type { Team, Guild } from '../api/types';
 import { exportJson } from '../utils/exportJson';
+import { Footer } from '../components/layout/Footer';
 
 export function meta() {
   return [
@@ -356,6 +357,7 @@ export default function Teams() {
           onClose={handleCloseBenchedPlayers}
         />
       )}
+      <Footer />
     </div>
   );
 } 

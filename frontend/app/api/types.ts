@@ -238,6 +238,7 @@ export interface WarcraftLogsProcessingResult {
     role: string;
     is_main: boolean;
   }>;
+  used_fallback_method?: boolean;
   error?: string;
 }
 

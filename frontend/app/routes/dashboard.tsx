@@ -10,6 +10,7 @@ import { RaidService } from "../api/raids";
 import { ScenarioService } from "../api/scenarios";
 import type { Guild, Team, Toon, Raid, Scenario } from "../api/types";
 import { Navigation } from "../components/layout/Navigation";
+import { Footer } from "../components/layout/Footer";
 
 export function meta() {
   return [
@@ -366,6 +367,7 @@ export default function Dashboard() {
           </div>
         </div>
       </Container>
+      <Footer />
     </div>
   );
 } 
