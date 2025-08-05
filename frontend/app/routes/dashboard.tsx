@@ -101,13 +101,8 @@ export default function Dashboard() {
   const totalRaids = filteredRaids.length;
   const activeScenarios = scenarios.filter(s => s.is_active).length;
 
-  // Get recent raids (last 7 days, filtered by selected guild if applicable)
-  const now = new Date();
-  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const recentRaids = filteredRaids.filter(raid => {
-    const raidDate = new Date(raid.scheduled_at);
-    return raidDate >= lastWeek && raidDate <= now;
-  }).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+  // Get all raids (filtered by selected guild if applicable)
+  const recentRaids = filteredRaids.sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
   // Group teams by guild (filtered by selected guild if applicable)
   const teamsByGuild = filteredTeams.reduce((acc, team) => {
@@ -230,7 +225,7 @@ export default function Dashboard() {
               {recentRaids.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">📅</div>
-                  <p className="text-slate-300">No recent raids scheduled</p>
+                  <p className="text-slate-300">No raids scheduled</p>
                 </div>
               ) : (
                 <div className="space-y-4">
