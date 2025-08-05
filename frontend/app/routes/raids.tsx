@@ -399,8 +399,8 @@ export default function Raids() {
 
       {/* Add/Edit Form Modal */}
       {(showAddForm || editingRaid) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="w-full max-w-md mx-auto">
             <RaidForm
               teams={teams}
               scenarios={scenarios}

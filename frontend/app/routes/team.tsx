@@ -312,7 +312,7 @@ export default function TeamView() {
 
           {/* Add Character Modal */}
           {showToonForm && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
               <div className="w-full max-w-md">
                 <ToonForm
                   mode="add"
@@ -329,7 +329,7 @@ export default function TeamView() {
 
           {/* Edit Character Modal */}
           {editingToon && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
               <div className="w-full max-w-md">
                 <ToonForm
                   mode="edit"

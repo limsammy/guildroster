@@ -203,7 +203,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   // Show processing step
   if (currentStep === 'processing') {
     return (
-      <Card variant="elevated" className="max-w-md mx-auto p-6">
+      <Card variant="elevated" className="max-w-md mx-auto p-3 sm:p-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
           <h3 className="text-lg font-semibold text-white mb-2">Processing WarcraftLogs Report</h3>
@@ -231,7 +231,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             </div>
           </div>
         )}
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
           <div className="w-full max-w-[1200px] flex justify-center items-center">
             <WarcraftLogsResults
               result={processingResult}
@@ -243,7 +243,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           </div>
         </div>
         {showToonForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
             <div className="w-full max-w-md">
               <ToonForm
                 mode="add"
@@ -263,7 +263,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
 
   // Show main form
   return (
-    <Card variant="elevated" className="max-w-md mx-auto p-6">
+    <Card variant="elevated" className="max-w-md mx-auto p-3 sm:p-6">
       <form onSubmit={handleSubmit}>
         <h2 className="text-xl font-bold text-white mb-4">{isEditing ? 'Edit Raid' : 'Add Raid'}</h2>
         {error && (
@@ -340,8 +340,8 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             <div className="text-slate-400 text-xs mt-1">Loading scenario variations...</div>
           )}
         </div>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button 
@@ -349,6 +349,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             variant="primary" 
             disabled={loading || !teamId || !scenarioName || !scenarioDifficulty || !scenarioSize || noTeams || noScenarios} 
             data-testid="raid-form-submit"
+            className="w-full sm:w-auto"
           >
             {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Raid' : 'Add Raid')}
           </Button>

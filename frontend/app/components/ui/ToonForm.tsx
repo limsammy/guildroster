@@ -61,7 +61,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
   const roleError = showErrors && !role ? 'Role is required' : '';
 
   return (
-    <Card variant="elevated" className="max-w-md mx-auto p-6">
+    <Card variant="elevated" className="max-w-md mx-auto p-3 sm:p-6">
       <form onSubmit={handleSubmit}>
         <h2 className="text-xl font-bold text-white mb-4">
           {mode === 'add' ? 'Add Toon' : 'Edit Toon'}
@@ -147,8 +147,8 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             })}
           </div>
         </div>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button 
@@ -156,6 +156,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             variant="primary" 
             disabled={loading || !username.trim() || !class_ || !role} 
             data-testid="toon-form-submit"
+            className="w-full sm:w-auto"
           >
             {loading ? (mode === 'add' ? 'Adding...' : 'Saving...') : (mode === 'add' ? 'Add Toon' : 'Save Changes')}
           </Button>
