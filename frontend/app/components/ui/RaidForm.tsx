@@ -52,6 +52,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
   const [toonFormInitialValues, setToonFormInitialValues] = useState<any>(null);
   const [allTeams, setAllTeams] = useState<Team[]>(teams);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [flashMessage, setFlashMessage] = useState<string | null>(null);
 
   const noTeams = teams.length === 0;
   const noScenarios = scenarios.length === 0;
@@ -113,6 +114,13 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     try {
       const result = await RaidService.processWarcraftLogs(warcraftlogsUrl.trim(), Number(teamId));
       setProcessingResult(result);
+      
+      // Show flash message if fallback method was used
+      if (result.used_fallback_method) {
+        setFlashMessage('⚠️ Using alternative data source - some character information may be limited');
+        setTimeout(() => setFlashMessage(null), 5000);
+      }
+      
       setCurrentStep('results');
     } catch (err: any) {
       // Handle different types of error responses
@@ -213,6 +221,13 @@ export const RaidForm: React.FC<RaidFormProps> = ({
           <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50">
             <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
               {successMessage}
+            </div>
+          </div>
+        )}
+        {flashMessage && (
+          <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-amber-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+              {flashMessage}
             </div>
           </div>
         )}
