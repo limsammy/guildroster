@@ -8,6 +8,7 @@ import { TeamService } from '../api/teams';
 import { ToonService } from '../api/toons';
 import { GuildService } from '../api/guilds';
 import { ScenarioService } from '../api/scenarios';
+import { AttendanceService } from '../api/attendance';
 
 export function meta() {
   return [
@@ -21,6 +22,8 @@ export default function Settings() {
 
   // Export section state
   const [selectedResources, setSelectedResources] = React.useState<string[]>([]);
+  const [exportEnabled, setExportEnabled] = React.useState(false);
+  const [loadingExportStatus, setLoadingExportStatus] = React.useState(true);
   const allResources = [
     { key: 'raids', label: 'Raids' },
     { key: 'teams', label: 'Teams' },
@@ -50,6 +53,23 @@ export default function Settings() {
     };
     await exportResourcesAsZip(resourceFetchers, selectedResources);
   };
+
+  // Check export status on component mount
+  React.useEffect(() => {
+    const checkExportStatus = async () => {
+      try {
+        const enabled = await AttendanceService.isExportEnabled();
+        setExportEnabled(enabled);
+      } catch (error) {
+        console.error('Failed to check export status:', error);
+        setExportEnabled(false);
+      } finally {
+        setLoadingExportStatus(false);
+      }
+    };
+    
+    checkExportStatus();
+  }, []);
 
   // Only show settings for superusers
   if (!user?.is_superuser) {
@@ -222,6 +242,42 @@ export default function Settings() {
               >
                 Export Selected
               </Button>
+            </div>
+          </Card>
+
+          {/* Feature Flags Section */}
+          <Card variant="elevated" className="p-6 mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Feature Flags</h2>
+              <p className="text-slate-300 mb-4">Enable or disable specific features in the application.</p>
+              
+              <div className="space-y-4">
+                {/* Attendance Export Toggle */}
+                <div className="bg-slate-800/50 rounded-lg border border-slate-600/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-white mb-1">Attendance Export</h3>
+                      <p className="text-slate-300 text-sm">
+                        Allow users to export attendance reports as PNG images
+                      </p>
+                    </div>
+                    <div className="flex items-center">
+                      {loadingExportStatus ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-500"></div>
+                      ) : (
+                        <div className="flex items-center">
+                          <span className={`text-sm font-medium mr-3 ${exportEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                            {exportEnabled ? 'Enabled' : 'Disabled'}
+                          </span>
+                          <div className="text-slate-400 text-xs">
+                            Set via ENABLE_ATTENDANCE_EXPORT environment variable
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
 

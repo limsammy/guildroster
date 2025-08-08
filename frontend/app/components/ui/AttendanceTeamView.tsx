@@ -24,6 +24,22 @@ export function AttendanceTeamView({ className = '' }: AttendanceTeamViewProps) 
   const [exportPeriod, setExportPeriod] = useState<'current' | 'all' | 'custom'>('current');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [exportEnabled, setExportEnabled] = useState(false);
+
+  // Check if export is enabled on component mount
+  useEffect(() => {
+    const checkExportStatus = async () => {
+      try {
+        const enabled = await AttendanceService.isExportEnabled();
+        setExportEnabled(enabled);
+      } catch (error) {
+        console.error('Failed to check export status:', error);
+        setExportEnabled(false);
+      }
+    };
+    
+    checkExportStatus();
+  }, []);
 
   // Reset team selection when guild changes
   useEffect(() => {
@@ -288,22 +304,24 @@ export function AttendanceTeamView({ className = '' }: AttendanceTeamViewProps) 
               </button>
             )}
             
-            <button
-              onClick={handleExportAllTeams}
-              disabled={exportLoading}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-              {exportLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  📦 Export All Teams (ZIP)
-                </>
-              )}
-            </button>
+            {exportEnabled && (
+              <button
+                onClick={handleExportAllTeams}
+                disabled={exportLoading}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
+              >
+                {exportLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    📦 Export All Teams (ZIP)
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </Card>
       )}

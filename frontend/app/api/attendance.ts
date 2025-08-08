@@ -139,6 +139,17 @@ export class AttendanceService {
     return response.data;
   }
 
+  // Check if attendance export is enabled
+  static async isExportEnabled(): Promise<boolean> {
+    try {
+      const response = await apiClient.get<{ export_enabled: boolean }>('/attendance/export/status');
+      return response.data.export_enabled;
+    } catch (error) {
+      console.error('Failed to check export status:', error);
+      return false; // Default to disabled if check fails
+    }
+  }
+
   // Export team attendance as image
   static async exportTeamImage(
     teamId: number,

@@ -58,7 +58,11 @@ class Settings(BaseSettings):
                 if hasattr(self, key):
                     # Handle boolean values from .env file
                     if isinstance(getattr(self, key), bool):
-                        object.__setattr__(self, key, value.lower() in ('true', '1', 'yes', 'on'))
+                        object.__setattr__(
+                            self,
+                            key,
+                            value.lower() in ("true", "1", "yes", "on"),
+                        )
                     else:
                         object.__setattr__(self, key, value)
         except FileNotFoundError:

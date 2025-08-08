@@ -32,6 +32,7 @@ from app.utils.image_generator import (
     AttendanceImageGenerator,
     get_current_period,
 )
+from app.config import settings
 
 # Debug import
 from app.utils.logger import get_logger
@@ -54,6 +55,15 @@ def debug_attendance_router():
     return {
         "message": "Attendance router is working",
         "routes": ["/export/team/{team_id}/image", "/export/all-teams/image"],
+        "export_enabled": settings.ENABLE_ATTENDANCE_EXPORT,
+    }
+
+
+@router.get("/export/status")
+def get_export_status():
+    """Get the status of attendance export functionality."""
+    return {
+        "export_enabled": settings.ENABLE_ATTENDANCE_EXPORT,
     }
 
 
@@ -1075,6 +1085,13 @@ def export_team_attendance_image(
     - "all": All available raids
     - "custom": Use start_date and end_date parameters
     """
+    # Check if attendance export is enabled
+    if not settings.ENABLE_ATTENDANCE_EXPORT:
+        raise HTTPException(
+            status_code=403,
+            detail="Attendance export functionality is disabled",
+        )
+
     logger.info(
         f"Export team image called: team_id={team_id}, period={period}, raid_count={raid_count}"
     )
@@ -1307,6 +1324,12 @@ def export_all_teams_attendance_images(
     - "all": All available raids
     - "custom": Use start_date and end_date parameters
     """
+    # Check if attendance export is enabled
+    if not settings.ENABLE_ATTENDANCE_EXPORT:
+        raise HTTPException(
+            status_code=403,
+            detail="Attendance export functionality is disabled",
+        )
     # Validate raid_count
     if raid_count < 1 or raid_count > 50:
         raise HTTPException(
