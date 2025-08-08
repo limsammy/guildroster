@@ -138,4 +138,69 @@ export class AttendanceService {
     const response = await apiClient.get<TeamViewData>(`/attendance/team-view/${teamId}?${params.toString()}`);
     return response.data;
   }
+
+  // Export team attendance as image
+  static async exportTeamImage(
+    teamId: number,
+    period: 'current' | 'all' | 'custom' = 'current',
+    startDate?: string,
+    endDate?: string,
+    raidCount: number = 20
+  ): Promise<Blob> {
+    const params = new URLSearchParams({
+      period,
+      raid_count: raidCount.toString()
+    });
+    
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+    
+    const url = `/attendance/export/team/${teamId}/image?${params.toString()}`;
+    console.log('Export team image URL:', url);
+    console.log('Full URL:', `${apiClient.defaults.baseURL}${url}`);
+    
+    try {
+      const response = await apiClient.get(url, {
+        responseType: 'blob'
+      });
+      console.log('Export team image response:', response.status, response.statusText);
+      return response.data;
+    } catch (error) {
+      console.error('Export team image error:', error);
+      throw error;
+    }
+  }
+
+  // Export all teams attendance as ZIP
+  static async exportAllTeamsImages(
+    guildId?: number,
+    period: 'current' | 'all' | 'custom' = 'current',
+    startDate?: string,
+    endDate?: string,
+    raidCount: number = 20
+  ): Promise<Blob> {
+    const params = new URLSearchParams({
+      period,
+      raid_count: raidCount.toString()
+    });
+    
+    if (guildId) {
+      params.append('guild_id', guildId.toString());
+    }
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+    
+    const response = await apiClient.get(`/attendance/export/all-teams/image?${params.toString()}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
 } 

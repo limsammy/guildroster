@@ -20,6 +20,10 @@ export function AttendanceTeamView({ className = '' }: AttendanceTeamViewProps) 
   const [data, setData] = useState<TeamViewData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportPeriod, setExportPeriod] = useState<'current' | 'all' | 'custom'>('current');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   // Reset team selection when guild changes
   useEffect(() => {
@@ -65,6 +69,90 @@ export function AttendanceTeamView({ className = '' }: AttendanceTeamViewProps) 
 
   const handleRaidCountChange = (count: number) => {
     setRaidCount(count);
+  };
+
+  const handleExportTeam = async () => {
+    if (!selectedTeamId) return;
+
+    try {
+      setExportLoading(true);
+      
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+      
+      if (exportPeriod === 'custom') {
+        if (!customStartDate || !customEndDate) {
+          alert('Please select both start and end dates for custom period');
+          return;
+        }
+        startDate = customStartDate;
+        endDate = customEndDate;
+      }
+      
+      const blob = await AttendanceService.exportTeamImage(
+        selectedTeamId,
+        exportPeriod,
+        startDate,
+        endDate,
+        20 // Use more raids for export
+      );
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `team_attendance_${selectedTeamId}_${new Date().toISOString().split('T')[0]}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (err: any) {
+      alert(`Export failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleExportAllTeams = async () => {
+    try {
+      setExportLoading(true);
+      
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+      
+      if (exportPeriod === 'custom') {
+        if (!customStartDate || !customEndDate) {
+          alert('Please select both start and end dates for custom period');
+          return;
+        }
+        startDate = customStartDate;
+        endDate = customEndDate;
+      }
+      
+      const blob = await AttendanceService.exportAllTeamsImages(
+        selectedGuildId || undefined,
+        exportPeriod,
+        startDate,
+        endDate,
+        20 // Use more raids for export
+      );
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `all_teams_attendance_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (err: any) {
+      alert(`Export failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   return (
@@ -123,6 +211,102 @@ export function AttendanceTeamView({ className = '' }: AttendanceTeamViewProps) 
           </div>
         </div>
       </Card>
+
+      {/* Export Controls */}
+      {(selectedTeamId || selectedGuildId) && (
+        <Card variant="elevated" className="p-6 mb-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-white mb-2">Export Reports</h3>
+            <p className="text-sm text-slate-400">
+              Generate attendance report images for sharing in Discord
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Export Period */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Export Period
+              </label>
+              <select
+                value={exportPeriod}
+                onChange={(e) => setExportPeriod(e.target.value as 'current' | 'all' | 'custom')}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="current">Current Week</option>
+                <option value="all">All Time</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            
+            {/* Custom Date Range */}
+            {exportPeriod === 'custom' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          
+          <div className="flex gap-3">
+            {selectedTeamId && (
+              <button
+                onClick={handleExportTeam}
+                disabled={exportLoading}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
+              >
+                {exportLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    📊 Export Team Report
+                  </>
+                )}
+              </button>
+            )}
+            
+            <button
+              onClick={handleExportAllTeams}
+              disabled={exportLoading}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
+            >
+              {exportLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  📦 Export All Teams (ZIP)
+                </>
+              )}
+            </button>
+          </div>
+        </Card>
+      )}
 
       {/* Loading State */}
       {loading && (

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -28,8 +28,33 @@ from app.models.attendance import AttendanceStatus
 from app.models.token import Token
 from app.utils.auth import require_superuser, require_user
 from app.models.user import User
+from app.utils.image_generator import (
+    AttendanceImageGenerator,
+    get_current_period,
+)
+
+# Debug import
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.info("Attendance router loaded - checking imports...")
+try:
+    from PIL import Image, ImageDraw, ImageFont
+
+    logger.info("PIL imports successful")
+except ImportError as e:
+    logger.error(f"PIL import failed: {e}")
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
+
+
+@router.get("/debug")
+def debug_attendance_router():
+    """Debug endpoint to test if attendance router is working."""
+    return {
+        "message": "Attendance router is working",
+        "routes": ["/export/team/{team_id}/image", "/export/all-teams/image"],
+    }
 
 
 def get_attendance_or_404(db: Session, attendance_id: int) -> Attendance:
@@ -1026,3 +1051,463 @@ def get_benched_players_for_week(
         )
 
     return benched_players
+
+
+@router.get(
+    "/export/team/{team_id}/image",
+    dependencies=[Depends(require_user)],
+)
+def export_team_attendance_image(
+    team_id: int,
+    period: str = "current",  # "current", "all", or "custom"
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    raid_count: int = 20,  # Max raids to include
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    """
+    Export team attendance as a PNG image.
+    Any valid token required.
+
+    Period options:
+    - "current": From previous Tuesday to now (default)
+    - "all": All available raids
+    - "custom": Use start_date and end_date parameters
+    """
+    logger.info(
+        f"Export team image called: team_id={team_id}, period={period}, raid_count={raid_count}"
+    )
+
+    # Validate raid_count
+    if raid_count < 1 or raid_count > 50:
+        raise HTTPException(
+            status_code=400, detail="raid_count must be between 1 and 50"
+        )
+
+    # Get team and verify it exists
+    team = get_team_or_404(db, team_id)
+    logger.info(f"Team found: {team.name}")
+
+    # Get guild
+    guild = db.query(Guild).filter(Guild.id == team.guild_id).first()
+    if not guild:
+        raise HTTPException(status_code=404, detail="Guild not found")
+    logger.info(f"Guild found: {guild.name}")
+
+    # Determine date range
+    if period == "current":
+        start_date, end_date = get_current_period()
+        logger.info(f"Current period: {start_date} to {end_date}")
+    elif period == "all":
+        start_date = None
+        end_date = None
+        logger.info("Using all raids")
+    elif period == "custom":
+        if not start_date or not end_date:
+            raise HTTPException(
+                status_code=400,
+                detail="start_date and end_date are required for custom period",
+            )
+        logger.info(f"Custom period: {start_date} to {end_date}")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="period must be 'current', 'all', or 'custom'",
+        )
+
+    # Get raids for the team
+    raid_query = db.query(Raid).filter(Raid.team_id == team_id)
+
+    # Debug: Show all raids for this team
+    all_raids = db.query(Raid).filter(Raid.team_id == team_id).all()
+    logger.info(f"All raids for team {team_id}: {len(all_raids)} total")
+    for raid in all_raids[:5]:  # Show first 5 raids
+        logger.info(
+            f"  Raid {raid.id}: {raid.scheduled_at} - {raid.scenario_name}"
+        )
+
+    if start_date and end_date:
+        raid_query = raid_query.filter(
+            Raid.scheduled_at >= start_date, Raid.scheduled_at <= end_date
+        )
+
+    raids = (
+        raid_query.order_by(Raid.scheduled_at.desc()).limit(raid_count).all()
+    )
+    logger.info(
+        f"Found {len(raids)} raids for team {team_id} in period {start_date} to {end_date}"
+    )
+
+    if not raids:
+        raise HTTPException(
+            status_code=404,
+            detail="No raids found for the specified team and period",
+        )
+
+    # Get team view data
+    raid_ids = [raid.id for raid in raids]
+
+    # Get all toons that have attendance records for these raids
+    toon_ids = (
+        db.query(Attendance.toon_id)
+        .filter(Attendance.raid_id.in_(raid_ids))
+        .distinct()
+        .all()
+    )
+    toon_ids = [toon_id[0] for toon_id in toon_ids]
+    logger.info(f"Found {len(toon_ids)} toons with attendance records")
+
+    # Get toon details
+    toons = db.query(Toon).filter(Toon.id.in_(toon_ids)).all()
+
+    # Get all attendance records for these raids and toons
+    attendance_records = (
+        db.query(Attendance)
+        .filter(
+            Attendance.raid_id.in_(raid_ids), Attendance.toon_id.in_(toon_ids)
+        )
+        .all()
+    )
+
+    # Build team view data
+    team_view_toons = []
+
+    for toon in toons:
+        # Get attendance records for this toon
+        toon_attendance = [
+            record for record in attendance_records if record.toon_id == toon.id
+        ]
+
+        # Calculate overall attendance percentage (excluding benched)
+        total_raids = len(toon_attendance)
+        present_count = sum(
+            1
+            for record in toon_attendance
+            if record.status == AttendanceStatus.PRESENT
+        )
+        benched_count = sum(
+            1
+            for record in toon_attendance
+            if record.status == AttendanceStatus.BENCHED
+        )
+
+        # Calculate percentage excluding benched from denominator
+        effective_total = total_raids - benched_count
+        attendance_percentage = (
+            (present_count / effective_total * 100)
+            if effective_total > 0
+            else 0.0
+        )
+
+        # Build attendance records for this toon
+        toon_attendance_records = []
+        for raid in raids:
+            record = next(
+                (r for r in toon_attendance if r.raid_id == raid.id), None
+            )
+            if record:
+                # Clean up notes for display
+                notes = record.notes
+                benched_note = record.benched_note
+
+                # Remove "Benched Note:" prefix and "Notes: Not present in warcraftlogs report"
+                if benched_note and benched_note.startswith("Benched Note:"):
+                    benched_note = benched_note[13:].strip()
+                if notes and notes == "Not present in warcraftlogs report":
+                    notes = None
+
+                has_note = bool(notes or benched_note)
+
+                toon_attendance_records.append(
+                    ToonAttendanceRecord(
+                        raid_id=raid.id,
+                        raid_date=raid.scheduled_at,
+                        status=record.status.value,
+                        notes=notes,
+                        benched_note=benched_note,
+                        has_note=has_note,
+                    )
+                )
+
+        team_view_toons.append(
+            TeamViewToon(
+                id=toon.id,
+                username=toon.username,
+                class_name=toon.class_,
+                role=toon.role,
+                overall_attendance_percentage=attendance_percentage,
+                attendance_records=toon_attendance_records,
+            )
+        )
+
+    # Build raid data
+    team_view_raids = []
+    for raid in raids:
+        team_view_raids.append(
+            TeamViewRaid(
+                id=raid.id,
+                scheduled_at=raid.scheduled_at,
+                scenario_name=raid.scenario_name,
+            )
+        )
+
+    team_view_data = TeamViewData(
+        team={"id": team.id, "name": team.name, "guild_id": team.guild_id},
+        toons=team_view_toons,
+        raids=team_view_raids,
+    )
+
+    logger.info(
+        f"Generated team view data with {len(team_view_toons)} toons and {len(team_view_raids)} raids"
+    )
+
+    # Generate image
+    generator = AttendanceImageGenerator()
+    image_bytes = generator.generate_team_report(
+        team_view_data, guild, start_date, end_date
+    )
+
+    logger.info(f"Generated image with {len(image_bytes)} bytes")
+
+    # Create filename
+    team_name = team.name.replace(" ", "_").replace("/", "_")
+    guild_name = guild.name.replace(" ", "_").replace("/", "_")
+    date_str = datetime.now().strftime("%Y%m%d")
+    filename = f"{guild_name}_{team_name}_attendance_{date_str}.png"
+
+    logger.info(f"Returning image with filename: {filename}")
+
+    return Response(
+        content=image_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get(
+    "/export/all-teams/image",
+    dependencies=[Depends(require_user)],
+)
+def export_all_teams_attendance_images(
+    guild_id: Optional[int] = None,
+    period: str = "current",  # "current", "all", or "custom"
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    raid_count: int = 20,  # Max raids to include per team
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    """
+    Export attendance images for all teams as a ZIP file.
+    Any valid token required.
+
+    Period options:
+    - "current": From previous Tuesday to now (default)
+    - "all": All available raids
+    - "custom": Use start_date and end_date parameters
+    """
+    # Validate raid_count
+    if raid_count < 1 or raid_count > 50:
+        raise HTTPException(
+            status_code=400, detail="raid_count must be between 1 and 50"
+        )
+
+    # Get teams
+    team_query = db.query(Team).filter(Team.is_active == True)
+    if guild_id:
+        team_query = team_query.filter(Team.guild_id == guild_id)
+
+    teams = team_query.all()
+
+    if not teams:
+        raise HTTPException(status_code=404, detail="No active teams found")
+
+    # Determine date range
+    if period == "current":
+        start_date, end_date = get_current_period()
+    elif period == "all":
+        start_date = None
+        end_date = None
+    elif period == "custom":
+        if not start_date or not end_date:
+            raise HTTPException(
+                status_code=400,
+                detail="start_date and end_date are required for custom period",
+            )
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="period must be 'current', 'all', or 'custom'",
+        )
+
+    # Generate reports for each team
+    generator = AttendanceImageGenerator()
+    reports_data = []
+
+    for team in teams:
+        try:
+            # Get guild
+            guild = db.query(Guild).filter(Guild.id == team.guild_id).first()
+            if not guild:
+                continue
+
+            # Get raids for the team
+            raid_query = db.query(Raid).filter(Raid.team_id == team.id)
+
+            if start_date and end_date:
+                raid_query = raid_query.filter(
+                    Raid.scheduled_at >= start_date,
+                    Raid.scheduled_at <= end_date,
+                )
+
+            raids = (
+                raid_query.order_by(Raid.scheduled_at.desc())
+                .limit(raid_count)
+                .all()
+            )
+
+            if not raids:
+                continue
+
+            # Get team view data (similar logic to single team export)
+            raid_ids = [raid.id for raid in raids]
+
+            toon_ids = (
+                db.query(Attendance.toon_id)
+                .filter(Attendance.raid_id.in_(raid_ids))
+                .distinct()
+                .all()
+            )
+            toon_ids = [toon_id[0] for toon_id in toon_ids]
+
+            toons = db.query(Toon).filter(Toon.id.in_(toon_ids)).all()
+
+            attendance_records = (
+                db.query(Attendance)
+                .filter(
+                    Attendance.raid_id.in_(raid_ids),
+                    Attendance.toon_id.in_(toon_ids),
+                )
+                .all()
+            )
+
+            team_view_toons = []
+            for toon in toons:
+                toon_attendance = [
+                    record
+                    for record in attendance_records
+                    if record.toon_id == toon.id
+                ]
+
+                total_raids = len(toon_attendance)
+                present_count = sum(
+                    1
+                    for record in toon_attendance
+                    if record.status == AttendanceStatus.PRESENT
+                )
+                benched_count = sum(
+                    1
+                    for record in toon_attendance
+                    if record.status == AttendanceStatus.BENCHED
+                )
+
+                effective_total = total_raids - benched_count
+                attendance_percentage = (
+                    (present_count / effective_total * 100)
+                    if effective_total > 0
+                    else 0.0
+                )
+
+                toon_attendance_records = []
+                for raid in raids:
+                    record = next(
+                        (r for r in toon_attendance if r.raid_id == raid.id),
+                        None,
+                    )
+                    if record:
+                        notes = record.notes
+                        benched_note = record.benched_note
+
+                        if benched_note and benched_note.startswith(
+                            "Benched Note:"
+                        ):
+                            benched_note = benched_note[13:].strip()
+                        if (
+                            notes
+                            and notes == "Not present in warcraftlogs report"
+                        ):
+                            notes = None
+
+                        has_note = bool(notes or benched_note)
+
+                        toon_attendance_records.append(
+                            ToonAttendanceRecord(
+                                raid_id=raid.id,
+                                raid_date=raid.scheduled_at,
+                                status=record.status.value,
+                                notes=notes,
+                                benched_note=benched_note,
+                                has_note=has_note,
+                            )
+                        )
+
+                team_view_toons.append(
+                    TeamViewToon(
+                        id=toon.id,
+                        username=toon.username,
+                        class_name=toon.class_,
+                        role=toon.role,
+                        overall_attendance_percentage=attendance_percentage,
+                        attendance_records=toon_attendance_records,
+                    )
+                )
+
+            team_view_raids = []
+            for raid in raids:
+                team_view_raids.append(
+                    TeamViewRaid(
+                        id=raid.id,
+                        scheduled_at=raid.scheduled_at,
+                        scenario_name=raid.scenario_name,
+                    )
+                )
+
+            team_view_data = TeamViewData(
+                team={
+                    "id": team.id,
+                    "name": team.name,
+                    "guild_id": team.guild_id,
+                },
+                toons=team_view_toons,
+                raids=team_view_raids,
+            )
+
+            reports_data.append((team_view_data, guild, start_date, end_date))
+
+        except Exception as e:
+            # Skip teams that fail to generate
+            continue
+
+    if not reports_data:
+        raise HTTPException(
+            status_code=404, detail="No valid team reports could be generated"
+        )
+
+    # Generate ZIP file
+    zip_bytes = generator.generate_multiple_reports(reports_data)
+
+    # Create filename
+    guild_name = (
+        "All_Guilds"
+        if not guild_id
+        else reports_data[0][1].name.replace(" ", "_").replace("/", "_")
+    )
+    date_str = datetime.now().strftime("%Y%m%d")
+    filename = f"{guild_name}_all_teams_attendance_{date_str}.zip"
+
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
