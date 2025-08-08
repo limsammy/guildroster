@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     APP_DESCRIPTION: str = (
         "GuildRoster is a tool for managing your guild's roster and tracking attendance."
     )
-    VERSION: str = "1.5.6"
+    VERSION: str = "1.6.0"
     ENV: str = "dev"
     SECRET_KEY: str = "supersecret"
 
@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     WARCRAFTLOGS_CLIENT_SECRET: str = ""
     WARCRAFTLOGS_API_URL: str = "https://www.warcraftlogs.com/api/v2/client"
     WARCRAFTLOGS_TOKEN_URL: str = "https://www.warcraftlogs.com/oauth/token"
+
+    # Feature flags
+    ENABLE_ATTENDANCE_EXPORT: bool = True
 
     # CORS settings
     CORS_ORIGINS: str = (
@@ -53,7 +56,11 @@ class Settings(BaseSettings):
             # Override defaults with values from .env file
             for key, value in config.items():
                 if hasattr(self, key):
-                    object.__setattr__(self, key, value)
+                    # Handle boolean values from .env file
+                    if isinstance(getattr(self, key), bool):
+                        object.__setattr__(self, key, value.lower() in ('true', '1', 'yes', 'on'))
+                    else:
+                        object.__setattr__(self, key, value)
         except FileNotFoundError:
             # .env file doesn't exist, use defaults
             pass
