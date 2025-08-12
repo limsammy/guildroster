@@ -106,6 +106,13 @@ export const RaidForm: React.FC<RaidFormProps> = ({
     await processWarcraftLogs();
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+  };
+
   const processWarcraftLogs = async () => {
     if (!warcraftlogsUrl.trim() || !teamId) return;
 
@@ -293,6 +300,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             type="text"
             value={warcraftlogsUrl}
             onChange={e => setWarcraftlogsUrl(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             placeholder="Paste WarcraftLogs report URL here (optional)"
             disabled={loading || noTeams || noScenarios}
@@ -309,6 +317,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             id="raid-team"
             value={teamId}
             onChange={e => setTeamId(e.target.value ? Number(e.target.value) : '')}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading || noTeams}
           >
@@ -325,6 +334,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
             type="datetime-local"
             value={scheduledAt}
             onChange={e => setScheduledAt(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading}
           />
@@ -340,6 +350,7 @@ export const RaidForm: React.FC<RaidFormProps> = ({
               setScenarioDifficulty(difficulty || '');
               setScenarioSize(size || '');
             }}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading || noScenarios || variationsLoading}
           >

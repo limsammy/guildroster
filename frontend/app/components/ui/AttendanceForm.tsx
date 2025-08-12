@@ -46,6 +46,13 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     });
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+  };
+
   const raidError = showErrors && !raidId ? 'Raid is required' : '';
   const toonError = showErrors && !toonId ? 'Toon is required' : '';
 
@@ -151,6 +158,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             placeholder="Add notes about attendance (e.g., 'On time', 'Late', 'No show')"
             disabled={loading}
+            onKeyPress={handleKeyPress}
           />
         </div>
         {status === 'benched' && (
@@ -166,6 +174,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               placeholder="Add note about why player is benched (e.g., 'Available for fill', 'Gear issues')"
               disabled={loading}
+              onKeyPress={handleKeyPress}
             />
           </div>
         )}

@@ -56,6 +56,13 @@ export const ToonForm: React.FC<ToonFormProps> = ({
     });
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+  };
+
   const usernameError = showErrors && !username.trim() ? 'Username is required' : '';
   const classError = showErrors && !class_ ? 'Class is required' : '';
   const roleError = showErrors && !role ? 'Role is required' : '';
@@ -78,6 +85,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             type="text"
             value={username}
             onChange={e => setUsername(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             placeholder="Enter character name"
             disabled={loading}
@@ -90,6 +98,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             id="toon-class"
             value={class_}
             onChange={e => setClass(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading}
           >
@@ -106,6 +115,7 @@ export const ToonForm: React.FC<ToonFormProps> = ({
             id="toon-role"
             value={role}
             onChange={e => setRole(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading}
           >

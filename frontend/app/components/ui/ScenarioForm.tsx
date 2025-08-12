@@ -35,6 +35,13 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
     });
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+  };
+
   const nameError = showErrors && !name.trim() ? 'Name is required' : '';
 
   return (
@@ -57,6 +64,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             placeholder="Enter scenario name (e.g., Molten Core, Mogu'shan Vaults)"
             disabled={loading}

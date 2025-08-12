@@ -35,6 +35,13 @@ export const TeamForm: React.FC<TeamFormProps> = ({
     });
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+  };
+
   const nameError = showErrors && !name.trim() ? 'Name is required' : '';
   const guildError = showErrors && !guildId ? 'Guild is required' : '';
 
@@ -58,6 +65,7 @@ export const TeamForm: React.FC<TeamFormProps> = ({
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             placeholder="Enter team name"
             disabled={loading}
@@ -72,6 +80,7 @@ export const TeamForm: React.FC<TeamFormProps> = ({
             id="team-guild"
             value={guildId}
             onChange={e => setGuildId(e.target.value ? Number(e.target.value) : '')}
+            onKeyPress={handleKeyPress}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             disabled={loading}
           >
