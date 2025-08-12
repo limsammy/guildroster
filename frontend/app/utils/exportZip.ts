@@ -7,7 +7,13 @@ export async function exportResourcesAsZip(resources: { [filename: string]: () =
   await Promise.all(selected.map(async (key) => {
     if (resources[key]) {
       const data = await resources[key]();
-      zip.file(`${key}.json`, JSON.stringify(data, null, 2));
+      // Add identifier to the exported data
+      const exportData = {
+        id: key,
+        exported_at: new Date().toISOString(),
+        data: data
+      };
+      zip.file(`${key}.json`, JSON.stringify(exportData, null, 2));
     }
   }));
 

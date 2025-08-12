@@ -3,6 +3,9 @@ import { Link } from 'react-router';
 import { Button, Card, Container, GuildSwitcher } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { exportResourcesAsZip } from '../utils/exportZip';
+import { exportAllAsJson, copyAllAsJson } from '../utils/exportJson';
+import { importResourcesFromFile, validateImportedData } from '../utils/importZip';
+import { ImportService } from '../api/import';
 import { RaidService } from '../api/raids';
 import { TeamService } from '../api/teams';
 import { ToonService } from '../api/toons';
@@ -24,6 +27,12 @@ export default function Settings() {
   const [selectedResources, setSelectedResources] = React.useState<string[]>([]);
   const [exportEnabled, setExportEnabled] = React.useState(false);
   const [loadingExportStatus, setLoadingExportStatus] = React.useState(true);
+  
+  // Import section state
+  const [importFile, setImportFile] = React.useState<File | null>(null);
+  const [importLoading, setImportLoading] = React.useState(false);
+  const [importResult, setImportResult] = React.useState<{ success: boolean; message: string; errors?: string[] } | null>(null);
+  const [copyResult, setCopyResult] = React.useState<string | null>(null);
   const allResources = [
     { key: 'raids', label: 'Raids' },
     { key: 'teams', label: 'Teams' },
@@ -43,15 +52,92 @@ export default function Settings() {
     setSelectedResources(allSelected ? [] : allKeys);
   };
 
+  const resourceFetchers: { [key: string]: () => Promise<any> } = {
+    raids: RaidService.getRaids,
+    teams: TeamService.getTeams,
+    toons: ToonService.getToons,
+    guilds: GuildService.getGuilds,
+    scenarios: ScenarioService.getScenarios,
+  };
+
   const handleExport = async () => {
-    const resourceFetchers: { [key: string]: () => Promise<any> } = {
-      raids: RaidService.getRaids,
-      teams: TeamService.getTeams,
-      toons: ToonService.getToons,
-      guilds: GuildService.getGuilds,
-      scenarios: ScenarioService.getScenarios,
-    };
     await exportResourcesAsZip(resourceFetchers, selectedResources);
+  };
+
+  const handleExportJson = async () => {
+    await exportAllAsJson(resourceFetchers, selectedResources);
+  };
+
+  const handleCopyJson = async () => {
+    try {
+      const jsonString = await copyAllAsJson(resourceFetchers, selectedResources);
+      setCopyResult('Data copied to clipboard!');
+      setTimeout(() => setCopyResult(null), 3000);
+    } catch (error) {
+      console.error('Failed to copy data:', error);
+      setCopyResult('Failed to copy to clipboard. Please try downloading instead.');
+      setTimeout(() => setCopyResult(null), 3000);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    
+    setImportLoading(true);
+    setImportResult(null);
+    
+    try {
+      // First validate the file structure
+      const validationResult = await importResourcesFromFile(importFile);
+      if (!validationResult.success) {
+        setImportResult(validationResult);
+        return;
+      }
+      
+      if (validationResult.importedData) {
+        const validation = validateImportedData(validationResult.importedData);
+        if (!validation.valid) {
+          setImportResult({
+            success: false,
+            message: 'Validation failed',
+            errors: validation.errors
+          });
+          return;
+        }
+      }
+      
+      // If validation passes, send to backend
+      const apiResult = await ImportService.importData(importFile);
+      
+      // Format the API response for display
+      const errors: string[] = [];
+      Object.entries(apiResult.results).forEach(([type, result]) => {
+        if (result.errors.length > 0) {
+          errors.push(`${type}: ${result.errors.join(', ')}`);
+        }
+      });
+      
+      setImportResult({
+        success: errors.length === 0,
+        message: apiResult.message,
+        errors: errors.length > 0 ? errors : undefined
+      });
+      
+    } catch (error: any) {
+      setImportResult({
+        success: false,
+        message: `Import failed: ${error.response?.data?.detail || error.message}`,
+        errors: [error.response?.data?.detail || error.message]
+      });
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    setImportFile(file || null);
+    setImportResult(null);
   };
 
   // Check export status on component mount
@@ -210,7 +296,7 @@ export default function Settings() {
           <Card variant="elevated" className="p-6 mb-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">Export Data</h2>
-              <p className="text-slate-300 mb-4">Select one or more resources to export as a zip file.</p>
+              <p className="text-slate-300 mb-4">Select one or more resources to export in different formats.</p>
               <div className="mb-4">
                 <label className="flex items-center mb-2 cursor-pointer">
                   <input
@@ -235,13 +321,78 @@ export default function Settings() {
                   ))}
                 </div>
               </div>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="primary"
+                  onClick={handleExport}
+                  disabled={selectedResources.length === 0}
+                >
+                  Export as ZIP
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handleExportJson}
+                  disabled={selectedResources.length === 0}
+                >
+                  Export as JSON
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handleCopyJson}
+                  disabled={selectedResources.length === 0}
+                >
+                  Copy to Clipboard
+                </Button>
+              </div>
+              {copyResult && (
+                <div className={`mt-3 p-3 rounded-lg text-sm ${copyResult.includes('Failed') ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                  {copyResult}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Import Data Section */}
+          <Card variant="elevated" className="p-6 mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Import Data</h2>
+              <p className="text-slate-300 mb-4">Import data from exported ZIP or JSON files. This will add new records to your database.</p>
+              
+              <div className="mb-4">
+                <input
+                  type="file"
+                  accept=".zip,.json"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-500 file:text-white hover:file:bg-amber-600 file:cursor-pointer"
+                />
+                <p className="text-slate-400 text-xs mt-2">
+                  Supported formats: ZIP files with JSON data or single JSON files
+                </p>
+              </div>
+              
               <Button
                 variant="primary"
-                onClick={handleExport}
-                disabled={selectedResources.length === 0}
+                onClick={handleImport}
+                disabled={!importFile || importLoading}
               >
-                Export Selected
+                {importLoading ? 'Importing...' : 'Import Data'}
               </Button>
+              
+              {importResult && (
+                <div className={`mt-4 p-4 rounded-lg ${importResult.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                  <div className="font-medium mb-2">{importResult.message}</div>
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <div className="text-sm">
+                      <div className="font-medium mb-1">Errors:</div>
+                      <ul className="list-disc list-inside space-y-1">
+                        {importResult.errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </Card>
 
