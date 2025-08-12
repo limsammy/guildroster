@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     APP_DESCRIPTION: str = (
         "GuildRoster is a tool for managing your guild's roster and tracking attendance."
     )
-    VERSION: str = "1.8.2"
+    VERSION: str = "1.8.3"
     ENV: str = "dev"
     SECRET_KEY: str = "supersecret"
 
