@@ -15,6 +15,7 @@ from app.utils.auth import require_superuser
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
+logger.info("Token router loaded")
 
 router = APIRouter(
     prefix="/tokens",

@@ -16,6 +16,10 @@ from app.models.token import Token
 from app.utils.auth import require_user, require_superuser
 from app.models.user import User
 from app.utils.request_logger import log_request_context
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.info("Scenario router loaded")
 
 router = APIRouter(prefix="/scenarios", tags=["Scenarios"])
 

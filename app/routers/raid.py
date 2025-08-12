@@ -18,7 +18,11 @@ from app.utils.warcraftlogs import (
     fetch_report_participants,
     process_warcraftlogs_raid,
 )
+from app.utils.logger import get_logger
 from pydantic import BaseModel
+
+logger = get_logger(__name__)
+logger.info("Raid router loaded")
 
 router = APIRouter(prefix="/raids", tags=["Raids"])
 

@@ -10,6 +10,10 @@ from app.schemas.toon import ToonCreate, ToonUpdate, ToonResponse
 from app.models.token import Token
 from app.models.user import User
 from app.utils.auth import require_user, require_superuser
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.info("Toon router loaded")
 
 router = APIRouter(prefix="/toons", tags=["Toons"])
 

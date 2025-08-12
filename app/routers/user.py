@@ -24,6 +24,7 @@ from app.utils.invite import use_invite_code
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
+logger.info("User router loaded")
 
 router = APIRouter(
     prefix="/users",

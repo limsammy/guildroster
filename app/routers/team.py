@@ -10,14 +10,20 @@ from app.models.toon import Toon
 from app.schemas.team import TeamCreate, TeamUpdate, TeamResponse
 from app.models.token import Token
 from app.utils.auth import require_user, require_superuser
+from app.utils.logger import get_logger
 from pydantic import BaseModel
 from typing import List
+
+logger = get_logger(__name__)
+logger.info("Team router loaded")
+
 
 class SimpleBenchedPlayer(BaseModel):
     id: int
     username: str
     class_: str
     role: str
+
 
 router = APIRouter(prefix="/teams", tags=["Teams"])
 
@@ -203,15 +209,12 @@ def get_benched_players(
     Any valid token required.
     """
     team = get_team_or_404(db, team_id)
-    
+
     # Get all toons that belong to this team
     team_toons = (
-        db.query(Toon)
-        .join(Toon.teams)
-        .filter(Team.id == team_id)
-        .all()
+        db.query(Toon).join(Toon.teams).filter(Team.id == team_id).all()
     )
-    
+
     # For now, return all team members as "benched" since we don't have raid assignments yet
     # This is a simplified version - in the future, this could check against actual raid assignments
     benched_players = []
@@ -224,5 +227,5 @@ def get_benched_players(
                 role=toon.role,
             )
         )
-    
+
     return benched_players

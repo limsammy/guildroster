@@ -23,6 +23,7 @@ from app.utils.invite import (
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
+logger.info("Invite router loaded")
 
 router = APIRouter(
     prefix="/invites",

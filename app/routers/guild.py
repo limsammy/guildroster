@@ -8,6 +8,10 @@ from app.models.user import User
 from app.schemas.guild import GuildCreate, GuildUpdate, GuildResponse
 from app.models.token import Token
 from app.utils.auth import require_user, require_superuser
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.info("Guild router loaded")
 
 router = APIRouter(prefix="/guilds", tags=["Guilds"])
 
