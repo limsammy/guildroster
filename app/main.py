@@ -25,10 +25,24 @@ logger.info(f"Postgres user: {settings.DB_USER} password: [REDACTED]")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created (if not already present)")
+    # Check if database schema matches current models
+    try:
+        from sqlalchemy import inspect
+
+        inspector = inspect(engine)
+        existing_tables = set(inspector.get_table_names())
+        expected_tables = set(Base.metadata.tables.keys())
+
+        if expected_tables - existing_tables:
+            logger.warning(
+                "Database schema is out of date - run 'alembic upgrade head'"
+            )
+        else:
+            logger.info("Database schema is up to date")
+    except Exception as e:
+        logger.error(f"Error checking database schema: {e}")
+
     yield
-    # (Optional) Add shutdown logic here
 
 
 def create_app() -> FastAPI:
@@ -72,6 +86,7 @@ def create_app() -> FastAPI:
         scenario,
         attendance,
         invite,
+        import_export,
     )
 
     app.include_router(user.router)
@@ -83,6 +98,7 @@ def create_app() -> FastAPI:
     app.include_router(scenario.router)
     app.include_router(attendance.router)
     app.include_router(invite.router)
+    app.include_router(import_export.router)
 
     @app.get("/")
     def read_root():
