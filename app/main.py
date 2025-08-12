@@ -86,7 +86,7 @@ def create_app() -> FastAPI:
         scenario,
         attendance,
         invite,
-        import_export,
+        data_import,
     )
 
     app.include_router(user.router)
@@ -98,7 +98,7 @@ def create_app() -> FastAPI:
     app.include_router(scenario.router)
     app.include_router(attendance.router)
     app.include_router(invite.router)
-    app.include_router(import_export.router)
+    app.include_router(data_import.router)
 
     @app.get("/")
     def read_root():

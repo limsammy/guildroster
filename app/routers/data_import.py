@@ -22,9 +22,9 @@ from app.schemas.scenario import ScenarioCreate
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
-logger.info("Import/Export router loaded")
+logger.info("Data import router loaded")
 
-router = APIRouter(prefix="/import-export", tags=["Import/Export"])
+router = APIRouter(prefix="/data-import", tags=["Data Import"])
 
 
 @router.post("/import", dependencies=[Depends(require_superuser)])
