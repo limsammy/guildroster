@@ -20,7 +20,7 @@ export class ImportService {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await apiClient.post<ImportResponse>('/import-export/import', formData, {
+    const response = await apiClient.post<ImportResponse>('/data-import/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -38,7 +38,7 @@ export class ImportService {
     supported_formats: string[];
     supported_data_types: string[];
   }> {
-    const response = await apiClient.get('/import-export/export-status');
+    const response = await apiClient.get('/data-import/export-status');
     return response.data;
   }
 }
