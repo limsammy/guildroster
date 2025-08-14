@@ -10,7 +10,7 @@ from app.config import settings
 TEST_DATABASE_URL = settings.SQLALCHEMY_DATABASE_URI
 
 # Create a new engine and session for tests
-engine = create_engine(TEST_DATABASE_URL, echo=True, future=True)
+engine = create_engine(TEST_DATABASE_URL, echo=False, future=True)
 TestingSessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=engine, future=True
 )
