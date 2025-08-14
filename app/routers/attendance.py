@@ -420,6 +420,9 @@ def get_team_attendance_view(
         .limit(raid_count)
         .all()
     )
+    
+    # Reverse the order to show earliest to latest (left to right)
+    recent_raids = list(reversed(recent_raids))
 
     if not recent_raids:
         # Return empty response if no raids found

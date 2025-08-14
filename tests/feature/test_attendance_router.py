@@ -158,7 +158,7 @@ def test_get_team_attendance_view_success(
     
     # Check raids
     assert len(data["raids"]) == 3
-    assert data["raids"][0]["id"] == test_raids[0].id
+    assert data["raids"][0]["id"] == test_raids[2].id  # Oldest raid first (earliest to latest)
     
     # Check toons
     assert len(data["toons"]) == 1
@@ -171,13 +171,14 @@ def test_get_team_attendance_view_success(
     # Check attendance percentage (2 present out of 3 total, so 66.67%)
     assert toon_data["overall_attendance_percentage"] == pytest.approx(66.67, abs=0.01)
     
-    # Check attendance records
+    # Check attendance records (order is now oldest to newest)
     assert len(toon_data["attendance_records"]) == 3
-    assert toon_data["attendance_records"][0]["status"] == "present"
-    assert toon_data["attendance_records"][0]["has_note"] == True
-    assert toon_data["attendance_records"][1]["status"] == "present"
+    assert toon_data["attendance_records"][0]["status"] == "absent"  # Oldest raid (test_raids[2])
+    assert toon_data["attendance_records"][0]["has_note"] == False
+    assert toon_data["attendance_records"][1]["status"] == "present"  # Middle raid (test_raids[1])
     assert toon_data["attendance_records"][1]["has_note"] == False
-    assert toon_data["attendance_records"][2]["status"] == "absent"
+    assert toon_data["attendance_records"][2]["status"] == "present"  # Newest raid (test_raids[0])
+    assert toon_data["attendance_records"][2]["has_note"] == True
 
 
 def test_get_team_attendance_view_with_benched(
@@ -227,8 +228,8 @@ def test_get_team_attendance_view_with_benched(
     toon_data = data["toons"][0]
     assert toon_data["overall_attendance_percentage"] == pytest.approx(50.0, abs=0.01)
     
-    # Check benched record has note
-    benched_record = toon_data["attendance_records"][1]
+    # Check benched record has note (order is now oldest to newest)
+    benched_record = toon_data["attendance_records"][1]  # Middle raid (test_raids[1])
     assert benched_record["status"] == "benched"
     assert benched_record["has_note"] == True
     assert benched_record["benched_note"] == "Was benched"
