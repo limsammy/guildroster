@@ -34,11 +34,13 @@ async def import_data(
     current_user: User = Depends(require_superuser),
 ):
     """
-    Import data from a ZIP file containing exported JSON data.
+    Import data from a ZIP file containing exported JSON data or a single JSON file.
     Only superusers can perform imports.
     """
-    if not file.filename.endswith(".zip"):
-        raise HTTPException(status_code=400, detail="File must be a ZIP file")
+    if not (file.filename.endswith(".zip") or file.filename.endswith(".json")):
+        raise HTTPException(
+            status_code=400, detail="File must be a ZIP or JSON file"
+        )
 
     try:
         # Read the file content
@@ -96,7 +98,7 @@ async def import_data(
                 )
 
         # Process the imported data
-        import_results = await process_import_data(data, db)
+        import_results = await process_import_data(data, db, current_user)
 
         return {
             "message": "Import completed successfully",
@@ -109,7 +111,7 @@ async def import_data(
 
 
 async def process_import_data(
-    data: Dict[str, Any], db: Session
+    data: Dict[str, Any], db: Session, current_user: User
 ) -> Dict[str, Any]:
     """
     Process imported data and insert it into the database.
@@ -130,10 +132,28 @@ async def process_import_data(
                 if "id" in guild_data:
                     del guild_data["id"]
 
-                guild_create = GuildCreate(**guild_data)
-                guild = Guild(**guild_create.dict())
-                db.add(guild)
-                results["guilds"]["imported"] += 1
+                # Check if guild already exists by name
+                existing_guild = (
+                    db.query(Guild)
+                    .filter(Guild.name == guild_data["name"])
+                    .first()
+                )
+
+                if existing_guild:
+                    # Update existing guild
+                    for key, value in guild_data.items():
+                        if hasattr(existing_guild, key):
+                            setattr(existing_guild, key, value)
+                    existing_guild.updated_at = datetime.now()
+                    results["guilds"]["imported"] += 1
+                else:
+                    # Create new guild
+                    guild_create = GuildCreate(**guild_data)
+                    guild = Guild(
+                        **guild_create.dict(), created_by=current_user.id
+                    )
+                    db.add(guild)
+                    results["guilds"]["imported"] += 1
             except Exception as e:
                 results["guilds"]["errors"].append(
                     f"Guild {guild_data.get('name', 'Unknown')}: {str(e)}"
@@ -165,10 +185,31 @@ async def process_import_data(
                         )
                         continue
 
-                team_create = TeamCreate(**team_data)
-                team = Team(**team_create.dict())
-                db.add(team)
-                results["teams"]["imported"] += 1
+                # Check if team already exists by name and guild_id
+                existing_team = (
+                    db.query(Team)
+                    .filter(
+                        Team.name == team_data["name"],
+                        Team.guild_id == team_data["guild_id"],
+                    )
+                    .first()
+                )
+
+                if existing_team:
+                    # Update existing team
+                    for key, value in team_data.items():
+                        if hasattr(existing_team, key) and key != "created_by":
+                            setattr(existing_team, key, value)
+                    existing_team.updated_at = datetime.now()
+                    results["teams"]["imported"] += 1
+                else:
+                    # Create new team
+                    team_create = TeamCreate(**team_data)
+                    team = Team(
+                        **team_create.dict(), created_by=current_user.id
+                    )
+                    db.add(team)
+                    results["teams"]["imported"] += 1
             except Exception as e:
                 results["teams"]["errors"].append(
                     f"Team {team_data.get('name', 'Unknown')}: {str(e)}"
@@ -184,10 +225,26 @@ async def process_import_data(
                 if "id" in scenario_data:
                     del scenario_data["id"]
 
-                scenario_create = ScenarioCreate(**scenario_data)
-                scenario = Scenario(**scenario_create.dict())
-                db.add(scenario)
-                results["scenarios"]["imported"] += 1
+                # Check if scenario already exists by name
+                existing_scenario = (
+                    db.query(Scenario)
+                    .filter(Scenario.name == scenario_data["name"])
+                    .first()
+                )
+
+                if existing_scenario:
+                    # Update existing scenario
+                    for key, value in scenario_data.items():
+                        if hasattr(existing_scenario, key):
+                            setattr(existing_scenario, key, value)
+                    existing_scenario.updated_at = datetime.now()
+                    results["scenarios"]["imported"] += 1
+                else:
+                    # Create new scenario
+                    scenario_create = ScenarioCreate(**scenario_data)
+                    scenario = Scenario(**scenario_create.dict())
+                    db.add(scenario)
+                    results["scenarios"]["imported"] += 1
             except Exception as e:
                 results["scenarios"]["errors"].append(
                     f"Scenario {scenario_data.get('name', 'Unknown')}: {str(e)}"
@@ -215,10 +272,26 @@ async def process_import_data(
                         )
                         continue
 
-                toon_create = ToonCreate(**toon_data)
-                toon = Toon(**toon_create.dict())
-                db.add(toon)
-                results["toons"]["imported"] += 1
+                # Check if toon already exists by username
+                existing_toon = (
+                    db.query(Toon)
+                    .filter(Toon.username == toon_data["username"])
+                    .first()
+                )
+
+                if existing_toon:
+                    # Update existing toon
+                    for key, value in toon_data.items():
+                        if hasattr(existing_toon, key):
+                            setattr(existing_toon, key, value)
+                    existing_toon.updated_at = datetime.now()
+                    results["toons"]["imported"] += 1
+                else:
+                    # Create new toon
+                    toon_create = ToonCreate(**toon_data)
+                    toon = Toon(**toon_create.dict())
+                    db.add(toon)
+                    results["toons"]["imported"] += 1
             except Exception as e:
                 results["toons"]["errors"].append(
                     f"Toon {toon_data.get('name', 'Unknown')}: {str(e)}"
@@ -246,10 +319,29 @@ async def process_import_data(
                         )
                         continue
 
-                raid_create = RaidCreate(**raid_data)
-                raid = Raid(**raid_create.dict())
-                db.add(raid)
-                results["raids"]["imported"] += 1
+                # Check if raid already exists by team_id and scheduled_at
+                existing_raid = (
+                    db.query(Raid)
+                    .filter(
+                        Raid.team_id == raid_data["team_id"],
+                        Raid.scheduled_at == raid_data["scheduled_at"],
+                    )
+                    .first()
+                )
+
+                if existing_raid:
+                    # Update existing raid
+                    for key, value in raid_data.items():
+                        if hasattr(existing_raid, key):
+                            setattr(existing_raid, key, value)
+                    existing_raid.updated_at = datetime.now()
+                    results["raids"]["imported"] += 1
+                else:
+                    # Create new raid
+                    raid_create = RaidCreate(**raid_data)
+                    raid = Raid(**raid_create.dict())
+                    db.add(raid)
+                    results["raids"]["imported"] += 1
             except Exception as e:
                 results["raids"]["errors"].append(
                     f"Raid {raid_data.get('scheduled_at', 'Unknown')}: {str(e)}"
@@ -269,7 +361,7 @@ def get_export_status():
     return {
         "import_enabled": True,
         "export_enabled": True,
-        "supported_formats": ["zip"],
+        "supported_formats": ["zip", "json"],
         "supported_data_types": [
             "guilds",
             "teams",
