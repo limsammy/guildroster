@@ -1150,7 +1150,7 @@ def export_team_attendance_image(
         )
 
     raids = (
-        raid_query.order_by(Raid.scheduled_at.desc()).limit(raid_count).all()
+        raid_query.order_by(Raid.scheduled_at.asc()).limit(raid_count).all()
     )
     logger.info(
         f"Found {len(raids)} raids for team {team_id} in period {start_date} to {end_date}"
