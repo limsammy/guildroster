@@ -67,7 +67,9 @@ class TestImportExport:
         assert "supported_formats" in data
         assert "supported_data_types" in data
 
-    def test_import_requires_superuser(self, client: TestClient, db_session: Session):
+    def test_import_requires_superuser(
+        self, client: TestClient, db_session: Session
+    ):
         """Test that import endpoint requires superuser access."""
         # Test without authentication
         response = client.post("/data-import/import")
@@ -76,11 +78,13 @@ class TestImportExport:
         # Test with regular user (non-superuser)
         user, token = self._create_test_user(db_session)
         headers = {"Authorization": f"Bearer {token.key}"}
-        
+
         response = client.post("/data-import/import", headers=headers)
         assert response.status_code == 403
 
-    def test_import_invalid_file_format(self, client: TestClient, db_session: Session):
+    def test_import_invalid_file_format(
+        self, client: TestClient, db_session: Session
+    ):
         """Test that import rejects invalid file formats."""
         # Create superuser and token
         user, token = self._create_test_superuser(db_session)
@@ -88,15 +92,19 @@ class TestImportExport:
 
         # Create a file with wrong extension
         files = {"file": ("test.txt", b"test content", "text/plain")}
-        
-        response = client.post("/data-import/import", headers=headers, files=files)
+
+        response = client.post(
+            "/data-import/import", headers=headers, files=files
+        )
         if response.status_code != 400:
             print(f"Response status: {response.status_code}")
             print(f"Response body: {response.text}")
         assert response.status_code == 400
         assert "ZIP or JSON file" in response.json()["detail"]
 
-    def test_import_valid_json_file(self, client: TestClient, db_session: Session):
+    def test_import_valid_json_file(
+        self, client: TestClient, db_session: Session
+    ):
         """Test importing a valid JSON file."""
         # Create superuser and token
         user, token = self._create_test_superuser(db_session)
@@ -108,29 +116,33 @@ class TestImportExport:
                 {
                     "name": "Test Guild",
                     "realm": "Test Realm",
-                    "faction": "Alliance"
+                    "faction": "Alliance",
                 }
             ],
             "teams": [
                 {
                     "name": "Test Team",
                     "guild_name": "Test Guild",
-                    "is_active": True
+                    "is_active": True,
                 }
-            ]
+            ],
         }
 
         # Create a JSON file
-        json_content = json.dumps(test_data).encode('utf-8')
+        json_content = json.dumps(test_data).encode("utf-8")
         files = {"file": ("test.json", json_content, "application/json")}
 
-        with patch('app.routers.data_import.process_import_data') as mock_process:
+        with patch(
+            "app.routers.data_import.process_import_data"
+        ) as mock_process:
             mock_process.return_value = {
                 "guilds": {"imported": 1, "errors": []},
-                "teams": {"imported": 1, "errors": []}
+                "teams": {"imported": 1, "errors": []},
             }
-            
-            response = client.post("/data-import/import", headers=headers, files=files)
+
+            response = client.post(
+                "/data-import/import", headers=headers, files=files
+            )
             if response.status_code != 200:
                 print(f"Response status: {response.status_code}")
                 print(f"Response body: {response.text}")
@@ -138,7 +150,9 @@ class TestImportExport:
             data = response.json()
             assert "Import completed successfully" in data["message"]
 
-    def test_import_valid_zip_file(self, client: TestClient, db_session: Session):
+    def test_import_valid_zip_file(
+        self, client: TestClient, db_session: Session
+    ):
         """Test importing a valid ZIP file."""
         # Create superuser and token
         user, token = self._create_test_superuser(db_session)
@@ -150,30 +164,32 @@ class TestImportExport:
                 {
                     "name": "Test Guild",
                     "realm": "Test Realm",
-                    "faction": "Alliance"
+                    "faction": "Alliance",
                 }
             ]
         }
 
         # Create a ZIP file in memory
         zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-            zip_file.writestr('guilds.json', json.dumps(test_data))
-        
+        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+            zip_file.writestr("guilds.json", json.dumps(test_data))
+
         zip_content = zip_buffer.getvalue()
         files = {"file": ("test.zip", zip_content, "application/zip")}
 
-        with patch('app.routers.data_import.process_import_data') as mock_process:
+        with patch(
+            "app.routers.data_import.process_import_data"
+        ) as mock_process:
             mock_process.return_value = {
                 "guilds": {"imported": 1, "errors": []}
             }
-            
-            response = client.post("/data-import/import", headers=headers, files=files)
+
+            response = client.post(
+                "/data-import/import", headers=headers, files=files
+            )
             if response.status_code != 200:
                 print(f"Response status: {response.status_code}")
                 print(f"Response body: {response.text}")
             assert response.status_code == 200
             data = response.json()
             assert "Import completed successfully" in data["message"]
-
-
