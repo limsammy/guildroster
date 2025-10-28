@@ -410,6 +410,9 @@ docker-compose up -d --build
 
 ## Features
 
+![GuildRoster Dashboard](screenshots/index.png)
+*Main dashboard showing guild overview and navigation*
+
 - **FastAPI REST API with automatic documentation**
   - Interactive Swagger UI at `/docs`
   - Professional ReDoc interface at `/redoc`
@@ -574,12 +577,21 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `PUT /teams/{team_id}` - Update team (superuser only)
 - `DELETE /teams/{team_id}` - Delete team (superuser only)
 
+![Teams Management](screenshots/teams.png)
+*Teams management interface showing team creation and configuration*
+
+![Teams View](screenshots/teams-view.png)
+*Teams listing view with team details and member management*
+
 ### Characters (Toons)
 - `POST /toons/` - Create new character (superuser only)
 - `GET /toons/` - List all characters (any valid token)
 - `GET /toons/{toon_id}` - Get character by ID (any valid token)
 - `PUT /toons/{toon_id}` - Update character (superuser only)
 - `DELETE /toons/{toon_id}` - Delete character (superuser only)
+
+![Add Character](screenshots/add-toon.png)
+*Character creation interface with class, role, and team assignment options*
 
 ### Raids
 - `POST /raids/` - Create new raid (superuser only)
@@ -613,6 +625,9 @@ GuildRoster automatically generates comprehensive API documentation using FastAP
 - `GET /attendance/stats/toon/{toon_id}` - Get attendance statistics for a character (any valid token)
 - `GET /attendance/stats/team/{team_id}` - Get attendance statistics for a team (any valid token)
 - `GET /attendance/report/date-range` - Get attendance report for date range (any valid token)
+
+![Attendance Tracking](screenshots/attendance.png)
+*Attendance tracking interface showing raid participation and statistics*
 
 ## Attendance System
 
